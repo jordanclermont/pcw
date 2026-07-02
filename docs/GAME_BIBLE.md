@@ -1,0 +1,215 @@
+# PCW: PERSONA CHAMPIONSHIP WRESTLING
+## Game Bible v1.1
+### July 2026 · Jordan Clermont · Working document
+
+*v1.1 revisions: added the Respect axis (§5.2), updated the planning screen
+to the actual Pitch model as built (§8), added a status note that corners
+are drafted but not yet physically implemented (§8), and added the deferred
+commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
+
+---
+
+## 1. What PCW is
+
+PCW is a cooperative performance game disguised as a wrestling game. Two players hold controllers and perform a professional wrestling match together, in real time, in front of a simulated crowd. The crowd is the score. The match has a plan agreed before the bell, and the drama of the game comes from whether the two performers execute that plan, improvise around problems, or betray each other.
+
+Every wrestling game ever made asks "can you beat your opponent?" PCW asks "can the two of you have a great match?" Those are different games. In PCW, a suplex is not an attack, it is a stunt two people perform together, and it only works if both of them do their jobs.
+
+What PCW is not: a fighting game, a booking simulator, or a wrestling game with a kayfabe skin. Health bars do not decide anything. The moment a player can win by depleting the other player, the design has failed.
+
+The genre research confirms the lane is open. The cooperative worked-match idea exists in a tabletop RPG (World Wide Wrestling), the crowd-hype idea exists in a turn-based RPG (WrestleQuest), and the match-quality-as-objective idea exists in booking sims and one turn-based indie (Built for the Ring). Nobody has built the real-time action version where two humans physically perform the match. That gap is the project.
+
+---
+
+## 2. The core thesis: performance, not combat
+
+Players should feel like they are playing a wrestling game. They run the ropes, throw strikes, hit slams, kick out of pins. The inputs, timing, and physicality of an action wrestling game all remain. What changes is what the actions mean and how they are scored.
+
+A chop that lands is worth nothing by itself. A chop that lands, gets sold big by the receiver, and arrives at the right moment in the match's emotional arc is worth heat. Execution is shared: the person taking the move is performing just as much as the person delivering it, and the game's timing challenges are distributed across both players. This is the single most important design rule: **every significant moment requires input from both performers.**
+
+The Work button carries this philosophy. Each player has one context-sensitive button whose meaning is always "do your job right now": reverse when the spot calls for a reversal, sell when a strike lands, feed a comeback, kick out at two, stay down for the finish. The same button, used against the plan, is a shoot. Cooperation and betrayal live on the same input, which keeps the temptation physically present in the player's hand at all times.
+
+---
+
+## 3. The two-audience model
+
+This is the structural heart of the game. There are two watching parties with different information, and every system answers to one or the other.
+
+**The crowd** sees only the show. It does not know the script, does not know who is booked to win, and cannot tell a botch from a receipt unless it looks like one. The crowd knows the *storyline* (it watched the weeks of TV that built this match, so it has rooting interests and expectations) but not the *plan*. The crowd judges pacing, drama, escalation, believability, and whether it is getting the story it came to see. Crowd Heat is the public score.
+
+**The locker room** (the other performer, the referee, the office behind the curtain) sees the work. It knows the script, notices every missed cue, feels every stiff shot, and remembers who can be trusted. Trust is the private score.
+
+The design consequence: a botch you cover smoothly costs almost nothing publicly. It costs trust and bodies backstage. A shoot the crowd enjoys (a shocking title change, a surprise kick-out) can gain heat while destroying trust. The two meters can move in opposite directions from the same event, and that split is where the interesting decisions live. Build 0.02 got this wrong by letting the crowd boo botches it could not have detected; every future system must pass the test "could the crowd actually know this?"
+
+---
+
+## 4. The three loops
+
+**Plan.** Before the bell, the performers build the match together. The office hands down non-negotiables (tonight's finish, any stipulations from the talent). The players then draft the body of the match from a spot menu, negotiating who takes which bumps. Big bumps are risk trades: the taker carries the injury risk, both share the heat reward. This phase is a strategy game about trust, played before any physical skill is tested.
+
+**Perform.** The match itself. Real-time execution of the plan, spot by spot, with timing windows, cooperative multi-input sequences for big moves, selling, pacing decisions, audibles when things go wrong, and the standing temptation to shoot.
+
+**Pay off.** The rating, the fallout, the story consequence. In the full game this feeds the next show: injuries persist, trust reputations follow you, the office books around what you did. In the demo it is a rating card and a written epilogue that acknowledges what actually happened.
+
+---
+
+## 5. Systems
+
+### 5.1 The crowd model
+
+The crowd is an engine with desires, not a meter that dispenses points. Its state includes:
+
+- **Heat** (0 to 100): current engagement. Decays slowly when nothing lands. The public score.
+- **An expectation arc**: crowds want matches shaped like stories. Early feeling-out, escalating action, a heat segment where the heel controls, a comeback, near-falls, a finish. Spots that land where the arc wants them earn full value; a finisher in minute one earns a fraction and burns future pop (the crowd has a limited supply of belief, and big moves spend it).
+- **Storyline allegiance**: the crowd arrives caring. In the demo it is firmly behind Stove Hot and hostile to the champion. Face offence pops harder; heel control builds resentment that makes the comeback pay more. Playing to allegiance is playing the crowd.
+- **Restlessness and hijack**: if heat stalls too long, the crowd starts asking for things: a chant appears on screen requesting a spot type or a performer. Serving the chant pays a bonus; ignoring it drains heat faster. This is the crowd overriding the match plan, and it forces audibles. The crowd never requests specific scripted spots (it cannot know them); it requests categories: more action, the face, a big one, take it outside.
+- **Visible reactions only**: pops, boos, chants, silence, flashbulbs. The crowd reacts to what it sees. A missed reversal reads as a slam. A shoot pin reads as a shocking finish. The crowd's information is the picture, never the plan.
+
+### 5.2 Trust, and the Respect axis
+
+Trust (0 to 100) is the private meter between the performers, and in the full game it extends to reputations with the referee, the locker room, and the office. It moves on backstage truth: kept promises, safe hands, covered mistakes, and their opposites.
+
+Betrayal is always mechanically possible. A player can stiff their opponent, no-sell, hijack spots, kick out of the finish, or steal a pin over the champion. The game never prevents this; it prices it. The pricing, escalating with severity:
+
+- **Immediate**: trust drops. At zero trust the professional relationship is dead: cooperative moves stop being available (your opponent will not take your moves properly), the match breaks down, and the rating collapses.
+- **Officiating**: the referee is a person with a memory. A worker the ref trusts gets slow counts against them, leniency on rope breaks, an eye conveniently elsewhere. A worker who shoots gets fast counts, strict enforcement, and no favours. (Full treatment in 5.7.)
+- **The other performer's tools**: a betrayed worker can sandbag: refuse to feed, refuse to sell, stiff back. Receipts are a legitimate in-fiction response, and the game should let a wronged player extract them, at further cost to the match.
+- **The office** (full game): booking punishment. Steal a win and you may hold the belt, but you will defend it in openers against people paid to hurt you, and the story layer writes you as the promotion's problem.
+
+The design intent: stealing the title should be genuinely available, occasionally story-perfect, and almost never worth it. The player who does it should feel the temperature drop.
+
+**Respect** is a second, separate meter, added during v0.04.1 and worth formalizing here because it turned out to be a real idea, not just a tuning knob. Trust measures whether your partner believes you'll do your job safely and as agreed. Respect measures whether the crowd and the office rate you. The two can diverge on purpose: a player can be a beloved, crowd-pleasing loose cannon, high respect, low trust, or a scrupulously reliable worker nobody's excited to see, high trust, low respect. Respect is earned in-ring (serving a crowd chant, a shoot that the crowd happens to pop for) and spent in the planning phase, where a pitcher's standing respect is the office's benefit of the doubt on a risky pitch: safe spots pass easily regardless, but a genuinely dangerous spot needs both a partner's buy-in and a pitcher who's respected enough that the office trusts them to pull it off. Respect persists across matches, so playing to the crowd in one match buys creative pull in the next booking.
+
+### 5.3 The Work button and timing
+
+Carried forward from Build 0.01/0.02, this is proven and stays. Timed windows measured in frames on a fixed 60 Hz logic step. The grapple reversal window (frames 4 to 9 of a 12-frame startup, perfect at 6 to 7) is the template; selling windows, kick-out timing, and feed timing use the same pattern with their own tunings. Timing quality grades the pop: crisp work reads better from the fifth row.
+
+### 5.4 Big spots: cooperative execution
+
+Signature moments are multi-input sequences shared across both players. A superplex might be: attacker climbs (hold input), receiver positions (timed press), attacker initiates (press in window), both players hit a simultaneous press for the landing. Every input hit cleanly means full heat and minimal real damage; degraded execution means the same visual event with more genuine harm to the receiver and a sloppier read from the crowd. The riskier the bump, the longer the input chain and the higher the stakes on both sides. This is the mechanical expression of "putting your body in someone else's hands": the receiver's health literally depends on the attacker's inputs, and vice versa. Ladder and table spots belong to this system later; the demo proves it with one top-rope spot.
+
+### 5.5 Audibles and calls
+
+Matches go wrong: a spot gets botched, a limb gets hurt, the crowd hijacks, someone is blown up. Workers adjust by calling audibles, and the call has to be covert because the crowd is watching. Mechanically: a call input opens a small radial of proposals (skip ahead, repeat a segment, swap a planned spot for a safer one, go home early). The proposal appears only on the partner's screen, styled as a whispered call in the clinch. The partner accepts or declines with their own input. Agreed audibles rewrite the live call sheet. An injured leg greys out every spot that needs it, forcing exactly the adaptation you described: the plan must reroute through what the bodies can still do.
+
+### 5.6 Bodies and injury
+
+Body condition is real and per-region (head, back, arms, legs), not a health bar. Worked moves cost a little; botches and shoots cost a lot; big bumps cost according to execution quality. Damaged regions degrade the relevant actions (a bad leg slows movement and disables leg-dependent spots) and force audibles. A region hitting zero is an injury stoppage: the worst ending, bad for the rating, worse for the story. Bodies are the reason the trust economy has teeth: when you agree to take someone's move, you are wagering your body on their hands.
+
+### 5.7 The referee
+
+The ref is a character with a trust ledger of their own, and their behaviour is a consequence system: count speed, strictness, and attention all flex with standing. The ref also anchors kayfabe: they can be knocked down (opening a window where anything goes, a classic device the crowd loves in the right dose), and they sell the drama of counts. In the demo the ref is visually present and implements count timing plus one bias rule; the full ledger comes later.
+
+### 5.9 Commentary (deferred, designed)
+
+Not yet built, but the shape is decided: two voices, play-by-play and color, presented as comic-style speech bubbles anchored to a commentary desk, not as scrolling text. This keeps commentary diegetic, in keeping with the Audacity Era presentation, and naturally caps how much can be said at once, since an overstuffed bubble stops reading as a bubble. Commentary is meta-guidance as well as flavor: if a wrestler is out of position for a spot that needs them somewhere specific, a commentator line can hint at it in kayfabe voice rather than breaking the fourth wall. The backstage log is a separate, permanent thing: a debug-facing technical readout, not part of the player-facing experience. Commentary replaces the log as what the player actually reads; it does not need to stay in sync with it.
+
+---
+
+## 6. The personas
+
+The game is called Persona Championship Wrestling because the character is the unit of design. A persona defines a moveset, a crowd relationship, a promo voice, and a set of things the crowd expects and will pay to see. The demo ships two.
+
+**Stove Hot** (face). The Stone Cold parody: anti-authority, beer-swilling energy, the working man who does not respect the office. The crowd's guy. Visual identity: black trunks and vest, shaved head, an iconography built around a glowing stove burner coil (his logo, his flame, his everything; the merch writes itself). Finisher: a stunner parody, placeholder name **The Front Burner**. Signature crowd ritual to be designed (the Austin beer-toast equivalent; your call as the writer, it should be something the crowd can request via chant).
+
+**The Boulder** (heel). The corporate-era Rock parody: the office's handpicked champion, impossibly charismatic, insufferably polished, granite in a tailored entrance robe. Speaks of himself in the third person. Finisher: a Rock Bottom parody, placeholder **The Landslide**; secondary taunt-finisher, the People's Elbow parody, placeholder **The Shareholder's Elbow**. His heat comes from smugness and office protection; his genius is that the crowd hates him and cannot look away.
+
+All names above are placeholders for you to keep or replace. Parody guidance: the gimmicks can be recognizably inspired, but invent adjacent iconography rather than cloning trade dress or catchphrases verbatim. No "3:16", no scratch-logo lookalike, no lifted lines. The parody should be legible from silhouette and attitude, not from copied assets. (I am not a lawyer; if this ever heads toward commercial release, that is a real conversation to have with one.)
+
+---
+
+## 7. Promos and story
+
+The promo is a performance minigame, and it should be deterministic before it is intelligent. A workable core: the player assembles a promo from beats (callback, insult, stakes, catchphrase, crowd address) under a timing rhythm, reading the crowd's live reaction and deciding when to let a chant breathe versus talk over it. Pausing for the pop at the right moment is the skill, exactly as in the ring. This needs no AI and will be reliable, tunable, and funny.
+
+AI earns its place one layer up: the story engine. Feuds that react to what actually happened in matches, an office that writes next week around your screwjob, promo text that references the real events of your career. That adaptability is where hand-authored branching cannot compete. The constraint to respect: an AI-dependent feature needs a connection and someone paying for the calls, so the design treats AI story as an enhancement over a deterministic skeleton, never as the foundation. The demo uses templated epilogue text keyed to match outcomes; it will feel authored, because it is.
+
+---
+
+## 8. The demo: one match
+
+Yes, it is manageable, and the scope you described is close to ideal. One match, fully realized, is worth more than any breadth. The Boulder's protection stipulation is a gift to the design: it forces the finish to be a multi-beat sequence (finisher, kick-out, escalation, second finisher), which means the demo's climax exercises every system the game is about. Title: working name **PCW GRANDSTAND** for the pay-per-view (placeholder, your call).
+
+**The demo flow, four screens:**
+
+**1. The hype package.** A skippable 60 to 90 second cold open in the style of an attitude-era video package: four to six generated story stills, hard cuts, aggressive type, parody promo pull-quotes, building the feud. The story: The Boulder is the office's champion, deep into a protected reign; Stove Hot is the anti-authority face the crowd has demanded into this match; tonight the office finally has to put them in a ring. Purpose: give the crowd (and the player) the storyline allegiance that the crowd model runs on.
+
+**2. Gorilla position (the planning screen).** The office's booking is displayed as non-negotiable: *Stove Hot wins the title tonight.* The Boulder's stipulation is attached: *he goes down strong*: he kicks out of the first Front Burner, he gets his own finisher and a believable near-fall, and only a second Front Burner keeps him down. Around those fixed beats, the match is a nine-spot structure, a fixed opener, six drafted spots, and the fixed finish, drafted through **the Pitch**: turns alternate, one performer pitches a spot from the menu, the other either puts it over for free, buries it at a cost, or lets it ride, and the office's agenda plus both performers' standing Respect decide whether it sails through or needs real buy-in. Safe, on-agenda spots pass easily; the top-rope superplex, a big bump on the champion, needs a put-over from the partner and a genuinely respected pitcher, roughly an 85 Respect threshold, to get approved at all. Three preset cards (The Classic, recommended; The War, high risk; From Scratch, full manual draft) make booking approachable without flattening it into all-or-nothing. A projected crowd-arc sparkline previews the pacing shape of the drafted plan before you lock it in. This is where the strategy game lives, and it plays like two workers with a clipboard behind a curtain, exactly as intended, just with sharper mechanics than the original sketch had.
+
+*Status note (v0.04): the Pitch model above is fully built and playable. What is not yet built is the physical execution of a drafted big spot, corners and turnbuckle positions don't exist on the grid yet, so a spot tagged "corner" or "top rope" currently resolves wherever the wrestlers happen to be standing. The negotiation layer is ahead of the physical layer; closing that gap, per §5.4, is the next priority.*
+
+**3. The match.** The 0.02 engine evolved: crowd model v1 (arc, allegiance, decay, one hijack chant event), the Work button in all its contexts, the call sheet advancing spot by spot, the audible call system in a minimal form (two or three proposals), the referee with count timing, the superplex input chain, and the scripted finish sequence with its kick-out beats. Every betrayal option live: the Boulder can stay down early and gift a flat win, kick out of the second Front Burner and steal the match, or stooge for the office; Stove Hot can stiff, no-sell, or go home early. All priced by trust, heat, and story.
+
+**4. The aftermath.** The Observer rating card, the key stats, and a written epilogue in kayfabe-news voice that acknowledges what actually happened: the clean title change, the screwjob, the botchfest, the injury, or the breakdown. Then "run it back."
+
+**Explicitly out of demo scope:** more than two wrestlers, ladders and tables, career or season structure, AI-generated text, online play, entrances beyond the hype package, commentary audio, a promo minigame. All noted, all later.
+
+---
+
+## 9. Art direction: the Audacity Era
+
+The black-and-white ink style is retired. The new direction is a period parody: PCW looks like a wrestling television product from the crash-TV era, 1997 to 2000, made by a promotion with more attitude than budget.
+
+**The feel.** Black arenas cut by harsh white spotlights and smoke. Steel, chain-link, scaffolding, sticker-bombed staging. A hostile sea of crowd signs. Aggressive ultra-condensed block typography, always slightly distressed, always shouting. VHS-era broadcast texture: subtle scanlines, chroma fuzz, a LIVE bug, lower-third graphics that slam in. The palette is black, steel, and blood red for the promotion, with each persona owning a brand colour: burner-coil orange for Stove Hot, corporate navy and gold for The Boulder.
+
+**The signature moment.** Replacing the ink splatter: **flashbulbs.** On big pops, camera flashes ripple through the darkened crowd, dozens of white pinpricks firing in waves, scaled to the size of the pop. It is period-perfect, it makes crowd approval visible without any meter, and it turns the audience itself into the game's particle system. Near-falls at high heat should strobe the whole arena.
+
+**Presentation frame.** The match renders as a television broadcast: subtle letterboxing, the PCW watermark, lower-thirds for the performers, a title-match graphic. The planning screen is the inverse: fluorescent-lit backstage realism, a clipboard, a curtain, no glamour. The contrast between the show and the work is the two-audience model expressed visually.
+
+**Parody discipline.** Evoke the era, never the trademarks. Invented logos, invented event names, invented iconography adjacent to the references. The joke is the register, not the assets.
+
+---
+
+## 10. Asset plan and the Gemini pipeline
+
+**On open-source assets, honestly:** wrestling-specific open art barely exists. OpenGameArt has a small CC0 retro wrestling pack in an 8-bit Master System style, which is the wrong look entirely; itch.io hosts wrestling-sim packs (portraits, championship belts, promotion and PPV logos) that could fill incidental UI gaps if their licences check out; and the sprite-rip databases carry actual WWF game sprites that are copyrighted material and not usable. Conclusion: we generate our own. The visual identity is the moat anyway, and you are a designer with image tools; borrowed art would dilute the one thing nobody can copy.
+
+**Pipeline principles.** Consistency beats beauty. Every generation uses the same style block, and every character generation works from that character's approved reference sheet rather than from a fresh text prompt. Lock a lighting direction (key light upper front, arena spot from above) so every asset composites into the same scene. Generate large (1024 px or more per pose), on a flat solid background (a green or magenta the costume never uses) for clean cutout, and export transparent PNGs at twice the in-game display size. You do the cutouts and cleanup; that pass is also where your design hand unifies whatever the generator wobbles on.
+
+**Reusable style block (paste into every prompt, tune once):**
+
+> Late-1990s professional wrestling television style, gritty attitude-era parody. Painted realistic style with bold silhouettes, slightly exaggerated proportions, strong rim lighting from arena spotlights, dark smoky background, high contrast. Consistent character design, full body visible, [SOLID GREEN] background, no text, no logos.
+
+**Order of operations:**
+
+1. **Character sheets first.** For each wrestler: a turnaround (front, three-quarter, side, back) in a neutral stance, plus a face close-up. Iterate until you approve the design. This sheet is now canon; every pose generation references it with "same character as reference image."
+2. **Pose inventory per wrestler** (the state machine's shopping list, roughly 16 each): idle, walk (2 frames), run, strike wind-up, strike contact, grapple reach, slam delivery, arm drag, sell stagger, hit reaction, down on mat, get-up, pin cover, being pinned, kick-out burst, finisher delivery, finisher receipt, celebration. Generate each as a single pose on the flat background. Where the generator struggles with a pose, describe the wrestling move in plain physical terms (bodies, limbs, weight) rather than by move name.
+3. **The scene:** the ring in a consistent three-quarter view (mat, ropes, posts, apron with the PCW logo), the arena backdrop in two or three layers for depth (far crowd darkness, mid crowd with signs, ringside), entrance stage, titantron frame.
+4. **The cast around the match:** the referee (six poses: neutral, counting 1-2-3 slaps, knocked down, remonstrating), a handful of crowd sign textures.
+5. **Story and UI stills:** four to six hype-package images (the feud beats: the champion with the office, Stove Hot's defiance, the confrontation, the contract), the championship belt (hero shot and small overlay version), the Gorilla-position backstage scene, logos (PCW, the PPV, each wrestler's brand mark; these you likely design directly rather than generate).
+
+**Technical spec for the engine:** individual PNG files, not packed sheets (simpler to iterate); naming convention `stovehot_sell.png`; consistent anchor at the feet centreline; standing poses around 480 px tall in source for a 240 px display target. The engine keeps the flashbulb system, screen shake, hit-stop, scanline post-processing, and crowd reactivity as code; the PNGs only need to be strong stills, because the game's motion language is pose-switching plus impact effects, which suits generated art far better than trying to produce smooth animation frames.
+
+---
+
+## 11. Production plan
+
+The project moves to Claude Code on your Mac and becomes a real repository. Suggested shape:
+
+```
+pcw/
+  index.html
+  src/          (engine modules: input, states, crowd, script, render, audio)
+  assets/       (sprites/, ui/, stills/)
+  data/         (spots.json, matchplan.json, personas.json)
+  docs/         (this bible, playtest notes)
+```
+
+This document lives in the repo, and a condensed version of its rules goes in the project's CLAUDE.md so every coding session starts already knowing what PCW is and, just as important, what it is not.
+
+Working rhythm for a non-coder director: one system per session, playtest immediately, keep a running playtest-notes file (what felt wrong, what broke, what surprised you), and bring that file to the next session as the brief. You never need to touch the code; your job is exactly the job you already know, which is design direction and taste. Build order for the demo: v0.03 crowd model and character rename/realignment on placeholder art, v0.04 planning screen, v0.05 finish sequence and superplex chain, v0.06 asset integration as your Gemini sprites land, v0.07 hype package and aftermath, then tuning until the match feels like a match.
+
+Art production runs in parallel from day one: the character sheets are the long pole, so they start first.
+
+---
+
+## 12. Anti-goals
+
+Written down so future sessions can be held to them.
+
+- **It never becomes a fighting game.** No victory by damage. If a playtest ever feels like a fight to win, a system is miscalibrated.
+- **The crowd never reads the script.** Every crowd reaction must be justifiable by what a person in row twelve could see.
+- **AI is seasoning, not structure.** The demo must be fully playable offline with authored content.
+- **Betrayal is priced, never prevented.** The temptation must stay in the player's hands; removing it removes the game.
+- **One match until it sings.** No roster, no modes, no career until the demo match is something you would show a stranger.
+- **Parody, not plagiarism.** The era is the reference; the assets are ours.

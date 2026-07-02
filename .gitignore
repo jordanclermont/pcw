@@ -1,0 +1,9 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Claude Code per-user local config (permissions etc.) — not shared
+.claude/settings.local.json
+
+# Logs / temp
+*.log
