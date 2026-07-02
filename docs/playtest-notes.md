@@ -188,4 +188,33 @@ panel (readable, but not yet Audacity-styled) — easy to restyle later.
 Deferred as before: taunts, shoot-as-abyss, v0.05 finish sequence +
 superplex input chain, v0.06 wrestler/arena sprite art.
 
+## 2026-07-02 / v0.05 — corners, the superplex chain, cues on the sprites
+
+Process: the project is now a git repo; commit history is the version log
+(see CLAUDE.md). The bible (§5.4) is updated to match this build.
+
+- CORNER POSITIONS are real now. Four grid points sit under the rendered
+  turnbuckle posts. Corner-tagged spots (CORNER STOMPS, the superplex)
+  won't fire unless the bump-taker is actually in a corner — otherwise
+  the move whiffs (no shoot penalty) and the cue says "get to a corner,"
+  with the corners marked on the mat. Walk him into the buckle to enable
+  it. (Tags live in data/spots.js as `corner: true`.)
+- THE SUPERPLEX is a live four-beat chain at the turnbuckle: CLIMB →
+  POSITION (receiver Works in-window) → THROW (attacker Works) → LAND
+  (both Work). Each missed window = one degraded beat: still reads as a
+  superplex, but more real damage + smaller pop. Clean chain reads huge.
+  No cutscene — the attacker visibly climbs and comes off the top in the
+  live ring. (Frame windows in config.js FRAMES.SPX_*.)
+- CUES MOVED TO THE SPRITES. Each wrestler's instruction now floats over
+  their own body in their own colour (same isoX/isoY floater pattern the
+  crowd uses), instead of a shared bottom strip. The bottom banner keeps
+  the spot name + the director's note for context.
+
+To judge next play: are the corner nudge + superplex windows readable
+mid-fight? Is the superplex timing too tight/loose (config FRAMES.SPX_*)?
+Do the per-sprite cues actually help, or add clutter?
+
+Deferred as before: taunts, shoot-as-abyss, the full finish kick-out
+sequence (kick-out / near-fall / second Front Burner), v0.06 sprite art.
+
 ## (next entry goes here)

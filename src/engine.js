@@ -27,7 +27,7 @@
     G.P1 = new PCW.Wrestler(PCW.PERSONAS.stovehot);
     G.P2 = new PCW.Wrestler(PCW.PERSONAS.boulder);
     G.pads = { p1: new PCW.Pad(PCW.PAD_MAP.p1), p2: new PCW.Pad(PCW.PAD_MAP.p2) };
-    G.exchange = null; G.sellWin = null; G.pin = null; G.splatters = [];
+    G.exchange = null; G.sellWin = null; G.pin = null; G.superplex = null; G.splatters = [];
     if (!G.crowd) G.crowd = new PCW.CrowdModel(); else G.crowd.reset();
     G.match = {
       phase: "MATCH", script: script || PCW.makeMatchPlan(), spot: 0,
@@ -105,6 +105,19 @@
     if ((def.state === S.DOWN) && atk.distTo(def) < 1.6) { startPin(atk, def); return; }
     if (def.busy() && def.state !== S.MOVE) return;
     if (atk.distTo(def) > 1.35) { PCW.log(atk.short + " reaches — nobody home."); return; }
+    const sp = spot();
+    // corner-tagged grapple spot (e.g. the superplex) can't fire unless the
+    // defender is actually standing in a corner. Otherwise the move is
+    // unavailable — the attacker whiffs and the cue tells them why.
+    if (sp && sp.corner && sp.move === "GRAPPLE" && sp.caller === atk.id && !PCW.atCorner(def)) {
+      atk.setState(S.WHIFF);
+      PCW.log(atk.short + " can't go up top — get " + def.short + " to a corner first.");
+      return;
+    }
+    // the superplex is a chained sequence, not a one-press slam
+    if (sp && sp.sequence === "superplex" && sp.caller === atk.id && PCW.atCorner(def)) {
+      initiateSuperplex(atk, def); return;
+    }
     atk.setState(S.GRAPPLE_STARTUP);
     G.exchange = { attacker: atk, defender: def, frame: 0, reversalAttempted: false, resolved: false };
   }
@@ -180,9 +193,17 @@
   function tryStrikeHit(atk, def) {
     if (def.busy() && def.state !== S.MOVE && def.state !== S.HITSTUN) return;
     if (atk.distTo(def) > 1.5 || def.state === S.HITSTUN) return;
+    const sp = spot();
+    // corner-tagged strike spot (e.g. CORNER STOMPS) needs the defender in a
+    // corner. If he's out in the open, the spot is unavailable — whiff, no
+    // hit, no shoot penalty; the cue says to walk him into the buckle.
+    if (sp && sp.corner && sp.move === "STRIKE" && sp.caller === atk.id && !PCW.atCorner(def)) {
+      atk.setState(S.WHIFF);
+      PCW.log("Not in the corner — walk " + def.short + " into the buckle first.");
+      return;
+    }
     def.setState(S.HITSTUN);
     PCW.render.inkBurst(def); G.hitstop = 3; G.shake = 3;
-    const sp = spot();
     if (sp && sp.move === "STRIKE" && sp.caller === atk.id) {
       def.hurt(BODY.WORKED_STRIKE);
       G.sellWin = { defender: def, frames: F.SELL_WINDOW, age: 0, spotRef: sp, attacker: atk };
@@ -218,6 +239,107 @@
     PCW.log("No-sold it. Flat crowd. (" + sp._count + "/" + sp.count + ")", "bad");
     if (sp._count >= sp.count) markDone(sp);
   }
+
+  /* ============================================================
+     THE TOP-ROPE SUPERPLEX — a cooperative chain at the turnbuckle.
+     Four beats, each a state with its own length and a timed Work
+     window (same pattern as the grapple reversal). Every clean input
+     means full heat and a soft landing; a missed beat is the SAME
+     visual with more real damage and a sloppier read from the crowd.
+     Stays entirely in the live ring — no cutscene.
+       CLIMB    attacker goes up (no input)
+       POSITION receiver Works in-window to meet him up top
+       THROW    attacker Works in-window to bring him over
+       LAND     BOTH Work in-window for the landing
+     ============================================================ */
+  function initiateSuperplex(atk, def) {
+    const ci = PCW.cornerIndexAt(def.gx, def.gy);
+    const c = PCW.CORNERS[ci];
+    def.gx = c.gx; def.gy = c.gy;
+    const side = c.gx < PCW.GRID / 2 ? 1 : -1;
+    atk.gx = clampGrid(c.gx + side * 0.9); atk.gy = clampGrid(c.gy + 0.3);
+    atk.facing = side >= 0 ? 1 : -1; def.facing = -atk.facing;
+    atk.setState(S.SPX_CLIMB); def.setState(S.SPX_WAIT);
+    G.superplex = {
+      attacker: atk, defender: def, corner: ci, step: "CLIMB", frame: 0,
+      posHit: null, posClean: false, throwHit: null, throwClean: false,
+      landAtk: null, landAtkWin: false, landDef: null, landDefWin: false
+    };
+    PCW.log(atk.short + " climbs the turnbuckle — this is the big one.");
+  }
+  const spxInWin = (sx, o, c) => sx.frame >= o && sx.frame <= c;
+
+  function superplexInput(w) {
+    const sx = G.superplex; if (!sx) return;
+    if (sx.step === "POSITION" && w === sx.defender && sx.posHit == null) {
+      sx.posHit = true; sx.posClean = spxInWin(sx, F.SPX_POS_OPEN, F.SPX_POS_CLOSE);
+      if (!sx.posClean) PCW.log(sx.defender.short + " was slow getting up top.", "bad");
+    } else if (sx.step === "THROW" && w === sx.attacker && sx.throwHit == null) {
+      sx.throwHit = true; sx.throwClean = spxInWin(sx, F.SPX_THROW_OPEN, F.SPX_THROW_CLOSE);
+      if (!sx.throwClean) PCW.log(sx.attacker.short + " rushed the throw.", "bad");
+    } else if (sx.step === "LAND") {
+      if (w === sx.attacker && sx.landAtk == null) { sx.landAtk = true; sx.landAtkWin = spxInWin(sx, F.SPX_LAND_OPEN, F.SPX_LAND_CLOSE); }
+      if (w === sx.defender && sx.landDef == null) { sx.landDef = true; sx.landDefWin = spxInWin(sx, F.SPX_LAND_OPEN, F.SPX_LAND_CLOSE); }
+    }
+  }
+
+  function superplexTick() {
+    const sx = G.superplex; if (!sx) return;
+    sx.frame++;
+    const A = sx.attacker, D = sx.defender;
+    if (sx.step === "CLIMB") {
+      if (sx.frame >= F.SPX_CLIMB) { sx.step = "POSITION"; sx.frame = 0; A.setState(S.SPX_TOP); D.setState(S.SPX_RECEIVE); }
+    } else if (sx.step === "POSITION") {
+      if (sx.frame >= F.SPX_POS_TOTAL) { sx.step = "THROW"; sx.frame = 0; }
+    } else if (sx.step === "THROW") {
+      if (sx.frame >= F.SPX_THROW_TOTAL) { sx.step = "LAND"; sx.frame = 0; A.setState(S.SPX_THROW); }
+    } else if (sx.step === "LAND") {
+      if (sx.frame >= F.SPX_LAND_TOTAL) superplexResolve();
+    }
+  }
+
+  function superplexResolve() {
+    const sx = G.superplex; G.superplex = null;
+    const A = sx.attacker, D = sx.defender, sp = spot();
+    const landClean = !!(sx.landAtkWin && sx.landDefWin);
+    const misses = (sx.posClean ? 0 : 1) + (sx.throwClean ? 0 : 1) + (landClean ? 0 : 1);
+    const quality = Math.max(0.4, 1.25 - misses * 0.28);   // a clean chain reads HUGE
+    D.hurt(BODY.WORKED_SLAM + misses * 5);                  // sloppier = a realer bump
+    const c = PCW.CORNERS[sx.corner];
+    D.gx = clampGrid(c.gx + (c.gx < PCW.GRID / 2 ? 1.4 : -1.4)); D.gy = clampGrid(c.gy);
+    D.downTime = F.DOWN; D.setState(S.DOWN);
+    A.gx = clampGrid(D.gx + 0.2); A.setState(S.WHIFF);
+    PCW.render.inkBurst(D); G.hitstop = F.HITSTOP; G.shake = 12;
+    if (sp && sp.sequence === "superplex" && sp.caller === A.id) {
+      popShake(G.crowd.react({ picture: "slam", role: A.role, base: sp.pop, quality, arcSlot: sp.arcSlot, big: true, actor: A }));
+      PCW.log("TOP-ROPE SUPERPLEX" + (misses ? " — sloppy, " + misses + " missed beat" + (misses > 1 ? "s" : "") : " — PICTURE PERFECT!"), misses ? "bad" : "ok");
+      markDone(sp);
+    } else {
+      offScript(A, "hit an uncalled superplex",
+        { picture: "slam", role: A.role, base: 12, quality, arcSlot: "transition", big: true, actor: A }, TRUST.SLAM);
+    }
+  }
+
+  /* the current on-canvas instruction for a wrestler (world-anchored cue) */
+  function defenderOf(sp) { return sp.bump === "STOVE" ? G.P1 : G.P2; }
+  function cueText(w) {
+    const m = G.match; if (!m || m.phase !== "MATCH") return null;
+    const sx = G.superplex;
+    if (sx) {
+      const atk = w === sx.attacker;
+      if (sx.step === "CLIMB") return atk ? "CLIMBING…" : "HE'S GOING UP…";
+      if (sx.step === "POSITION") return atk ? "WAIT FOR HIM" : "MEET HIM — WORK!";
+      if (sx.step === "THROW") return atk ? "BRING HIM OVER — WORK!" : "HANG ON…";
+      if (sx.step === "LAND") return "LAND IT — WORK!";
+      return null;
+    }
+    const sp = spot(); if (!sp) return "GO HOME";
+    if (sp.corner && !PCW.atCorner(defenderOf(sp))) {
+      return w === defenderOf(sp) ? "GET TO A CORNER" : "WALK HIM TO A CORNER";
+    }
+    return sp.cue[w.id] || null;
+  }
+  PCW.cueText = cueText;
 
   /* pin */
   function startPin(atk, def) {
@@ -314,7 +436,8 @@
 
       /* WORK button (Y) — context-sensitive cooperation */
       if (pad.just.Y) {
-        if (grappleCtx(w)) attemptReversal(w);
+        if (G.superplex && (G.superplex.attacker === w || G.superplex.defender === w)) superplexInput(w);
+        else if (grappleCtx(w)) attemptReversal(w);
         else if (G.sellWin && G.sellWin.defender === w) doSell(w);
         else if (G.pin && G.pin.defender === w && G.pin.finish) pinKickout(true);
       }
@@ -346,7 +469,8 @@
         case S.HITSTUN: if (w.stateFrame >= F.HITSTUN) w.setState(S.IDLE); break;
         case S.SELL: if (w.stateFrame >= F.SELL) w.setState(S.IDLE); break;
         case S.WHIFF: if (w.stateFrame >= F.WHIFF) w.setState(S.IDLE); break;
-        case S.GRAPPLE_STARTUP: case S.PINNING: case S.PINNED: break;
+        case S.GRAPPLE_STARTUP: case S.PINNING: case S.PINNED:
+        case S.SPX_CLIMB: case S.SPX_TOP: case S.SPX_THROW: case S.SPX_WAIT: case S.SPX_RECEIVE: break;
       }
     }
 
@@ -356,6 +480,7 @@
     }
     if (G.sellWin) { G.sellWin.age++; if (G.sellWin.age > G.sellWin.frames) sellWindowExpire(); }
     if (G.pin) pinTick();
+    if (G.superplex) superplexTick();
 
     for (const sp of G.splatters) { sp.age++; if (sp.age === F.SPLATTER) PCW.render.stampStain(sp); }
     G.splatters = G.splatters.filter(sp => sp.age <= F.SPLATTER);

@@ -47,7 +47,7 @@
       promo: "Early shine for the challenger. The crowd likes what they see." },
     corner_stomps: {
       id: "corner_stomps", name: "CORNER STOMPS", caller: "p2", move: "STRIKE",
-      count: 2, pop: 7, arcSlot: "heat", risk: 1, bump: "STOVE",
+      count: 2, pop: 7, arcSlot: "heat", risk: 1, bump: "STOVE", corner: true,
       desc: "Boulder mudholes him in the corner. Heat.",
       cue: { p2: "Two stomps in the corner (J)", p1: "Sell each one — Work (T) when it lands" },
       promo: "Boot him down in the corner. Draw the heat." },
@@ -90,8 +90,9 @@
     superplex: {
       id: "superplex", name: "TOP-ROPE SUPERPLEX", caller: "p1", move: "GRAPPLE",
       reversal: false, pop: 18, arcSlot: "comeback", big: true, risk: 3, bump: "BOULDER",
-      desc: "The big one. Boulder takes a huge bump. (Full input chain in v0.05.)",
-      cue: { p1: "Climb and bring him over — press G", p2: "Take the superplex. Trust him." },
+      corner: true, sequence: "superplex",
+      desc: "The big one — a four-beat chain at the turnbuckle. Boulder takes a huge bump.",
+      cue: { p1: "Get him to a corner, then press G to climb", p2: "Be in the corner — trust him" },
       promo: "Off the top. The most dangerous spot in the match — on the champ." },
 
     /* ---- fixed tail: the protected finish ---- */

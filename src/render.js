@@ -148,6 +148,18 @@
     };
   }
 
+  /* how high off the mat a wrestler is drawn (turnbuckle climb) */
+  function figureLift(w) {
+    const sf = w.stateFrame;
+    switch (w.state) {
+      case S.SPX_CLIMB: return Math.min(72, sf * 2.4);
+      case S.SPX_TOP: return 72;
+      case S.SPX_THROW: return Math.max(0, 72 - sf * 5);
+      case S.SPX_RECEIVE: return Math.min(64, sf * 2.6);
+      default: return 0;
+    }
+  }
+
   /* ---- wrestlers ---- */
   function drawWrestler(w) {
     const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy);
@@ -156,7 +168,7 @@
 
     if (w.state === S.DOWN || w.state === S.PINNED) { drawDown(w, x, y, s, slab, fill); return; }
 
-    let lean = 0, crouch = 0, pose = 0;
+    let lean = 0, crouch = 0, pose = 0, lift = 0;
     switch (w.state) {
       case S.RUN: pose = 0; lean = f * 7; break;
       case S.STRIKE: pose = 1; lean = f * (sf < F.STRIKE_ACTIVE_A ? -6 : 6); break;
@@ -168,14 +180,21 @@
       case S.GETUP: crouch = 10 - (sf / F.GETUP) * 10; break;
       case S.WHIFF: lean = f * 9; crouch = 4; break;
       case S.PINNING: pose = 2; crouch = 14; break;
+      // the superplex: attacker climbs the buckle, receiver meets him up top
+      case S.SPX_CLIMB: pose = 2; break;
+      case S.SPX_TOP: pose = 2; break;
+      case S.SPX_THROW: pose = 2; lean = f * 6; break;
+      case S.SPX_WAIT: crouch = 3; break;
+      case S.SPX_RECEIVE: pose = 4; break;
     }
+    lift = figureLift(w);
     const bob = (w.state === S.MOVE || w.state === S.RUN) ? Math.sin(sf * 0.5) * 2 : Math.sin(G.renderFrame * 0.05 + (slab ? 2 : 0));
 
     CTX.save(); CTX.fillStyle = "rgba(22,19,14,.28)";
     CTX.beginPath(); CTX.ellipse(x, y, 22 * s, 9 * s, 0, 0, 7); CTX.fill(); CTX.restore();
 
     CTX.save();
-    CTX.translate(x, y - 4 + bob + crouch * 0.6);
+    CTX.translate(x, y - 4 + bob + crouch * 0.6 - lift);
     CTX.rotate(lean * Math.PI / 180);
     const seed = slab ? 97 : 7;
 
@@ -435,6 +454,45 @@
 
   const LT = "#d8dbe0";                          // light HUD text on dark
   const barCol = w => w.id === "p1" ? "#ff7a18" : "#6f86d6";  // lightened brand bars
+
+  /* each wrestler's current instruction, anchored to their own sprite in
+     their own colour — so you read your cue where you're already looking,
+     not in a shared strip at the bottom of the screen. */
+  function drawCueLabels() {
+    for (const w of [G.P1, G.P2]) {
+      const t = PCW.cueText && PCW.cueText(w);
+      if (!t) continue;
+      const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy) - 46 - figureLift(w);
+      const pulse = 0.75 + 0.25 * Math.sin(G.renderFrame * 0.18 + (w.id === "p1" ? 0 : 2));
+      CTX.save(); CTX.globalAlpha = pulse; CTX.textAlign = "center";
+      CTX.font = "bold 13px Impact";
+      CTX.strokeStyle = "rgba(0,0,0,.8)"; CTX.lineWidth = 3.5;
+      CTX.strokeText(t, x, y); CTX.fillStyle = barCol(w); CTX.fillText(t, x, y);
+      // a little tick pointing down at the wrestler
+      CTX.fillText("▾", x, y + 11);
+      CTX.restore();
+    }
+  }
+
+  /* when a corner spot is called but the man isn't in a corner yet, mark
+     the four corners so the players know where to take him. */
+  function drawCornerHints() {
+    const m = G.match, sp = m && m.script[m.spot];
+    if (!m || m.phase !== "MATCH" || !sp || !sp.corner || G.superplex) return;
+    const def = sp.bump === "STOVE" ? G.P1 : G.P2;
+    if (PCW.cornerIndexAt(def.gx, def.gy) >= 0) return;   // already there
+    const pulse = 0.4 + 0.35 * Math.abs(Math.sin(G.renderFrame * 0.12));
+    CTX.save();
+    for (const c of PCW.CORNERS) {
+      const x = isoX(c.gx, c.gy), y = isoY(c.gx, c.gy);
+      CTX.globalAlpha = pulse; CTX.strokeStyle = barCol(def); CTX.lineWidth = 2.5;
+      CTX.beginPath(); CTX.ellipse(x, y, 26, 13, 0, 0, 7); CTX.stroke();
+      CTX.globalAlpha = pulse * 0.5; CTX.fillStyle = barCol(def);
+      CTX.beginPath(); CTX.ellipse(x, y, 26, 13, 0, 0, 7); CTX.fill();
+    }
+    CTX.restore();
+  }
+
   function drawHUD() {
     const match = G.match, crowd = G.crowd, sp = match.script[match.spot] || null;
     CTX.save();
@@ -444,9 +502,10 @@
     if (match.phase === "MATCH" && sp) {
       CTX.fillStyle = "#fff"; CTX.font = "bold 15px Impact";
       CTX.fillText("SPOT " + (match.spot + 1) + "/" + match.script.length + " — " + sp.name, W / 2, H - 38);
-      CTX.fillStyle = LT; CTX.font = "12px 'Courier New'";
-      const cue = (sp.cue.p1 ? ("STOVE: " + sp.cue.p1 + "   ·   ") : "") + (sp.cue.p2 ? ("BOULDER: " + sp.cue.p2) : "");
-      CTX.fillText(cue, W / 2, H - 20);
+      // per-wrestler instructions now live on the sprites (drawCueLabels);
+      // the banner keeps the director's note for context.
+      CTX.fillStyle = LT; CTX.font = "italic 12px 'Courier New'";
+      CTX.fillText("“" + sp.promo + "”", W / 2, H - 20);
     } else if (match.phase === "MATCH") {
       CTX.fillStyle = "#fff"; CTX.font = "bold 13px Impact"; CTX.fillText("SHEET COMPLETE — GO HOME", W / 2, H - 30);
     }
@@ -495,6 +554,7 @@
       CTX.fillText("◼ SLOW-MO ◼", 0, 0); CTX.restore();
     }
 
+    drawCueLabels();
     drawCrowdSignals();
 
     if (match.phase === "ENDED" && match.endInfo) {
@@ -523,6 +583,7 @@
     CTX.drawImage(paper, 0, 0);
     G.crowd.draw(CTX, G.renderFrame);
     const ring = drawRing();
+    drawCornerHints();
     const order = [G.P1, G.P2].sort((a, b) => isoY(a.gx, a.gy) - isoY(b.gx, b.gy));
     for (const w of order) drawWrestler(w);
     for (const sp of G.splatters) drawSplatter(sp);

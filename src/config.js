@@ -9,7 +9,7 @@
   "use strict";
   const PCW = (window.PCW = window.PCW || {});
 
-  PCW.VERSION = "0.03";
+  PCW.VERSION = "0.05";
   PCW.CANVAS = { W: 960, H: 640 };
 
   /* frame windows (60 Hz logic) */
@@ -18,7 +18,15 @@
     ARM_DRAG: 28, SLAM: 24, DOWN: 110, DOWN_SHORT: 70, GETUP: 26,
     HITSTUN: 16, SELL: 36, SELL_WINDOW: 26,
     WHIFF: 16, STRIKE_TOTAL: 14, STRIKE_ACTIVE_A: 5, STRIKE_ACTIVE_B: 8,
-    SPLATTER: 5, HITSTOP: 5, PIN_COUNT: 55
+    SPLATTER: 5, HITSTOP: 5, PIN_COUNT: 55,
+    /* the top-rope superplex chain — four beats, each a state with its
+       own length and a timed Work-button window inside it (same pattern
+       as the grapple reversal). CLIMB has no input; the other three do. */
+    SPX_CLIMB: 42,
+    SPX_POS_TOTAL: 32, SPX_POS_OPEN: 8, SPX_POS_CLOSE: 22,
+    SPX_THROW_TOTAL: 30, SPX_THROW_OPEN: 8, SPX_THROW_CLOSE: 20,
+    SPX_LAND_TOTAL: 26, SPX_LAND_OPEN: 6, SPX_LAND_CLOSE: 20,
+    SPX_RECOVER: 30
   };
 
   /* body cost per outcome. Worked moves cost a little; botches and
@@ -52,6 +60,25 @@
   PCW.isoX = (gx, gy) => PCW.ORIGIN.x + (gx - gy) * TILE_W / 2;
   PCW.isoY = (gx, gy) => PCW.ORIGIN.y + (gx + gy) * TILE_H / 2;
   PCW.clampGrid = v => Math.min(PCW.GRID - 0.6, Math.max(0.6, v));
+
+  /* the four corners — ring-inside points sitting under the turnbuckle
+     posts render.js draws at the grid corners. Corner-tagged spots
+     require the DEFENDER to actually be standing in one of these before
+     the move can fire. Order matches the posts: NW, NE, SE, SW. */
+  const IN = 1.3;
+  PCW.CORNERS = [
+    { gx: IN, gy: IN }, { gx: PCW.GRID - IN, gy: IN },
+    { gx: PCW.GRID - IN, gy: PCW.GRID - IN }, { gx: IN, gy: PCW.GRID - IN }
+  ];
+  PCW.CORNER_RADIUS = 1.6;
+  PCW.cornerIndexAt = (gx, gy) => {
+    for (let i = 0; i < PCW.CORNERS.length; i++) {
+      const c = PCW.CORNERS[i];
+      if (Math.hypot(gx - c.gx, gy - c.gy) <= PCW.CORNER_RADIUS) return i;
+    }
+    return -1;
+  };
+  PCW.atCorner = w => PCW.cornerIndexAt(w.gx, w.gy) >= 0;
 
   /* ---------------- shared runtime state ----------------
      Single source of truth for everything the logic mutates and
