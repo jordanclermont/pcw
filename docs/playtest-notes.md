@@ -397,4 +397,48 @@ To feel for:
 - Is the controls-under-ring / call-sheet+log-right layout comfortable?
 - Anything still overlapping (commentary, cues, meters)?
 
+## 2026-07-03 / v0.09 — feel pass (weight + legibility), driven by actually playing it
+
+From Jordan's 0.08 play: guys feel a little fast / "walking on ice"; a grapple
+doesn't feel like a grapple; visual spacing + prompt legibility need work. This
+session I used the run skill to launch the real build in headless Chrome, drove
+it into a CPU-vs-CPU match, and screenshotted — so these are fixes to things I
+could see, not just reason about.
+
+Done:
+- MOVEMENT is heavier now (src/config.js PCW.MOVE): lower accel (.020→.015),
+  much grippier friction (.86→.78 — the ice fix), lower top speed (run
+  .19→.15), whip a touch slower. Should plant the feet instead of sliding.
+- GRAPPLE HAS WEIGHT: a slam is no longer instant. The attacker locks up,
+  LIFTS the man for ~14 frames, then drives him down with a heavier hit-stop;
+  the crowd pop / trust / call-sheet all resolve on the IMPACT. New LIFTED
+  state + pose (you can see him scooped up before the drop). Bible §5.3.
+- TOP METERS FIXED: heat, "behind stove" (resentment) and trust were three
+  bars overlapping each other and their own labels, smeared over the crowd.
+  Now one dark paneled block, three clean rows, labels left of the bars —
+  legible. (render.js drawMeters.)
+- WRESTLERS SCALED UP ~18% so they read bigger in the big ring.
+- CUE CHIPS bigger (13→15px) with larger name tabs; pushed a bit further off
+  the taller sprites; the pin count is now a big clean number (the old "…"
+  rendered as tofu boxes).
+- Results screen sits still now (already zeroed the shake in 0.08; also cleared
+  the frozen floaters/"POP!" stamps that lingered on the card).
+
+Verified: launched + drove the real app (no console errors); slow-mo capture
+confirms the lift reads and the meters/scale/commentary layout are clean;
+logic regressions still green (cooperative finish + both-CPU auto-play to 5★).
+NOT settled without your hands: the exact movement numbers (still too fast/too
+floaty? too sluggish now?) and whether the slam's lift timing feels right —
+all easy knobs in config.js (PCW.MOVE, FRAMES.SLAM_LIFT/SLAM_HITSTOP).
+
+Noticed while watching (not fixed, flagging): the two CPUs tend to pool the
+action in one corner rather than roam the ring — a CPU-positioning artifact,
+not a bug; a human moves around more. Can add a "drift toward centre between
+spots" nudge if it bugs you.
+
+To feel for:
+- Movement: right weight now, or over-corrected into sluggish? (PCW.MOVE knobs.)
+- Does the slam finally feel like a grapple? Lift too long/short?
+- Are the top meters + cues clearly legible now? Anything still cramped?
+
 ## (next entry goes here)

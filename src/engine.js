@@ -45,7 +45,7 @@
     G.P1 = new PCW.Wrestler(PCW.PERSONAS.stovehot);
     G.P2 = new PCW.Wrestler(PCW.PERSONAS.boulder);
     G.pads = { p1: new PCW.Pad(PCW.PAD_MAP.p1), p2: new PCW.Pad(PCW.PAD_MAP.p2) };
-    G.tieup = null; G.sellWin = null; G.pin = null; G.superplex = null; G.splatters = [];
+    G.tieup = null; G.sellWin = null; G.pin = null; G.superplex = null; G.slam = null; G.splatters = [];
     G.ropeShake = { t: 0, side: 0 };
     if (!G.crowd) G.crowd = new PCW.CrowdModel(); else G.crowd.reset();
     if (PCW.Commentary) PCW.Commentary.reset();
@@ -238,36 +238,51 @@
   function controllerPlant(w) {
     const t = G.tieup, def = t.receiver; G.tieup = null;
     const sp = spot(), kind = performKind(sp);
-    plantBump(w, def, 0.9);
-    if (t.reversalSpot) {
-      // the controller planted during the FACE's booked reversal — he buried
-      // the spot. Reads to the crowd as a slam; costs a real bump + trust.
-      def.hurt(BODY.BOTCH_SLAM);
-      adjustTrust(-TRUST.STIFF, w.short + " planted him instead of giving the arm drag");
-      G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 0.7, arcSlot: sp.arcSlot, actor: w });
-      markBotched(sp);
-      return;
-    }
-    if (kind === "PLANT" && sp.caller === w.id && defenderOf(sp) === def) {
-      def.hurt(BODY.WORKED_SLAM);
-      popShake(G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 1.0, arcSlot: sp.arcSlot, big: !!sp.big, actor: w }));
-      PCW.log((sp.big ? sp.name + " — " : "") + "planted flush.", "ok");
-      say("pbp", sp.big ? sp.name + "! He got all of it!" : "Scoop and a slam, " + w.short + " in control.");
-      markDone(sp);
-    } else {
-      def.hurt(BODY.SHOOT_SLAM);
-      offScript(w, "dropped " + def.short + " off-script",
-        { picture: "slam", role: w.role, base: 8, quality: 0.9, arcSlot: "transition", actor: w }, TRUST.SLAM);
-    }
+    const workedPlant = (kind === "PLANT" && sp.caller === w.id && defenderOf(sp) === def);
+    // The outcome (crowd pop, trust, call-sheet) resolves on the IMPACT, not
+    // the button press — the slam now has a lift-and-drive beat first.
+    beginSlam(w, def, function () {
+      if (t.reversalSpot) {
+        // the controller planted during the FACE's booked reversal — buried the
+        // spot. Reads to the crowd as a slam; costs a real bump + trust.
+        def.hurt(BODY.BOTCH_SLAM);
+        adjustTrust(-TRUST.STIFF, w.short + " planted him instead of giving the arm drag");
+        G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 0.7, arcSlot: sp.arcSlot, actor: w });
+        markBotched(sp);
+      } else if (workedPlant) {
+        def.hurt(BODY.WORKED_SLAM);
+        popShake(G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 1.0, arcSlot: sp.arcSlot, big: !!sp.big, actor: w }));
+        PCW.log((sp.big ? sp.name + " — " : "") + "planted flush.", "ok");
+        say("pbp", sp.big ? sp.name + "! He got all of it!" : "Scoop and a slam, " + w.short + " in control.");
+        markDone(sp);
+      } else {
+        def.hurt(BODY.SHOOT_SLAM);
+        offScript(w, "dropped " + def.short + " off-script",
+          { picture: "slam", role: w.role, base: 8, quality: 0.9, arcSlot: "transition", actor: w }, TRUST.SLAM);
+      }
+    });
   }
 
-  /* shared plant physics: shove the receiver down and out */
-  function plantBump(atk, def, push) {
-    atk.setState(S.SLAM);
+  /* a grapple slam with WEIGHT: the attacker locks him up and LIFTS for
+     SLAM_LIFT frames, then drives him down with a heavy hit-stop. Makes a
+     grapple read as a grapple instead of an instant teleport-to-the-mat. */
+  function beginSlam(atk, def, onImpact) {
+    atk.setState(S.SLAM); def.stop();
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
-    def.gx = clampGrid(def.gx + dx / m * push); def.gy = clampGrid(def.gy + dy / m * push);
+    def.gx = clampGrid(atk.gx + dx / m * 0.5); def.gy = clampGrid(atk.gy + dy / m * 0.5);
+    def.setState(S.LIFTED);
+    G.slam = { atk, def, frame: 0, push: 0.9, onImpact };
+  }
+  function slamTick() {
+    const s = G.slam; s.frame++;
+    if (s.frame < F.SLAM_LIFT) return;
+    G.slam = null;
+    const atk = s.atk, def = s.def;
+    const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
+    def.gx = clampGrid(def.gx + dx / m * s.push); def.gy = clampGrid(def.gy + dy / m * s.push);
     def.stop(); def.downTime = F.DOWN; def.setState(S.DOWN);
-    PCW.render.inkBurst(def); G.hitstop = F.HITSTOP; G.shake = 8;
+    PCW.render.inkBurst(def); G.hitstop = F.SLAM_HITSTOP; G.shake = 13;
+    s.onImpact();
   }
 
   /* the receiver attempts the arm-drag reversal (Work) */
@@ -586,7 +601,7 @@
     // would FREEZE on the results screen (a permanent shake was the worst
     // offender). Calm them all here so the rating card sits still.
     G.shake = 0;
-    crowd.strobe = 0; crowd.popTimer = 0; crowd.booTimer = 0; crowd.flashes = [];
+    crowd.strobe = 0; crowd.popTimer = 0; crowd.booTimer = 0; crowd.flashes = []; crowd.floaters = []; crowd.stamp = null;
     const avg = crowd.avgHeat();
     let stars = avg / 18 - match.botches * 0.6 - match.shoots * 0.4;
     if (match.trust >= 80) stars += 0.5;
@@ -841,6 +856,7 @@
         case S.CLOTHESLINE: if (w.stateFrame >= F.CLOTHESLINE) w.setState(S.IDLE); break;
         case S.WHIP: if (w.stateFrame >= F.WHIP) w.setState(S.IDLE); break;
         case S.SLAM: if (w.stateFrame >= F.SLAM) w.setState(S.IDLE); break;
+        case S.LIFTED: if (w.stateFrame > F.SLAM_LIFT + 30) w.setState(S.IDLE); break;  // safety; normally slamTick drops him
         case S.ARM_DRAG: if (w.stateFrame >= F.ARM_DRAG) w.setState(S.IDLE); break;
         case S.BUMP: if (w.stateFrame >= F.BUMP) { w.downTime = F.DOWN; w.setState(S.DOWN); } break;
         case S.DOWN: if (w.stateFrame >= w.downTime) w.setState(S.GETUP); break;
@@ -859,6 +875,7 @@
     if (G.tieup) tieupTick();
     if (G.sellWin) { G.sellWin.age++; if (G.sellWin.age > G.sellWin.frames) sellWindowExpire(); }
     if (G.pin) pinTick();
+    if (G.slam) slamTick();
     if (G.superplex) superplexTick();
 
     for (const sp of G.splatters) { sp.age++; if (sp.age === F.SPLATTER) PCW.render.stampStain(sp); }

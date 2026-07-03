@@ -38,7 +38,11 @@
     REBOUND_SETTLE: 6,     // frames a rope rebound reads before it becomes a run
     CORNER_STAGGER: 200,   // how long a man stays stunned in the corner
     BUMP: 26,              // a big collision bump before he hits the mat
-    TAUNT: 46              // a taunt pose (play to the crowd)
+    TAUNT: 46,             // a taunt pose (play to the crowd)
+    /* a grapple slam now has WEIGHT: the attacker locks him up and lifts for
+       SLAM_LIFT frames, THEN drives him down with a heavy hit-stop. */
+    SLAM_LIFT: 14,         // lift/hold frames before the slam connects
+    SLAM_HITSTOP: 9        // freeze-frame on the slam impact (weightier than a strike)
   };
 
   /* body cost per outcome. Worked moves cost a little; botches and
@@ -87,12 +91,15 @@
      transplant is for; everything else (whip, rebound, clothesline) is
      built on it. Tuned on the 12-grid. */
   PCW.MOVE = {
-    ACC: 0.020, FRIC: 0.86,
-    VMAX_WALK: 0.075, VMAX_RUN: 0.19,
-    WHIP_V: 0.30,          // launch speed of an Irish whip
+    // v0.09 feel pass: heavier, less slippery. Lower accel + lower top speed
+    // (guys were "walking on ice" and moving a touch fast), and a much grippier
+    // friction so they plant their feet instead of sliding to a stop.
+    ACC: 0.015, FRIC: 0.78,
+    VMAX_WALK: 0.058, VMAX_RUN: 0.15,
+    WHIP_V: 0.27,          // launch speed of an Irish whip
     ROPE_KEEP: 0.94,       // fraction of speed kept off a rope rebound
-    RUN_THRESHOLD: 0.105,  // speed above which the gait reads as a run
-    CLOTHESLINE_MIN: 0.09  // a foe must be charging faster than this to be clotheslined
+    RUN_THRESHOLD: 0.088,  // speed above which the gait reads as a run
+    CLOTHESLINE_MIN: 0.072 // a foe must be charging faster than this to be clotheslined
   };
 
   /* the four corners — ring-inside points sitting under the turnbuckle

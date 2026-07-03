@@ -132,6 +132,7 @@
       case S.SPX_THROW: return Math.max(0, 72 - sf * 5);
       case S.SPX_RECEIVE: return Math.min(64, sf * 2.6);
       case S.BUMP: return Math.sin(Math.min(Math.PI, sf * 0.18)) * 18;
+      case S.LIFTED: return 22 + Math.min(F.SLAM_LIFT, sf) * 0.7;   // scooped up off the mat
       default: return 0;
     }
   }
@@ -146,7 +147,7 @@
 
   function drawWrestler(w) {
     const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy);
-    const slab = w.build === "slab", sc = slab ? 1.3 : 1.12, f = w.facing;
+    const slab = w.build === "slab", sc = slab ? 1.5 : 1.3, f = w.facing;   // v0.09: read bigger
     const sk = "#e7e1d3", dark = "#12141a", rf = G.renderFrame;
     const acc = w.accent2 && w.build === "slab" ? w.accent2 : w.accent;
 
@@ -233,6 +234,7 @@
         break;
       }
       case S.DOWN: case S.PINNED: prone = true; break;
+      case S.LIFTED: prone = true; break;   // held horizontal, raised by figureLift
       case S.GETUP: pelvisY = -1.3 * U - (w.stateFrame / F.GETUP) * 1.3 * U; lean = -f * 6; break;
       case S.SPX_CLIMB: lean = 0; LA = arm(shL, 0, 0, 2.0 * U); RA = arm(shR, 0, 0, 2.0 * U); footLy = footRy = 0; break;
       case S.SPX_TOP: pelvisY = -2.1 * U; break;
@@ -302,6 +304,32 @@
   }
 
   /* ---- HUD ---- */
+  /* the top public meters (heat / resentment / trust) in ONE dark panel with
+     clear rows, so they never overlap each other or smear over the crowd. */
+  function meterRow(lx, bx, y, bw, label, val, fill, labelCol) {
+    const h = 12;
+    CTX.font = "bold 11px Impact"; CTX.textAlign = "left"; CTX.textBaseline = "middle";
+    CTX.fillStyle = labelCol || "#d8dbe0"; CTX.fillText(label, lx, y + h / 2);
+    CTX.fillStyle = "rgba(0,0,0,.55)"; CTX.fillRect(bx, y, bw, h);
+    CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 1.5; CTX.strokeRect(bx, y, bw, h);
+    CTX.fillStyle = fill; CTX.fillRect(bx + 1.5, y + 1.5, Math.max(0, (bw - 3) * val / 100), h - 3);
+    CTX.textBaseline = "alphabetic";
+  }
+  function drawMeters() {
+    const crowd = G.crowd, match = G.match, rf = G.renderFrame;
+    const pw = 320, ph = 76, px = W / 2 - pw / 2, py = 12;
+    CTX.fillStyle = "rgba(8,10,14,.86)"; CTX.fillRect(px, py, pw, ph);
+    CTX.strokeStyle = "#c1121f"; CTX.lineWidth = 2; CTX.strokeRect(px, py, pw, ph);
+    const lx = px + 12, bx = px + 104, bw = pw - 104 - 14;
+    meterRow(lx, bx, py + 10, bw, "CROWD HEAT", crowd.heat, "#e8562a", "#fff");
+    const primed = crowd.primed;
+    meterRow(lx, bx, py + 32, bw, primed ? "BEHIND STOVE ▲" : "BEHIND STOVE", crowd.resentment,
+      primed ? (rf % 8 < 4 ? "#ffd27a" : "#ff7a18") : "#ff7a18", primed ? "#ffd27a" : LT);
+    const tr = match.trust, danger = tr < 20, warn = tr < 40;
+    meterRow(lx, bx, py + 54, bw, danger ? "TRUST ⚠" : warn ? "TRUST ⚠" : "TRUST", tr,
+      danger ? "#e0454f" : warn ? "#e0902b" : "#c9a24a", danger ? "#ff6b6b" : warn ? "#e0902b" : LT);
+  }
+
   function gauge(x, y, wd, ht, val, label, accent, labelColor) {
     CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 2.4; CTX.strokeRect(x, y, wd, ht);
     const fill = Math.max(0, wd * (val / 100) - 4);
@@ -341,15 +369,8 @@
       CTX.save(); CTX.fillStyle = vg; CTX.fillRect(0, 0, W, H); CTX.restore();
     }
 
-    const mx = W / 2 - 150, my = 48, mw = 300, mh = 7;
-    CTX.save();
-    CTX.fillStyle = LT; CTX.font = "bold 10px Impact"; CTX.textAlign = "left";
-    CTX.fillText(crowd.primed ? "CROWD BEHIND STOVE — READY!" : "CROWD BEHIND STOVE", mx, my - 2);
-    CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 2; CTX.strokeRect(mx, my, mw, mh);
-    const fillW = Math.max(0, mw * (crowd.resentment / 100) - 3);
-    CTX.fillStyle = crowd.primed ? (rf % 8 < 4 ? "#ffd27a" : "#ff7a18") : "#ff7a18";
-    CTX.fillRect(mx + 1.5, my + 1.5, fillW, mh - 3);
-    CTX.restore();
+    // (the heat / crowd-behind-stove / trust meters now live in one tidy
+    // paneled block — drawMeters() — so nothing overlaps up top.)
 
     if (crowd.primed && match.phase === "MATCH") {
       const s = G.P1, x = isoX(s.gx, s.gy), y = isoY(s.gx, s.gy) - 118;
@@ -422,7 +443,7 @@
       const rise = (55 - tf.t) * 0.35;
       CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3;
       const txt = (tf.delta > 0 ? "+" : "") + tf.delta + " TRUST";
-      CTX.strokeText(txt, W / 2 + 86, 73 - rise); CTX.fillText(txt, W / 2 + 86, 73 - rise);
+      CTX.strokeText(txt, W / 2 + 168, 84 - rise); CTX.fillText(txt, W / 2 + 168, 84 - rise);
       CTX.restore();
     }
   }
@@ -442,10 +463,10 @@
       const fx = isoX(w.gx, w.gy), fy = isoY(w.gx, w.gy) - lift;
       const col = barCol(w);
       CTX.save();
-      CTX.font = "bold 13px Impact";
-      const tw = CTX.measureText(t).width, pw = tw + 24, ph = 21;
+      CTX.font = "bold 15px Impact";
+      const tw = CTX.measureText(t).width, pw = tw + 28, ph = 25;
       // desired chip position, then clamped fully inside the canvas
-      let px = fx - pw / 2, py = (fy + (above ? -96 : 40)) - ph / 2;
+      let px = fx - pw / 2, py = (fy + (above ? -112 : 48)) - ph / 2;   // clears the taller sprites
       px = Math.max(6, Math.min(W - pw - 6, px));
       py = Math.max(24, Math.min(H - 118 - ph, py));
       // pointer toward the figure (down from an above-chip, up from a below-chip)
@@ -459,12 +480,12 @@
       CTX.fillStyle = "rgba(9,11,15,.95)"; CTX.fillRect(px, py, pw, ph);
       CTX.lineWidth = 2; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
       // name tab (own colour) sitting on the chip's top edge
-      CTX.font = "bold 9px Impact"; CTX.textAlign = "left";
-      const ntw = CTX.measureText(w.short).width + 8;
-      CTX.fillStyle = col; CTX.fillRect(px, py - 11, ntw, 11);
-      CTX.fillStyle = "#0b0c0f"; CTX.fillText(w.short, px + 4, py - 2.5);
+      CTX.font = "bold 10px Impact"; CTX.textAlign = "left";
+      const ntw = CTX.measureText(w.short).width + 10;
+      CTX.fillStyle = col; CTX.fillRect(px, py - 13, ntw, 13);
+      CTX.fillStyle = "#0b0c0f"; CTX.fillText(w.short, px + 5, py - 3.5);
       // cue text
-      CTX.font = "bold 13px Impact"; CTX.textAlign = "center"; CTX.textBaseline = "middle";
+      CTX.font = "bold 15px Impact"; CTX.textAlign = "center"; CTX.textBaseline = "middle";
       CTX.fillStyle = col; CTX.fillText(t, px + pw / 2, py + ph / 2 + 1);
       CTX.textBaseline = "alphabetic";
       CTX.restore();
@@ -505,12 +526,7 @@
     }
     CTX.restore();
 
-    gauge(W / 2 - 150, 26, 300, 16, crowd.heat, "CROWD HEAT", "#e8562a", LT);
-    const tr = match.trust;
-    const trustAccent = tr < 20 ? "#e0454f" : tr < 40 ? "#e0902b" : "#c9a24a";
-    const trustLabel = tr < 20 ? "⚠ TRUST BREAKING DOWN" : tr < 40 ? "⚠ TRUST SLIPPING" : "TRUST (backstage)";
-    const trustLabelCol = tr < 20 ? "#e0454f" : tr < 40 ? "#e0902b" : LT;
-    gauge(W / 2 - 80, 64, 160, 9, tr, trustLabel, trustAccent, trustLabelCol);
+    drawMeters();   // heat / resentment / trust, one tidy panel up top
     const cpu = id => (PCW.AI && PCW.AI.control[id]) ? "  · CPU" : "";
     gauge(24, H - 100, 180, 10, G.P1.body, G.P1.short + " — BODY" + cpu("p1"), barCol(G.P1), LT);
     gauge(W - 204, H - 100, 180, 10, G.P2.body, G.P2.short + " — BODY" + cpu("p2"), barCol(G.P2), LT);
@@ -529,11 +545,11 @@
         else if (inWin) { CTX.fillStyle = "rgba(255,210,122,.25)"; CTX.fillRect(px + .5, y + .5, 4, 9); }
       }
     }
-    if (G.pin) {
+    if (G.pin && G.pin.count >= 1) {   // the ref's count — a big clean number
       CTX.save(); CTX.translate(W / 2, H / 2 - 40); CTX.rotate(-0.03);
-      CTX.font = "bold 64px Impact"; CTX.textAlign = "center";
-      CTX.strokeStyle = "rgba(0,0,0,.7)"; CTX.lineWidth = 5;
-      const s = G.pin.count === 0 ? "..." : String(G.pin.count) + "!";
+      CTX.font = "bold 76px Impact"; CTX.textAlign = "center";
+      CTX.strokeStyle = "rgba(0,0,0,.7)"; CTX.lineWidth = 6;
+      const s = String(G.pin.count) + "!";
       CTX.strokeText(s, 0, 0); CTX.fillStyle = "#fff"; CTX.fillText(s, 0, 0); CTX.restore();
     }
     if (crowd.stamp) {

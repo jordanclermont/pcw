@@ -66,9 +66,14 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   solo; UI pass (controls card moved below the ring; right rail is now just the
   call sheet + "Match Log"); commentary bubbles rise from the bottom-centre off
   the health bars; removed the frozen end-of-match screen shake.
-- NEXT — Jordan's 0.08 solo playtest (does the CPU feel like a real partner;
-  do the cues read fast enough in the hand; movement/window tuning); then the
-  sprite/asset pass (individual PNGs from assets/sprites/, naming:
+- v0.09 "weight & warmth" (feel pass) — DONE, driven by playing the build via
+  the run skill: heavier/grippier locomotion (the "walking on ice" fix); the
+  grapple now lifts-and-drives with a heavy impact (bible §5.3); the top
+  heat/resentment/trust meters consolidated into one legible panel; wrestlers
+  scaled up; bigger cue chips + a clean pin-count number; results screen calmed.
+- NEXT — Jordan's 0.09 playtest (movement weight dialled right? slam lift feel?
+  meters/cues legible?); tuning knobs in config.js (PCW.MOVE, FRAMES.SLAM_*).
+  Then the sprite/asset pass (individual PNGs from assets/sprites/, naming:
   stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px
   display; keep the procedural skeletons as the fallback), and the
   hype-package + aftermath screens.

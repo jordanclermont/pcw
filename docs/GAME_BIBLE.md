@@ -7,6 +7,12 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.5 revisions (Build 0.09, feel pass): grapple weight — the lift-and-drive
+slam (§5.3); heavier/grippier locomotion; plus non-bible UI work (the top
+heat/resentment/trust meters consolidated into one legible panel, wrestlers
+scaled up to read bigger, larger cue chips, the results screen left calm).
+Driven by playing the build via the run skill, not just the harness.*
+
 *v1.4 revisions (Build 0.08): added the CPU performer for solo play/testing
 (§5.12); commentary bubbles now rise from the bottom-centre, clear of the
 health bars (§5.9); plus UI/bugfix work not needing bible changes (controls
@@ -105,6 +111,8 @@ The design intent: stealing the title should be genuinely available, occasionall
 Carried forward from Build 0.01/0.02, this is proven and stays. Timed windows measured in frames on a fixed 60 Hz logic step. The reversal window (frames 4 to 9, perfect at 6 to 7) is the template; selling windows, kick-out timing, and the superplex beats use the same pattern with their own tunings. Timing quality grades the pop: crisp work reads better from the fifth row.
 
 **Performing spots through the momentum grammar (Build 0.06).** With the momentum engine (§5.10) as the base, a booked spot is no longer a single context-button press — it is performed with the movement verbs, and position gates it. The call sheet still names each spot and cues it, but you execute it in the ring: tie up (Grab) and the controller Works to plant a slam, or the receiver Works in the 4–9 window to reverse it into the arm drag; whip the bump-taker into a corner (Grab-whip + push a direction) and Strike to stomp; run him into a Strike for a clothesline bump; go up top (Grab) from a corner for the superplex. A spot you cannot set up yet — the man isn't in the corner, say — simply is not available; the attacker whiffs (no shoot penalty for a missing prerequisite) and the cue tells you how to set it up. The same verbs used against the sheet are shoots, priced as ever.
+
+**Grapple weight (Build 0.09).** A slam is not an instant teleport-to-the-mat: the attacker locks up, LIFTS the opponent for a beat, then drives him down with a heavy hit-stop. The audience/backstage outcome (the crowd pop, the trust cost, the call-sheet advance) resolves on the impact, not the button press — so a grapple reads and feels like a grapple. Locomotion was also made heavier the same pass (lower top speed, much grippier friction) after the "walking on ice" note.
 
 **Cue grammar — the hard rule for all player-facing text (Build 0.07).** A cue must say WHAT TO DO in wrestling terms, then name the literal key for THAT player — nothing else, one instruction at a time. "SLAM HIM — PRESS T"; "WHIP HIM AT A CORNER — PUSH A DIRECTION"; "REVERSE HIM — PRESS T NOW"; "KICK OUT — PRESS I"; "STAY DOWN — TOUCH NOTHING". Never design-doc vocabulary: the words **work** and **plant** are banned from anything on screen (they live in the bible and the code; the cue names the key). Cues are per-player about keys — a single key-label map (`KEYLABEL` in engine.js: Stove T/G/F/H, Boulder I/K/J/L) is the one source of truth for what letter a button is. The cue reads the current spot and shows only the action the sheet wants right now; other options still work mechanically, the cue just stops advertising them. This applies everywhere: the live ring cues, the superplex beats, and the spot data. Placement (Build 0.07): the two performers' cues sit in fixed vertical lanes — Stove's always above his figure, the Boulder's always below — each tagged with the wrestler's name and clamped on-screen, so when the two are stacked the chips never collide.
 

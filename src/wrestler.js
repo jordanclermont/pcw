@@ -20,7 +20,7 @@
     WHIP: "WHIP", WHIPPED: "WHIPPED", REBOUND: "REBOUND",
     /* strikes + collisions */
     STRIKE: "STRIKE", CLOTHESLINE: "CLOTHESLINE",
-    SLAM: "SLAM", ARM_DRAG: "ARM_DRAG",
+    SLAM: "SLAM", LIFTED: "LIFTED", ARM_DRAG: "ARM_DRAG",
     SELL: "SELL", HITSTUN: "HITSTUN", BUMP: "BUMP",
     /* positions + downs */
     CORNER: "CORNER", DOWN: "DOWN", GETUP: "GETUP", WHIFF: "WHIFF",
