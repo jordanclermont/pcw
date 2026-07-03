@@ -7,6 +7,14 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.2 revisions (Build 0.06, "the transplant"): the movement prototype's
+momentum grammar is now the MAIN engine — the old teleporty grid-step is
+retired and every booked spot is performed through the momentum verbs
+(§5.3, §5.10). Added the TAUNT verb (§5.11). Commentary bubbles are now
+BUILT, not deferred (§5.9). The orchestrated finish sequence is BUILT — the
+six-beat protected finish with two booked kick-outs (§8). Sections 1–4, 6,
+7 unchanged.*
+
 ---
 
 ## 1. What PCW is
@@ -82,7 +90,9 @@ The design intent: stealing the title should be genuinely available, occasionall
 
 ### 5.3 The Work button and timing
 
-Carried forward from Build 0.01/0.02, this is proven and stays. Timed windows measured in frames on a fixed 60 Hz logic step. The grapple reversal window (frames 4 to 9 of a 12-frame startup, perfect at 6 to 7) is the template; selling windows, kick-out timing, and feed timing use the same pattern with their own tunings. Timing quality grades the pop: crisp work reads better from the fifth row.
+Carried forward from Build 0.01/0.02, this is proven and stays. Timed windows measured in frames on a fixed 60 Hz logic step. The reversal window (frames 4 to 9, perfect at 6 to 7) is the template; selling windows, kick-out timing, and the superplex beats use the same pattern with their own tunings. Timing quality grades the pop: crisp work reads better from the fifth row.
+
+**Performing spots through the momentum grammar (Build 0.06).** With the momentum engine (§5.10) as the base, a booked spot is no longer a single context-button press — it is performed with the movement verbs, and position gates it. The call sheet still names each spot and cues it, but you execute it in the ring: tie up (Grab) and the controller Works to plant a slam, or the receiver Works in the 4–9 window to reverse it into the arm drag; whip the bump-taker into a corner (Grab-whip + push a direction) and Strike to stomp; run him into a Strike for a clothesline bump; go up top (Grab) from a corner for the superplex. A spot you cannot set up yet — the man isn't in the corner, say — simply is not available; the attacker whiffs (no shoot penalty for a missing prerequisite) and the cue tells you how to set it up. The same verbs used against the sheet are shoots, priced as ever.
 
 ### 5.4 Big spots: cooperative execution
 
@@ -104,13 +114,13 @@ Body condition is real and per-region (head, back, arms, legs), not a health bar
 
 The ref is a character with a trust ledger of their own, and their behaviour is a consequence system: count speed, strictness, and attention all flex with standing. The ref also anchors kayfabe: they can be knocked down (opening a window where anything goes, a classic device the crowd loves in the right dose), and they sell the drama of counts. In the demo the ref is visually present and implements count timing plus one bias rule; the full ledger comes later.
 
-### 5.9 Commentary (deferred, designed)
+### 5.9 Commentary (built, v0.06)
 
-Not yet built, but the shape is decided: two voices, play-by-play and color, presented as comic-style speech bubbles anchored to a commentary desk, not as scrolling text. This keeps commentary diegetic, in keeping with the Audacity Era presentation, and naturally caps how much can be said at once, since an overstuffed bubble stops reading as a bubble. Commentary is meta-guidance as well as flavor: if a wrestler is out of position for a spot that needs them somewhere specific, a commentator line can hint at it in kayfabe voice rather than breaking the fourth wall. The backstage log is a separate, permanent thing: a debug-facing technical readout, not part of the player-facing experience. Commentary replaces the log as what the player actually reads; it does not need to stay in sync with it.
+Built as designed: two voices — play-by-play (CHET) and colour (DUTCH, a grizzled ex-wrestler) — presented as comic-style speech bubbles at ringside, not scrolling text. Each voice shows only its latest line and lines are short and auto-truncated, so an overstuffed bubble never stops reading as a bubble. This keeps commentary diegetic, in keeping with the Audacity Era presentation. The engine feeds it: the bell, big moves, near-falls, reversals, the shocking kick-out, the finish. It is meta-guidance as well as flavour and is free to drift from the backstage log — the log stays a debug-facing technical readout; commentary is what the player actually reads. Still to come: kayfabe out-of-position hints and a fuller line library (names and desk art are placeholders).
 
-### 5.10 Movement and the ring as real space (prototyped v0.05, in v1-demo/)
+### 5.10 Movement and the ring as real space (ADOPTED as the main engine, v0.06)
 
-The core thesis (§2) promises that players "run the ropes, throw strikes, hit slams" — real wrestling locomotion, not menu combat. That movement layer is being prototyped in a separate from-scratch build, `v1-demo/index.html`, because the incremental spot engine had grown a stiff, teleporty feel that a patch wouldn't fix. The prototype establishes the movement grammar the main build will adopt:
+The core thesis (§2) promises that players "run the ropes, throw strikes, hit slams" — real wrestling locomotion, not menu combat. The v0.05 prototype (`v1-demo/index.html`) proved that feel; **v0.06 transplants it into the main build as the base engine.** The old teleporty grid-step is retired; `src/wrestler.js` now carries velocity, `src/engine.js` runs the momentum grammar, and `src/render.js` draws the wrestlers as jointed procedural skeletons. All the systems (crowd, trust, respect, the Pitch planning screen, spots, endings) were kept and now sit on top of a body that actually moves. `v1-demo/` remains as the reference prototype. The grammar:
 
 - **Momentum locomotion.** Wrestlers accelerate to a walk and then a run and carry velocity; they do not snap between fixed speeds. This is what makes everything else feel physical.
 - **The Irish whip.** From a collar-and-elbow tie-up, the wrestler in control pushes a direction to launch the other along it. It is the primary tool for *moving your opponent* — into the ropes, or into a corner. The receiver can contest the tie-up (a reversal press) to seize control instead.
@@ -120,6 +130,10 @@ The core thesis (§2) promises that players "run the ropes, throw strikes, hit s
 - **Procedural jointed animation.** Bodies are drawn as jointed skeletons (pelvis, torso, head, two-segment arms and legs) posed per state, with real run cycles, wind-ups, sells and bumps — the motion language that sells "wrestling" without hand-drawn frames, and the target the sprite pass (v0.06) will match.
 
 Outside-the-ring brawling is the next extension of the same boundary logic and is not yet built.
+
+### 5.11 The taunt (built, v0.06)
+
+Each performer has a taunt (its own button, distinct from Work). A taunt is always legitimate crowd work — never a shoot — and it is the verb for *playing to the room* between spots. A face taunt pops the crowd; a heel taunt draws heat and banks resentment toward the comeback (the same engine that pays off a long heel-control segment). Either can answer a live hijack chant, which is where a taunt earns Respect. It is deliberately cheap in heat and rate-limited by its own animation, so it flavours the pacing without becoming a heat farm — the crowd's decay and finite belief keep it honest. It fills the gap the playtest notes flagged between "throw a move" and "hit a finisher," and gives the crowd something to request.
 
 ---
 
@@ -153,7 +167,7 @@ Yes, it is manageable, and the scope you described is close to ideal. One match,
 
 **2. Gorilla position (the planning screen).** The office's booking is displayed as non-negotiable: *Stove Hot wins the title tonight.* The Boulder's stipulation is attached: *he goes down strong*: he kicks out of the first Front Burner, he gets his own finisher and a believable near-fall, and only a second Front Burner keeps him down. Around those fixed beats, the match is a nine-spot structure, a fixed opener, six drafted spots, and the fixed finish, drafted through **the Pitch**: turns alternate, one performer pitches a spot from the menu, the other either puts it over for free, buries it at a cost, or lets it ride, and the office's agenda plus both performers' standing Respect decide whether it sails through or needs real buy-in. Safe, on-agenda spots pass easily; the top-rope superplex, a big bump on the champion, needs a put-over from the partner and a genuinely respected pitcher, roughly an 85 Respect threshold, to get approved at all. Three preset cards (The Classic, recommended; The War, high risk; From Scratch, full manual draft) make booking approachable without flattening it into all-or-nothing. A projected crowd-arc sparkline previews the pacing shape of the drafted plan before you lock it in. This is where the strategy game lives, and it plays like two workers with a clipboard behind a curtain, exactly as intended, just with sharper mechanics than the original sketch had.
 
-*Status note (v0.04): the Pitch model above is fully built and playable. What is not yet built is the physical execution of a drafted big spot, corners and turnbuckle positions don't exist on the grid yet, so a spot tagged "corner" or "top rope" currently resolves wherever the wrestlers happen to be standing. The negotiation layer is ahead of the physical layer; closing that gap, per §5.4, is the next priority.*
+*Status note (v0.06): the Pitch model is fully built and playable, and the gap the v0.04 note flagged is now CLOSED — spots are physically executed through the momentum grammar (§5.3, §5.10), corners are real space, and a spot resolves only when it is actually set up and worked. The protected finish is now a fully orchestrated six-beat sequence on the fixed tail: the first Front Burner, a booked kick-out at two, The Boulder's own finisher and a believable near-fall for the champion, a second Front Burner, and the three-count — with the champion's kick-out of the REAL finish available as a priced betrayal that arms a steal. Verified end-to-end in a headless harness (clean title change, all recipes firing). Still authored-thin and awaiting Jordan's feel pass.*
 
 **3. The match.** The 0.02 engine evolved: crowd model v1 (arc, allegiance, decay, one hijack chant event), the Work button in all its contexts, the call sheet advancing spot by spot, the audible call system in a minimal form (two or three proposals), the referee with count timing, the superplex input chain, and the scripted finish sequence with its kick-out beats. Every betrayal option live: the Boulder can stay down early and gift a flat win, kick out of the second Front Burner and steal the match, or stooge for the office; Stove Hot can stiff, no-sell, or go home early. All priced by trust, heat, and story.
 

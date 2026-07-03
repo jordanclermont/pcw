@@ -9,7 +9,7 @@
   "use strict";
   const PCW = (window.PCW = window.PCW || {});
 
-  PCW.VERSION = "0.05";
+  PCW.VERSION = "0.06";
   PCW.CANVAS = { W: 960, H: 640 };
 
   /* frame windows (60 Hz logic) */
@@ -29,7 +29,16 @@
     SPX_POS_OPEN: 8, SPX_POS_CLOSE: 26, SPX_POS_TIMEOUT: 120,
     SPX_THROW_OPEN: 8, SPX_THROW_CLOSE: 24, SPX_THROW_TIMEOUT: 120,
     SPX_LAND_OPEN: 6, SPX_LAND_CLOSE: 22, SPX_LAND_TIMEOUT: 44,
-    SPX_RECOVER: 30
+    SPX_RECOVER: 30,
+    /* momentum grammar (v0.06 transplant) */
+    TIEUP_HOLD: 150,       // how long a tie-up stands before it breaks on its own
+    WHIP: 18,              // attacker's whip follow-through
+    WHIPPED_MIN: 8,        // min frames a whipped man is committed before he can act
+    CLOTHESLINE: 20,       // clothesline swing
+    REBOUND_SETTLE: 6,     // frames a rope rebound reads before it becomes a run
+    CORNER_STAGGER: 200,   // how long a man stays stunned in the corner
+    BUMP: 26,              // a big collision bump before he hits the mat
+    TAUNT: 46              // a taunt pose (play to the crowd)
   };
 
   /* body cost per outcome. Worked moves cost a little; botches and
@@ -55,25 +64,46 @@
     REGAIN: 4      // recovered per cleanly-completed spot
   };
 
-  /* ---------------- isometric grid ---------------- */
-  PCW.GRID = 10;
-  const TILE_W = 58, TILE_H = 29;
+  /* ---------------- isometric grid ----------------
+     v0.06 adopts the movement prototype's larger ring (12×12, bigger
+     tiles) so momentum locomotion has room to build speed and the ropes
+     sit where a running man expects them. */
+  PCW.GRID = 12;
+  const TILE_W = 64, TILE_H = 32;
   PCW.TILE_W = TILE_W; PCW.TILE_H = TILE_H;
-  PCW.ORIGIN = { x: PCW.CANVAS.W / 2, y: 168 };
+  PCW.ORIGIN = { x: PCW.CANVAS.W / 2, y: 150 };
   PCW.isoX = (gx, gy) => PCW.ORIGIN.x + (gx - gy) * TILE_W / 2;
   PCW.isoY = (gx, gy) => PCW.ORIGIN.y + (gx + gy) * TILE_H / 2;
-  PCW.clampGrid = v => Math.min(PCW.GRID - 0.6, Math.max(0.6, v));
+
+  /* the ropes are elastic boundaries just inside the grid edge. A man
+     runs to them and rebounds; a whip into them sends him bouncing. */
+  const ROPE_INSET = 0.7;
+  PCW.BOUND_LO = ROPE_INSET;
+  PCW.BOUND_HI = PCW.GRID - ROPE_INSET;
+  PCW.clampGrid = v => Math.min(PCW.BOUND_HI, Math.max(PCW.BOUND_LO, v));
+
+  /* momentum locomotion — wrestlers accelerate to a walk then a run and
+     CARRY velocity (grid units per 60 Hz tick). This is the feel the whole
+     transplant is for; everything else (whip, rebound, clothesline) is
+     built on it. Tuned on the 12-grid. */
+  PCW.MOVE = {
+    ACC: 0.020, FRIC: 0.86,
+    VMAX_WALK: 0.075, VMAX_RUN: 0.19,
+    WHIP_V: 0.30,          // launch speed of an Irish whip
+    ROPE_KEEP: 0.94,       // fraction of speed kept off a rope rebound
+    RUN_THRESHOLD: 0.105,  // speed above which the gait reads as a run
+    CLOTHESLINE_MIN: 0.09  // a foe must be charging faster than this to be clotheslined
+  };
 
   /* the four corners — ring-inside points sitting under the turnbuckle
      posts render.js draws at the grid corners. Corner-tagged spots
-     require the DEFENDER to actually be standing in one of these before
+     require the bump-taker to actually be staggered in one of these before
      the move can fire. Order matches the posts: NW, NE, SE, SW. */
-  const IN = 1.3;
   PCW.CORNERS = [
-    { gx: IN, gy: IN }, { gx: PCW.GRID - IN, gy: IN },
-    { gx: PCW.GRID - IN, gy: PCW.GRID - IN }, { gx: IN, gy: PCW.GRID - IN }
+    { gx: PCW.BOUND_LO, gy: PCW.BOUND_LO }, { gx: PCW.BOUND_HI, gy: PCW.BOUND_LO },
+    { gx: PCW.BOUND_HI, gy: PCW.BOUND_HI }, { gx: PCW.BOUND_LO, gy: PCW.BOUND_HI }
   ];
-  PCW.CORNER_RADIUS = 1.6;
+  PCW.CORNER_RADIUS = 1.5;
   PCW.cornerIndexAt = (gx, gy) => {
     for (let i = 0; i < PCW.CORNERS.length; i++) {
       const c = PCW.CORNERS[i];

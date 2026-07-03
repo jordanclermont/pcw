@@ -30,34 +30,38 @@ it, or betraying it.
   everywhere. Brand: burner-coil orange. Finisher placeholder: The Front Burner.
 - THE BOULDER — the HEEL. Corporate-champion Rock parody. Brand: navy/gold.
   Finisher placeholders: The Landslide; The Shareholder's Elbow.
-The 0.02 code has these alignments and names wrong. Fix in v0.03.
+(The alignment/name fix landed in v0.03; STOVE HOT is the face, THE BOULDER
+the heel, and "Greg Texas"/the cowboy hat are gone. Kept here as the record.)
 
 ## Current state
 
-index.html is Build 0.02: a single-file HTML5/Canvas prototype. Working:
-fixed 60 Hz logic timestep, WASD/arrows two-player input, grapple with a
-12-frame startup and a frames-4-to-9 reversal window on the Work (Y) button,
-sell windows, pins, a scripted call sheet, heat/trust meters, botch/shoot
-penalties, endings with a star rating. The visual style in 0.02 (black/white
-ink) is RETIRED — new direction is "Audacity Era" (see bible §9): crash-TV
-1997–2000 parody, dark arena, flashbulb ripples through the crowd as the
-signature reward effect.
+index.html is **Build 0.06 "the transplant"**: a modular HTML5/Canvas build
+(src/ + data/), no build step, opens straight from disk. The movement
+prototype's **momentum engine is now the base**: wrestlers accelerate and run
+and carry velocity, tie up (collar & elbow), Irish-whip each other into the
+ropes and corners, rebound, clothesline a charging man, and climb for a
+cooperative top-rope superplex — all drawn as jointed procedural skeletons in
+the dark "Audacity Era" arena (bible §9). Every booked spot is PERFORMED
+through those verbs (bible §5.3, §5.10). On top sit the systems, all working:
+crowd model v1 (arc, allegiance, resentment, hijack chant, flashbulbs), the
+two-audience split, trust + respect economies, the Gorilla-position Pitch
+planning screen, and star-rated endings. New in 0.06: the **taunt** verb
+(§5.11), diegetic **commentary bubbles** (§5.9), and the fully **orchestrated
+six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
 
 ## Build order for the demo
 
-- v0.03 — refactor index.html into src/ modules; fix character names and
-  face/heel alignment; crowd model v1 (arc, allegiance, decay, one hijack
-  chant); remove crowd reactions to information it can't see.
-- v0.04 — Gorilla position planning screen (draft ~6 spots from a menu around
-  the fixed booking: Stove Hot wins; Boulder protected in the loss).
-- v0.05 — finish sequence (finisher / kick-out / near-fall / second finisher)
-  and the top-rope superplex multi-input chain.
-- v0.06 — asset integration: sprite loader for individual PNGs from
-  assets/sprites/ (naming: stovehot_idle.png; anchor at feet centreline;
-  ~480 px source for ~240 px display). Keep procedural placeholders as
-  fallback for any missing pose.
-- v0.07 — hype package intro and aftermath/epilogue screens.
-- Then tuning passes from docs/playtest-notes.md.
+- v0.03–v0.05 — DONE: src/ refactor, character fix, crowd model v1, the
+  Gorilla-position Pitch planning screen, corners, the gated superplex.
+- v0.06 "transplant" — DONE: momentum engine adopted as the base; spots
+  performed through the momentum grammar; jointed-skeleton rendering; the
+  taunt verb; commentary bubbles; the orchestrated finish sequence.
+- NEXT — feel/tuning pass from Jordan's 0.06 playtest (movement speed, window
+  tightness, spot discoverability, bubble placement); then the sprite/asset
+  pass (individual PNGs from assets/sprites/, naming: stovehot_idle.png;
+  anchor at feet centreline; ~480 px source for ~240 px display; keep the
+  procedural skeletons as the fallback), and the hype-package + aftermath
+  screens.
 
 ## Technical conventions
 

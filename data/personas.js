@@ -25,7 +25,7 @@
       build: "lean",
       head: "bald",        // bald + goatee, no cowboy hat
       finisher: "THE FRONT BURNER",
-      start: { gx: 3.0, gy: 6.5 }
+      start: { gx: 4.0, gy: 7.0 }
     },
     boulder: {
       id: "p2",
@@ -38,7 +38,7 @@
       head: "flattop",
       finisher: "THE LANDSLIDE",
       finisher2: "THE SHAREHOLDER'S ELBOW",
-      start: { gx: 7.0, gy: 3.5 }
+      start: { gx: 8.0, gy: 5.0 }
     }
   };
 })();

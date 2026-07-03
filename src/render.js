@@ -1,14 +1,13 @@
 /* ============================================================
-   PCW — render.js
+   PCW — render.js  (v0.06: jointed skeletons)
    Free-running render layer. Reads shared state from PCW.G, never
    mutates game logic. The crowd draws itself (crowd.js); this file
-   draws the ring, the performers, impact effects, and the HUD.
+   draws the dark-arena ring, the performers as JOINTED PROCEDURAL
+   SKELETONS (ported from the movement prototype — real run cycles,
+   wind-ups, sells and bumps), the impact effects, and the HUD.
 
-   NOTE: the black/white ink look of 0.02 is officially retired; the
-   full "Audacity Era" dark-arena art lands with the sprite pass
-   (v0.06). For now the ring keeps procedural placeholders, but the
-   crowd is already dark so the new signature effect — flashbulbs —
-   reads correctly.
+   The skeleton is the v0.06 motion language and the target the sprite
+   pass (v0.06/asset) will eventually match, pose for pose.
    ============================================================ */
 (function () {
   "use strict";
@@ -28,11 +27,9 @@
     const g = c.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#090a0d"); g.addColorStop(0.5, "#0d0f14"); g.addColorStop(1, "#040405");
     c.fillStyle = g; c.fillRect(0, 0, W, H);
-    // overhead spotlight cone onto the ring
     const sp = c.createRadialGradient(W / 2, 250, 30, W / 2, 320, W * 0.6);
     sp.addColorStop(0, "rgba(150,160,185,.16)"); sp.addColorStop(0.5, "rgba(90,100,120,.06)"); sp.addColorStop(1, "rgba(0,0,0,0)");
     c.fillStyle = sp; c.fillRect(0, 0, W, H);
-    // smoke/haze grain
     const img = c.getImageData(0, 0, W, H), d = img.data;
     for (let i = 0; i < d.length; i += 4) { const n = (Math.random() * 12) | 0; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
     c.putImageData(img, 0, 0);
@@ -40,112 +37,90 @@
   const stainLayer = document.createElement("canvas"); stainLayer.width = W; stainLayer.height = H;
   const stainCtx = stainLayer.getContext("2d");
 
-  function makePattern(draw) {
-    const c = document.createElement("canvas"); c.width = c.height = 8;
-    draw(c.getContext("2d")); return CTX.createPattern(c, "repeat");
-  }
-  const hatch = makePattern(g => { g.strokeStyle = "rgba(22,19,14,.55)"; g.lineWidth = 1; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 6); g.lineTo(6, -2); g.stroke(); });
-  const stipple = makePattern(g => { g.fillStyle = "rgba(22,19,14,.6)"; g.fillRect(1, 2, 1.4, 1.4); g.fillRect(5, 6, 1.4, 1.4); g.fillRect(6, 1, 1.2, 1.2); g.fillRect(2, 6, 1.1, 1.1); });
-
-  function jit(seed) { const t = (G.renderFrame >> 3); const v = Math.sin(seed * 127.1 + t * 311.7) * 43758.5453; return (v - Math.floor(v) - 0.5) * 2.4; }
-  function inkLine(x1, y1, x2, y2, wd, seed, col) {
-    CTX.strokeStyle = col || "#16130e"; CTX.lineWidth = wd; CTX.lineCap = "round";
-    CTX.beginPath();
-    CTX.moveTo(x1 + jit(seed), y1 + jit(seed + 1));
-    CTX.quadraticCurveTo((x1 + x2) / 2 + jit(seed + 2), (y1 + y2) / 2 + jit(seed + 3), x2 + jit(seed + 4), y2 + jit(seed + 5));
-    CTX.stroke();
-  }
-
-  /* ---- impact splatters (placeholder; called from engine) ---- */
+  /* ---- impact splatters (subtle sparks; called from engine) ---- */
   function spawnSplatter(def) {
     const x = isoX(def.gx, def.gy), y = isoY(def.gx, def.gy) - 26, blobs = [];
-    for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 70; blobs.push({ dx: Math.cos(a) * r, dy: Math.sin(a) * r * 0.6, s: 2 + Math.random() * 11, wob: Math.random() * 7 }); }
-    G.splatters.push({ x, y, color: def.accent, blobs, age: 0 });
+    for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 54; blobs.push({ dx: Math.cos(a) * r, dy: Math.sin(a) * r * 0.6, s: 2 + Math.random() * 8, wob: Math.random() * 6 }); }
+    G.splatters.push({ x, y, color: def.accent2 || def.accent, blobs, age: 0 });
   }
   function inkBurst(w) {
     const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy) - 24, blobs = [];
-    for (let i = 0; i < 10; i++) { const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * 26; blobs.push({ dx: Math.cos(a) * r, dy: Math.sin(a) * r * 0.6, s: 1.5 + Math.random() * 4, wob: 0 }); }
-    G.splatters.push({ x, y, color: "#16130e", blobs, age: 0, mono: true });
+    for (let i = 0; i < 8; i++) { const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * 22; blobs.push({ dx: Math.cos(a) * r, dy: Math.sin(a) * r * 0.6, s: 1.4 + Math.random() * 3.4, wob: 0 }); }
+    G.splatters.push({ x, y, color: "#f4efe2", blobs, age: 0, mono: true });
   }
   function drawSplatter(sp) {
     const t = Math.min(1, sp.age / F.SPLATTER), spread = 0.35 + t * 0.65;
-    CTX.save(); CTX.globalAlpha = sp.mono ? 0.8 : 0.92; CTX.fillStyle = sp.color;
+    CTX.save(); CTX.globalCompositeOperation = "lighter"; CTX.globalAlpha = (sp.mono ? 0.6 : 0.5) * (1 - t * 0.5);
+    CTX.fillStyle = sp.color;
     for (const b of sp.blobs) {
       const bx = sp.x + b.dx * spread, by = sp.y + b.dy * spread;
       CTX.beginPath(); CTX.ellipse(bx, by, b.s * (0.6 + t * 0.7) + b.wob * t, b.s * (0.5 + t * 0.5), 0, 0, Math.PI * 2); CTX.fill();
-      if (!sp.mono && Math.random() < 0.4) CTX.fillRect(bx - 1, by, 2, 4 + 8 * t);
     }
     CTX.restore();
   }
   function stampStain(sp) {
-    stainCtx.save(); stainCtx.globalAlpha = 0.16; stainCtx.fillStyle = sp.color;
-    for (const b of sp.blobs) { stainCtx.beginPath(); stainCtx.ellipse(sp.x + b.dx, sp.y + b.dy * 1.05, b.s * 1.5, b.s * 1.1, 0, 0, Math.PI * 2); stainCtx.fill(); }
+    stainCtx.save(); stainCtx.globalAlpha = 0.10; stainCtx.fillStyle = sp.mono ? "#000" : sp.color;
+    for (const b of sp.blobs) { stainCtx.beginPath(); stainCtx.ellipse(sp.x + b.dx, sp.y + b.dy * 1.05, b.s * 1.4, b.s, 0, 0, Math.PI * 2); stainCtx.fill(); }
     stainCtx.restore();
   }
   function clearStain() { stainCtx.clearRect(0, 0, W, H); }
 
-  /* ---- context readers (visible cues only) ---- */
-  const inGrappleCtx = w => G.exchange && !G.exchange.resolved && G.exchange.defender === w && G.exchange.attacker.state === S.GRAPPLE_STARTUP;
-  const winOpen = () => G.exchange && G.exchange.frame >= F.WINDOW_OPEN && G.exchange.frame <= F.WINDOW_CLOSE;
-
-  /* ---- ring (dark arena, lit canvas, steel ropes, blood-red pads) ---- */
+  /* ---- the ring (dark arena, lit canvas, steel ropes, blood-red pads) ---- */
   const ROPE = "#c9ccd2", ROPE_RED = "#c1121f", STEEL = "#3b3f47", STEEL_HI = "#5a6069";
+  function ropeGive(side) {
+    const rs = G.ropeShake;
+    return (rs && rs.t > 0 && rs.side === side) ? Math.sin(rs.t * 0.9) * rs.t * 0.5 : 0;
+  }
+  function drawRopes(a, b, PH, side) {
+    const give = ropeGive(side);
+    for (let r = 1; r <= 3; r++) {
+      const yo = PH * r / 3.2, col = r === 3 ? ROPE_RED : ROPE;
+      CTX.strokeStyle = col; CTX.lineWidth = r === 3 ? 2.2 : 1.8; CTX.lineCap = "round";
+      CTX.beginPath();
+      CTX.moveTo(a[0], a[1] - yo);
+      CTX.quadraticCurveTo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - yo + give, b[0], b[1] - yo);
+      CTX.stroke();
+    }
+  }
   function drawRing() {
-    const c0 = [isoX(0, 0), isoY(0, 0)], c1 = [isoX(PCW.GRID, 0), isoY(PCW.GRID, 0)],
-      c2 = [isoX(PCW.GRID, PCW.GRID), isoY(PCW.GRID, PCW.GRID)], c3 = [isoX(0, PCW.GRID), isoY(0, PCW.GRID)];
-
-    // apron skirt (dark, with a blood-red trim + PCW)
+    const G0 = PCW.GRID;
+    const c0 = [isoX(0, 0), isoY(0, 0)], c1 = [isoX(G0, 0), isoY(G0, 0)],
+      c2 = [isoX(G0, G0), isoY(G0, G0)], c3 = [isoX(0, G0), isoY(0, G0)];
+    // apron skirt
     for (const [a, b] of [[c1, c2], [c2, c3]]) {
       CTX.fillStyle = "#111318";
       CTX.beginPath(); CTX.moveTo(a[0], a[1]); CTX.lineTo(b[0], b[1]);
-      CTX.lineTo(b[0], b[1] + 36); CTX.lineTo(a[0], a[1] + 36); CTX.closePath(); CTX.fill();
+      CTX.lineTo(b[0], b[1] + 38); CTX.lineTo(a[0], a[1] + 38); CTX.closePath(); CTX.fill();
       CTX.strokeStyle = ROPE_RED; CTX.lineWidth = 3;
-      CTX.beginPath(); CTX.moveTo(a[0], a[1] + 34); CTX.lineTo(b[0], b[1] + 34); CTX.stroke();
+      CTX.beginPath(); CTX.moveTo(a[0], a[1] + 36); CTX.lineTo(b[0], b[1] + 36); CTX.stroke();
     }
-    CTX.save(); CTX.translate((c2[0] + c3[0]) / 2, (c2[1] + c3[1]) / 2 + 22);
+    CTX.save(); CTX.translate((c2[0] + c3[0]) / 2, (c2[1] + c3[1]) / 2 + 24);
     CTX.rotate(Math.atan2(c3[1] - c2[1], c3[0] - c2[0]));
-    CTX.font = "bold 20px Impact"; CTX.textAlign = "center"; CTX.fillStyle = "#e7e1d3";
+    CTX.font = "bold 22px Impact"; CTX.textAlign = "center"; CTX.fillStyle = "#e7e1d3";
     CTX.fillText("P C W", 0, 0); CTX.restore();
-
-    // the mat — a spotlit canvas so the (white) wrestlers read on it
+    // mat (spotlit)
     CTX.save();
     CTX.beginPath(); CTX.moveTo(c0[0], c0[1]); CTX.lineTo(c1[0], c1[1]);
-    CTX.lineTo(c2[0], c2[1]); CTX.lineTo(c3[0], c3[1]); CTX.closePath();
-    CTX.clip();
+    CTX.lineTo(c2[0], c2[1]); CTX.lineTo(c3[0], c3[1]); CTX.closePath(); CTX.clip();
     const mid = [(c0[0] + c2[0]) / 2, (c0[1] + c2[1]) / 2];
-    const mg = CTX.createRadialGradient(mid[0], mid[1], 20, mid[0], mid[1], 320);
+    const mg = CTX.createRadialGradient(mid[0], mid[1], 20, mid[0], mid[1], 380);
     mg.addColorStop(0, "#9b9a93"); mg.addColorStop(0.7, "#6f6f6a"); mg.addColorStop(1, "#4a4a47");
     CTX.fillStyle = mg; CTX.fillRect(0, 0, W, H);
     CTX.drawImage(stainLayer, 0, 0);
     CTX.restore();
-
-    // mat grid — faint dark lines read on the lit mat
-    CTX.save(); CTX.globalAlpha = .28;
-    for (let i = 0; i <= PCW.GRID; i++) {
-      inkLine(isoX(i, 0), isoY(i, 0), isoX(i, PCW.GRID), isoY(i, PCW.GRID), i % 5 === 0 ? 1.2 : 0.5, i * 3 + 1, "#2a2a28");
-      inkLine(isoX(0, i), isoY(0, i), isoX(PCW.GRID, i), isoY(PCW.GRID, i), i % 5 === 0 ? 1.2 : 0.5, i * 3 + 2, "#2a2a28");
-    }
-    CTX.restore();
-
-    // ring frame (light steel, reads against the dark hall)
-    inkLine(c0[0], c0[1], c1[0], c1[1], 3.4, 50, STEEL_HI); inkLine(c1[0], c1[1], c2[0], c2[1], 3.4, 51, STEEL_HI);
-    inkLine(c2[0], c2[1], c3[0], c3[1], 3.4, 52, STEEL_HI); inkLine(c3[0], c3[1], c0[0], c0[1], 3.4, 53, STEEL_HI);
-    const posts = [c0, c1, c2, c3], PH = 78;
-    // back ropes (3 strands, top one red)
-    for (const [a, b, seed] of [[c3, c0, 60], [c0, c1, 63]])
-      for (let r = 1; r <= 3; r++) inkLine(a[0], a[1] - PH * r / 3.2, b[0], b[1] - PH * r / 3.2, 1.8, seed + r, r === 3 ? ROPE_RED : ROPE);
+    // frame
+    CTX.strokeStyle = STEEL_HI; CTX.lineWidth = 3.4;
+    CTX.beginPath(); CTX.moveTo(c0[0], c0[1]); CTX.lineTo(c1[0], c1[1]);
+    CTX.lineTo(c2[0], c2[1]); CTX.lineTo(c3[0], c3[1]); CTX.closePath(); CTX.stroke();
+    const posts = [c0, c1, c2, c3], PH = 84;
+    drawRopes(c3, c0, PH, 0); drawRopes(c0, c1, PH, 3);
     for (const [px, py] of posts) {
       const pg = CTX.createLinearGradient(px - 4, 0, px + 4, 0);
       pg.addColorStop(0, STEEL); pg.addColorStop(0.5, STEEL_HI); pg.addColorStop(1, STEEL);
       CTX.fillStyle = pg; CTX.fillRect(px - 4, py - PH, 8, PH);
-      CTX.fillStyle = ROPE_RED; CTX.beginPath(); CTX.ellipse(px, py - PH, 6.5, 4.5, 0, 0, 7); CTX.fill(); // red pad cap
+      CTX.fillStyle = ROPE_RED; CTX.beginPath(); CTX.ellipse(px, py - PH, 6.5, 4.5, 0, 0, 7); CTX.fill();
     }
-    return {
-      frontRopes() {
-        for (const [a, b, seed] of [[c1, c2, 66], [c2, c3, 69]])
-          for (let r = 1; r <= 3; r++) inkLine(a[0], a[1] - PH * r / 3.2, b[0], b[1] - PH * r / 3.2, 1.8, seed + r, r === 3 ? ROPE_RED : ROPE);
-      }
-    };
+    return { frontRopes() { drawRopes(c1, c2, PH, 1); drawRopes(c2, c3, PH, 2); } };
   }
 
   /* how high off the mat a wrestler is drawn (turnbuckle climb) */
@@ -156,147 +131,167 @@
       case S.SPX_TOP: return 72;
       case S.SPX_THROW: return Math.max(0, 72 - sf * 5);
       case S.SPX_RECEIVE: return Math.min(64, sf * 2.6);
+      case S.BUMP: return Math.sin(Math.min(Math.PI, sf * 0.18)) * 18;
       default: return 0;
     }
   }
 
-  /* ---- wrestlers ---- */
+  /* ============================================================
+     JOINTED SKELETON — pelvis / torso / head, two-segment arms & legs,
+     posed per state. Ported from the movement prototype, extended to
+     the full PCW state set and the two personas' brand colours.
+     ============================================================ */
+  function seg(a, b, wd, col) { CTX.lineCap = "round"; CTX.strokeStyle = col; CTX.lineWidth = wd; CTX.beginPath(); CTX.moveTo(a.x, a.y); CTX.lineTo(b.x, b.y); CTX.stroke(); }
+  function limb(a, b, c, wd, col) { CTX.lineCap = "round"; CTX.lineJoin = "round"; CTX.strokeStyle = col; CTX.lineWidth = wd; CTX.beginPath(); CTX.moveTo(a.x, a.y); CTX.lineTo(b.x, b.y); CTX.lineTo(c.x, c.y); CTX.stroke(); }
+
   function drawWrestler(w) {
     const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy);
-    const slab = w.build === "slab", s = slab ? 1.8 : 1.45, f = w.facing, sf = w.stateFrame;
-    const fill = slab ? stipple : hatch;
+    const slab = w.build === "slab", sc = slab ? 1.3 : 1.12, f = w.facing;
+    const sk = "#e7e1d3", dark = "#12141a", rf = G.renderFrame;
+    const acc = w.accent2 && w.build === "slab" ? w.accent2 : w.accent;
 
-    if (w.state === S.DOWN || w.state === S.PINNED) { drawDown(w, x, y, s, slab, fill); return; }
+    // shadow
+    CTX.save(); CTX.fillStyle = "rgba(0,0,0,.34)"; CTX.beginPath(); CTX.ellipse(x, y, 24 * sc, 9 * sc, 0, 0, 7); CTX.fill(); CTX.restore();
 
-    let lean = 0, crouch = 0, pose = 0, lift = 0;
+    const U = 13 * sc;                       // unit scale
+    let pelvisY = -2.6 * U, chestY = pelvisY - 1.9 * U, headY = chestY - 1.15 * U;
+    let lean = 0, lift = figureLift(w), prone = false;
+    let footLx = -.5 * U, footRx = .5 * U, footLy = 0, footRy = 0;
+    const gaitOn = (w.state === S.RUN || w.state === S.WALK || w.state === S.WHIPPED || w.state === S.REBOUND);
+    if (gaitOn) {
+      const spd = (w.state === S.WHIPPED || w.state === S.REBOUND) ? 1.5 : (w.state === S.RUN ? 1.15 : 0.7);
+      const p = w.gait;
+      lean = f * (2.2 + spd * 2.2);
+      footLx = f * Math.sin(p) * 1.3 * U; footRx = f * Math.sin(p + Math.PI) * 1.3 * U;
+      footLy = -Math.max(0, Math.cos(p)) * .55 * U; footRy = -Math.max(0, Math.cos(p + Math.PI)) * .55 * U;
+      pelvisY = -2.6 * U - Math.abs(Math.sin(p)) * .18 * U;
+    }
+    const shL = { x: -.55 * U, y: chestY }, shR = { x: .55 * U, y: chestY };
+    function arm(sh, ang, bend, len) {
+      const e = { x: sh.x + Math.sin(ang) * len * .55, y: sh.y + Math.cos(ang) * len * .55 };
+      const h = { x: e.x + Math.sin(ang + bend) * len * .5, y: e.y + Math.cos(ang + bend) * len * .5 };
+      return { e, h };
+    }
+    let LA = arm(shL, f * 0.25, -f * 0.5, 2.0 * U), RA = arm(shR, -f * 0.25, f * 0.5, 2.0 * U);
+
     switch (w.state) {
-      case S.RUN: pose = 0; lean = f * 7; break;
-      case S.STRIKE: pose = 1; lean = f * (sf < F.STRIKE_ACTIVE_A ? -6 : 6); break;
-      case S.GRAPPLE_STARTUP: pose = 2; crouch = 4; lean = f * 3; break;
-      case S.SLAM: pose = 2; crouch = 8; lean = f * 5; break;
-      case S.ARM_DRAG: pose = 3; lean = -f * 10; break;
-      case S.HITSTUN: lean = -f * 8; break;
-      case S.SELL: pose = 4; lean = -f * (14 + Math.sin(sf * 0.5) * 6); crouch = Math.min(8, sf * 0.4); break;
-      case S.GETUP: crouch = 10 - (sf / F.GETUP) * 10; break;
-      case S.WHIFF: lean = f * 9; crouch = 4; break;
-      case S.PINNING: pose = 2; crouch = 14; break;
-      // the superplex: attacker climbs the buckle, receiver meets him up top
-      case S.SPX_CLIMB: pose = 2; break;
-      case S.SPX_TOP: pose = 2; break;
-      case S.SPX_THROW: pose = 2; lean = f * 6; break;
-      case S.SPX_WAIT: crouch = 3; break;
-      case S.SPX_RECEIVE: pose = 4; break;
-    }
-    lift = figureLift(w);
-    const bob = (w.state === S.MOVE || w.state === S.RUN) ? Math.sin(sf * 0.5) * 2 : Math.sin(G.renderFrame * 0.05 + (slab ? 2 : 0));
-
-    CTX.save(); CTX.fillStyle = "rgba(22,19,14,.28)";
-    CTX.beginPath(); CTX.ellipse(x, y, 22 * s, 9 * s, 0, 0, 7); CTX.fill(); CTX.restore();
-
-    CTX.save();
-    CTX.translate(x, y - 4 + bob + crouch * 0.6 - lift);
-    CTX.rotate(lean * Math.PI / 180);
-    const seed = slab ? 97 : 7;
-
-    const tw = (slab ? 26 : 16) * s, th = (30 - crouch * 0.5) * s, taper = slab ? 7 * s : 2 * s;
-    CTX.fillStyle = "#fdfcf7";
-    CTX.beginPath();
-    CTX.moveTo(-tw / 2 - taper, -th - 14 * s); CTX.lineTo(tw / 2 + taper, -th - 14 * s);
-    CTX.lineTo(tw / 2, -14 * s); CTX.lineTo(-tw / 2, -14 * s); CTX.closePath(); CTX.fill();
-    CTX.save(); CTX.clip(); CTX.fillStyle = fill;
-    CTX.fillRect(-tw / 2 - taper, -th - 14 * s, (tw + taper * 2) * 0.55, th); CTX.restore();
-    inkLine(-tw / 2 - taper, -th - 14 * s, tw / 2 + taper, -th - 14 * s, 3, seed + 1);
-    inkLine(tw / 2 + taper, -th - 14 * s, tw / 2, -14 * s, 3, seed + 2);
-    inkLine(tw / 2, -14 * s, -tw / 2, -14 * s, 3, seed + 3);
-    inkLine(-tw / 2, -14 * s, -tw / 2 - taper, -th - 14 * s, 3, seed + 4);
-
-    if (slab) { // Boulder: corporate singlet, gold straps
-      CTX.strokeStyle = w.accent2; CTX.lineWidth = 2.4;
-      CTX.beginPath(); CTX.moveTo(-tw / 4, -th - 13 * s); CTX.lineTo(-tw / 5, -th + 6); CTX.stroke();
-      CTX.beginPath(); CTX.moveTo(tw / 4, -th - 13 * s); CTX.lineTo(tw / 5, -th + 6); CTX.stroke();
-      CTX.fillStyle = w.accent; CTX.fillRect(-tw / 2, -14 * s - 6, tw, 5);   // navy band
-    } else {   // Stove Hot: black vest with orange fringe
-      for (let i = 0; i < 5; i++) {
-        CTX.strokeStyle = w.accent; CTX.lineWidth = 1.2;
-        CTX.beginPath(); CTX.moveTo(-tw / 2 + 2 + i * 3, -14 * s); CTX.lineTo(-tw / 2 + 1 + i * 3, -14 * s + 7); CTX.stroke();
-        CTX.beginPath(); CTX.moveTo(tw / 2 - 2 - i * 3, -14 * s); CTX.lineTo(tw / 2 - 1 - i * 3, -14 * s + 7); CTX.stroke();
+      case S.RUN: case S.WALK: case S.WHIPPED: case S.REBOUND: {
+        const p = w.gait;
+        LA = arm(shL, -f * Math.sin(p) * 1.1, -f * 0.6, 2.0 * U);
+        RA = arm(shR, -f * Math.sin(p + Math.PI) * 1.1, f * 0.6, 2.0 * U);
+        break;
       }
+      case S.STRIKE: {
+        const e = Math.min(1, w.stateFrame / 5), r = w.stateFrame < 5 ? -0.6 : 1.5;
+        lean = f * (w.stateFrame < 5 ? -5 : 8);
+        LA = arm(shL, f * (r * e), -f * 0.3, 2.1 * U);
+        break;
+      }
+      case S.CLOTHESLINE: {
+        lean = f * 7; LA = arm(shL, f * 1.55, 0, 2.3 * U); RA = arm(shR, f * 1.4, 0, 2.1 * U);
+        footLx = f * 1.1 * U; footRx = -f * .6 * U;
+        break;
+      }
+      case S.SLAM: {
+        lean = f * 9; pelvisY = -2.3 * U;
+        LA = arm(shL, f * 1.2, f * 0.4, 2.0 * U); RA = arm(shR, f * 1.0, -f * 0.3, 2.0 * U);
+        break;
+      }
+      case S.WHIP: case S.ARM_DRAG: {
+        const sw = Math.sin(w.stateFrame * 0.3) * 1.2; lean = -f * 6;
+        LA = arm(shL, f * (1.4 - sw), 0, 2.2 * U); RA = arm(shR, f * (1.0 - sw), 0, 2.0 * U);
+        break;
+      }
+      case S.TIEUP_A: case S.TIEUP_B: {
+        lean = f * 4 + Math.sin(rf * 0.4 + (w.id === "p1" ? 0 : 1)) * 0.6;
+        LA = arm(shL, f * 1.15, 0.1, 1.9 * U); RA = arm(shR, f * 0.95, -0.1, 1.9 * U);
+        break;
+      }
+      case S.SELL: case S.HITSTUN: {
+        lean = -f * (12 + Math.sin(w.stateFrame * 0.6) * 5); headY -= 2;
+        LA = arm(shL, -f * 0.9, -0.4, 2.0 * U); RA = arm(shR, -f * 0.6, 0.4, 2.0 * U);
+        break;
+      }
+      case S.CORNER: {
+        lean = -f * 10; pelvisY = -2.3 * U; footLx = -.7 * U; footRx = .7 * U;
+        LA = arm(shL, -f * 1.3, 0, 2.0 * U); RA = arm(shR, -f * 1.3, 0, 2.0 * U);
+        break;
+      }
+      case S.TAUNT: {
+        lean = 0; headY -= 1;
+        LA = arm(shL, -f * 1.5, 0.1, 2.1 * U); RA = arm(shR, f * 1.5, -0.1, 2.1 * U);   // arms flung wide
+        break;
+      }
+      case S.WHIFF: { lean = f * 9; LA = arm(shL, -f * 0.6, -0.5, 2.0 * U); break; }
+      case S.PINNING: {
+        lean = f * 34; pelvisY = -1.5 * U;
+        LA = arm(shL, f * 1.4, 0, 1.8 * U); RA = arm(shR, f * 1.2, 0, 1.8 * U);
+        break;
+      }
+      case S.BUMP: {
+        const spin = (w.bumpSpin || 1); lean = spin * Math.min(80, w.stateFrame * 6);
+        break;
+      }
+      case S.DOWN: case S.PINNED: prone = true; break;
+      case S.GETUP: pelvisY = -1.3 * U - (w.stateFrame / F.GETUP) * 1.3 * U; lean = -f * 6; break;
+      case S.SPX_CLIMB: lean = 0; LA = arm(shL, 0, 0, 2.0 * U); RA = arm(shR, 0, 0, 2.0 * U); footLy = footRy = 0; break;
+      case S.SPX_TOP: pelvisY = -2.1 * U; break;
+      case S.SPX_THROW: lean = f * 10; break;
+      case S.SPX_WAIT: lean = 0; break;
+      case S.SPX_RECEIVE: break;
     }
-    CTX.fillStyle = w.accent; CTX.fillRect(-tw / 2, -16 * s, tw, 4.5); // trunks trim
 
-    inkLine(-6 * s, -13 * s, -8 * s, -1, 5 * s, seed + 11);
-    inkLine(6 * s, -13 * s, 8 * s, -1, 5 * s, seed + 12);
-    CTX.fillStyle = "#16130e"; CTX.fillRect(-11 * s, -3, 7 * s, 4); CTX.fillRect(4 * s, -3, 7 * s, 4);
+    CTX.save(); CTX.translate(x, y - lift);
+    if (prone) { drawProne(w, sc, sk, dark, acc); CTX.restore(); nameplate(w, x, y + 18); return; }
+    CTX.rotate(lean * Math.PI / 180 * (w.state === S.BUMP ? 1 : 0.4));
 
-    const AW = slab ? 5.5 * s : 4 * s, shY = -(th + 8 * s);
-    if (pose === 1) {
-      const ext = sf < F.STRIKE_ACTIVE_A ? sf / F.STRIKE_ACTIVE_A : 1;
-      inkLine(0, shY, f * (26 * ext) * s, shY - 4 * s, AW, seed + 13);
-      inkLine(0, shY + 3, -f * 9 * s, shY + 10 * s, AW, seed + 14);
-    } else if (pose === 2) {
-      inkLine(0, shY, f * 18 * s, shY + (w.state === S.PINNING ? 14 : -6), AW, seed + 13);
-      inkLine(0, shY + 3, f * 16 * s, shY + (w.state === S.PINNING ? 18 : 4), AW, seed + 14);
-    } else if (pose === 3) {
-      const sw = Math.sin(sf * 0.3) * 16;
-      inkLine(0, shY, -f * (12 + sw) * s, shY - 10 * s, AW, seed + 13);
-      inkLine(0, shY + 3, f * (16 - sw) * s, shY + 2, AW, seed + 14);
-    } else if (pose === 4) {
-      const fl = Math.sin(sf * 0.7) * 10;
-      inkLine(0, shY, -f * 10 * s + fl, shY - 16 * s, AW, seed + 13);
-      inkLine(0, shY + 3, f * 6 * s - fl, shY - 14 * s, AW, seed + 14);
-    } else {
-      inkLine(0, shY, -9 * s, shY + 12 * s, AW, seed + 13);
-      inkLine(0, shY + 3, 9 * s, shY + 12 * s, AW, seed + 14);
-    }
+    const pelvis = { x: 0, y: pelvisY }, chest = { x: f * lean * 0.05, y: chestY }, head = { x: chest.x + f * 1, y: headY };
+    const hipL = { x: pelvis.x - .42 * U, y: pelvis.y }, hipR = { x: pelvis.x + .42 * U, y: pelvis.y };
+    const footL = { x: footLx, y: footLy }, footR = { x: footRx, y: footRy };
+    const kneeL = { x: (hipL.x + footL.x) / 2 + f * .25 * U, y: (hipL.y + footL.y) / 2 };
+    const kneeR = { x: (hipR.x + footR.x) / 2 + f * .25 * U, y: (hipR.y + footR.y) / 2 };
 
+    seg(hipR, kneeR, 5.4 * sc, dark); seg(kneeR, footR, 4.6 * sc, dark);   // back leg
+    limb(shR, RA.e, RA.h, 4.4 * sc, sk);                                  // back arm
+    seg(pelvis, chest, 9 * sc, sk);                                        // torso
+    CTX.strokeStyle = acc; CTX.lineWidth = 3.4 * sc;                       // trunks band
+    CTX.beginPath(); CTX.moveTo(pelvis.x - 3, pelvis.y + 2); CTX.lineTo(pelvis.x + 3, pelvis.y + 2); CTX.stroke();
+    seg(hipL, kneeL, 5.6 * sc, sk); seg(kneeL, footL, 4.8 * sc, sk);       // front leg
+    CTX.fillStyle = dark;                                                  // boots
+    CTX.beginPath(); CTX.ellipse(footL.x + f * 2, footL.y, 4 * sc, 2.4 * sc, 0, 0, 7); CTX.fill();
+    CTX.beginPath(); CTX.ellipse(footR.x + f * 2, footR.y, 4 * sc, 2.4 * sc, 0, 0, 7); CTX.fill();
+    limb(shL, LA.e, LA.h, 4.6 * sc, sk);                                  // front arm
     // head
-    const hy = -(th + 21 * s), hr = (slab ? 7.5 : 8.5) * s;
-    CTX.fillStyle = "#fdfcf7"; CTX.strokeStyle = "#16130e"; CTX.lineWidth = 2.6;
-    CTX.beginPath(); CTX.arc(0, hy, hr, 0, 7); CTX.fill(); CTX.stroke();
-    if (slab) {
-      // Boulder: granite flat-top + scowl, gold brow
-      CTX.fillStyle = "#16130e"; CTX.fillRect(-hr - 1, hy - hr - 2, hr * 2 + 2, 4.5);
-      CTX.fillStyle = w.accent2; CTX.fillRect(-hr, hy - 2, hr * 2, 1.6);
-      CTX.fillStyle = "#16130e"; CTX.fillRect(-2.5, hy + 2, 5, 2);
-    } else {
-      // Stove Hot: bald dome, hard brow, goatee (no cowboy hat)
-      CTX.fillStyle = "#16130e";
-      CTX.fillRect(-hr + 1, hy - 1.5, hr * 2 - 2, 1.8);            // brow
-      CTX.beginPath(); CTX.moveTo(-3.5, hy + 3.5); CTX.lineTo(3.5, hy + 3.5);
-      CTX.lineTo(2.2, hy + hr + 1); CTX.lineTo(-2.2, hy + hr + 1); CTX.closePath(); CTX.fill(); // goatee
+    CTX.fillStyle = sk; CTX.strokeStyle = dark; CTX.lineWidth = 1.5;
+    CTX.beginPath(); CTX.arc(head.x, head.y, 4.6 * sc, 0, 7); CTX.fill(); CTX.stroke();
+    CTX.fillStyle = acc; CTX.beginPath(); CTX.arc(head.x, head.y - 1, 4.6 * sc, Math.PI * 1.05, Math.PI * 1.95); CTX.fill();
+    if (w.head !== "bald") { // Boulder flat-top
+      CTX.fillStyle = dark; CTX.fillRect(head.x - 4.6 * sc, head.y - 5.6 * sc, 9.2 * sc, 2.4 * sc);
+    } else { // Stove goatee
+      CTX.fillStyle = dark; CTX.beginPath();
+      CTX.moveTo(head.x - 2, head.y + 3.4 * sc); CTX.lineTo(head.x + 2, head.y + 3.4 * sc);
+      CTX.lineTo(head.x + 1.3, head.y + 5.4 * sc); CTX.lineTo(head.x - 1.3, head.y + 5.4 * sc); CTX.closePath(); CTX.fill();
     }
     CTX.restore();
 
-    if (inGrappleCtx(w)) drawPrompt(x, y - 110 * s / 1.45, winOpen() ? "[ Y! ]" : "[ Y? ]", winOpen() ? w.accent : null);
-    if (G.sellWin && G.sellWin.defender === w) drawPrompt(x, y - 110 * s / 1.45, "SELL [Y]", w.accent);
-
-    nameplate(w, x, y + 20);
+    nameplate(w, x, y + 18);
   }
+
+  function drawProne(w, sc, sk, dark, acc) {
+    const L = 30 * sc, T = 8 * sc, f = w.facing;
+    CTX.strokeStyle = sk; CTX.lineCap = "round"; CTX.lineWidth = 9 * sc;
+    CTX.beginPath(); CTX.moveTo(-L / 2, -T); CTX.lineTo(L / 2, -T); CTX.stroke();
+    CTX.strokeStyle = dark; CTX.lineWidth = 4.5 * sc;
+    CTX.beginPath(); CTX.moveTo(L / 2, -T); CTX.lineTo(L / 2 + 8 * sc, -T + 3); CTX.stroke();
+    CTX.fillStyle = sk; CTX.strokeStyle = dark; CTX.lineWidth = 1.5;
+    CTX.beginPath(); CTX.arc(-L / 2 - 4 * sc, -T, 4.6 * sc, 0, 7); CTX.fill(); CTX.stroke();
+    CTX.strokeStyle = acc; CTX.lineWidth = 3 * sc; CTX.beginPath(); CTX.moveTo(-4, -T - 1); CTX.lineTo(4, -T - 1); CTX.stroke();
+  }
+
   function nameplate(w, x, y) {
     CTX.font = "bold 10px Impact"; CTX.textAlign = "center";
     CTX.strokeStyle = "rgba(0,0,0,.75)"; CTX.lineWidth = 3;
-    CTX.strokeText(w.short, x, y); CTX.fillStyle = barCol(w); CTX.fillText(w.short, x, y);
-  }
-
-  function drawDown(w, x, y, s, slab, fill) {
-    const breathe = Math.sin(G.renderFrame * 0.1) * 1;
-    CTX.save(); CTX.fillStyle = "rgba(22,19,14,.28)";
-    CTX.beginPath(); CTX.ellipse(x, y + 2, 30 * s, 9 * s, 0, 0, 7); CTX.fill(); CTX.restore();
-    CTX.save(); CTX.translate(x, y - 6 + breathe * 0.4);
-    const L = (slab ? 46 : 40) * s * 0.8, T = (slab ? 15 : 11) * s * 0.8;
-    CTX.fillStyle = "#fdfcf7"; CTX.fillRect(-L / 2, -T, L, T);
-    CTX.save(); CTX.beginPath(); CTX.rect(-L / 2, -T, L, T); CTX.clip();
-    CTX.fillStyle = fill; CTX.fillRect(-L / 2, -T, L * 0.6, T); CTX.restore();
-    inkLine(-L / 2, -T, L / 2, -T, 2.6, w.id === "p1" ? 301 : 401);
-    inkLine(L / 2, -T, L / 2, 0, 2.6, 302); inkLine(L / 2, 0, -L / 2, 0, 2.6, 303); inkLine(-L / 2, 0, -L / 2, -T, 2.6, 304);
-    CTX.fillStyle = w.accent; CTX.fillRect(-3, -T, 6, T);
-    CTX.fillStyle = "#fdfcf7"; CTX.strokeStyle = "#16130e"; CTX.lineWidth = 2.2;
-    CTX.beginPath(); CTX.arc(-L / 2 - 6 * s * 0.8, -T / 2, 6.5 * s * 0.8, 0, 7); CTX.fill(); CTX.stroke();
-    inkLine(L / 2, -T * 0.6, L / 2 + 12 * s * 0.8, -T * 0.3, 4 * s * 0.8, 305);
-    inkLine(L / 2, -T * 0.3, L / 2 + 11 * s * 0.8, 2, 4 * s * 0.8, 306);
-    CTX.restore();
-    if (G.pin && G.pin.defender === w && G.pin.finish) drawPrompt(x, y - 64, "STAY DOWN", w.accent);
-    nameplate(w, x, y + 22);
+    CTX.strokeText(w.short, x, y + 6); CTX.fillStyle = barCol(w); CTX.fillText(w.short, x, y + 6);
   }
 
   function drawPrompt(x, y, text, accent) {
@@ -308,20 +303,17 @@
 
   /* ---- HUD ---- */
   function gauge(x, y, wd, ht, val, label, accent, labelColor) {
-    CTX.strokeStyle = "#16130e"; CTX.lineWidth = 2.4; CTX.strokeRect(x, y, wd, ht);
+    CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 2.4; CTX.strokeRect(x, y, wd, ht);
     const fill = Math.max(0, wd * (val / 100) - 4);
     CTX.fillStyle = accent; CTX.fillRect(x + 2, y + 2, fill, ht - 4);
-    CTX.fillStyle = hatch; CTX.fillRect(x + 2, y + 2, fill, ht - 4);
-    CTX.fillStyle = labelColor || "#16130e"; CTX.font = "bold 11px Impact"; CTX.textAlign = "left";
+    CTX.fillStyle = labelColor || "#d8dbe0"; CTX.font = "bold 11px Impact"; CTX.textAlign = "left";
     CTX.fillText(label, x, y - 4);
   }
-
   function starText(s) {
     const full = Math.floor(s), q = s - full;
     return "★".repeat(full) + (q === 0.25 ? "¼" : q === 0.5 ? "½" : q === 0.75 ? "¾" : "") + (full === 0 && q === 0 ? "DUD" : "");
   }
   PCW.starText = starText;
-
   function wrapText(text, x, y, maxW, lh) {
     const words = text.split(" "); let line = "", yy = y;
     for (const wd of words) {
@@ -332,14 +324,13 @@
     CTX.fillText(line, x, yy);
   }
 
-  /* ---- in-world crowd signals (top layer, catchable peripherally) ----
-     The player's hands are on the keyboard and eyes on the wrestlers, so
-     the crowd's wants and payoffs speak through the canvas, not the log. */
+  const LT = "#d8dbe0";
+  const barCol = w => w.id === "p1" ? "#ff7a18" : "#6f86d6";
+
+  /* ---- in-world crowd signals (top layer, catchable peripherally) ---- */
   function drawCrowdSignals() {
     const crowd = G.crowd, match = G.match, rf = G.renderFrame;
 
-    // (1) COMEBACK PRESSURE — an orange arena glow that swells around the
-    // edges as heel heat banks resentment. Pure peripheral vision.
     const r = crowd.resentment / 100;
     if (r > 0.02) {
       let inten = Math.min(0.5, r * 0.5);
@@ -350,18 +341,16 @@
       CTX.save(); CTX.fillStyle = vg; CTX.fillRect(0, 0, W, H); CTX.restore();
     }
 
-    // (2) CROWD-BEHIND-STOVE meter, under the heat bar.
     const mx = W / 2 - 150, my = 48, mw = 300, mh = 7;
     CTX.save();
-    CTX.fillStyle = "#16130e"; CTX.font = "bold 10px Impact"; CTX.textAlign = "left";
+    CTX.fillStyle = LT; CTX.font = "bold 10px Impact"; CTX.textAlign = "left";
     CTX.fillText(crowd.primed ? "CROWD BEHIND STOVE — READY!" : "CROWD BEHIND STOVE", mx, my - 2);
-    CTX.strokeStyle = "#16130e"; CTX.lineWidth = 2; CTX.strokeRect(mx, my, mw, mh);
+    CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 2; CTX.strokeRect(mx, my, mw, mh);
     const fillW = Math.max(0, mw * (crowd.resentment / 100) - 3);
     CTX.fillStyle = crowd.primed ? (rf % 8 < 4 ? "#ffd27a" : "#ff7a18") : "#ff7a18";
     CTX.fillRect(mx + 1.5, my + 1.5, fillW, mh - 3);
     CTX.restore();
 
-    // (3) PRIMED cue — tells the player the payoff window is open, over Stove.
     if (crowd.primed && match.phase === "MATCH") {
       const s = G.P1, x = isoX(s.gx, s.gy), y = isoY(s.gx, s.gy) - 118;
       const pulse = 0.65 + 0.35 * Math.sin(rf * 0.22);
@@ -374,8 +363,6 @@
       CTX.restore();
     }
 
-    // (4) HIJACK CHANT — the demand in plain words, the action to take, and
-    // a draining timer. Plus a bouncing arrow over the wrestler to act.
     if (crowd.hijack) {
       const hj = crowd.hijack, bx = W / 2, by = 96;
       const pulse = 0.6 + 0.4 * Math.abs(Math.sin(rf * 0.12));
@@ -396,14 +383,12 @@
         const w = hj.target === "p1" ? G.P1 : G.P2;
         const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy) - 116 + Math.sin(rf * 0.2) * 4;
         CTX.save(); CTX.textAlign = "center"; CTX.font = "bold 26px Impact";
-        CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3;
-        CTX.fillStyle = "#ffd27a";
+        CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3; CTX.fillStyle = "#ffd27a";
         CTX.strokeText("▼", x, y); CTX.fillText("▼", x, y);
         CTX.restore();
       }
     }
 
-    // (5) FLOATERS — reaction popups leaping off the wrestler who acted.
     for (const fl of crowd.floaters) {
       const a = 1 - fl.age / fl.life;
       CTX.save(); CTX.globalAlpha = Math.max(0, a); CTX.textAlign = "center";
@@ -414,7 +399,6 @@
       CTX.restore();
     }
 
-    // (6) STROBE — a near-fall at high heat whites out the whole arena.
     if (crowd.strobe > 0) {
       CTX.save();
       CTX.globalAlpha = 0.22 * (crowd.strobe / 12) + (crowd.strobe % 2 ? 0.14 : 0);
@@ -422,60 +406,42 @@
       CTX.restore();
     }
 
-    // (7) TRUST WARNING — the private stakes. A frame-edge glow warns, in
-    // the corner of the eye, that the relationship is heading for breakdown
-    // (trust 0 = the match falls apart). Amber = slipping, red = danger.
     if (match.phase === "MATCH" && match.trust < 40) {
       const danger = match.trust < 20;
       const pulse = 0.4 + 0.6 * Math.abs(Math.sin(rf * (danger ? 0.24 : 0.13)));
-      CTX.save();
-      CTX.globalAlpha = pulse;
-      CTX.strokeStyle = danger ? "#ff2b2b" : "#e0902b";
-      CTX.lineWidth = danger ? 7 : 4;
+      CTX.save(); CTX.globalAlpha = pulse;
+      CTX.strokeStyle = danger ? "#ff2b2b" : "#e0902b"; CTX.lineWidth = danger ? 7 : 4;
       CTX.strokeRect(CTX.lineWidth / 2, CTX.lineWidth / 2, W - CTX.lineWidth, H - CTX.lineWidth);
       CTX.restore();
     }
 
-    // trust-change sting beside the trust bar (green up, red down).
     if (match.trustFlash) {
       const tf = match.trustFlash, a = Math.min(1, tf.t / 55);
-      CTX.save(); CTX.globalAlpha = a; CTX.textAlign = "left";
-      CTX.font = "bold 15px Impact";
+      CTX.save(); CTX.globalAlpha = a; CTX.textAlign = "left"; CTX.font = "bold 15px Impact";
       CTX.fillStyle = tf.delta < 0 ? "#ff4d4d" : "#5fd07a";
       const rise = (55 - tf.t) * 0.35;
       CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3;
       const txt = (tf.delta > 0 ? "+" : "") + tf.delta + " TRUST";
-      CTX.strokeText(txt, W / 2 + 86, 73 - rise);
-      CTX.fillText(txt, W / 2 + 86, 73 - rise);
+      CTX.strokeText(txt, W / 2 + 86, 73 - rise); CTX.fillText(txt, W / 2 + 86, 73 - rise);
       CTX.restore();
     }
   }
 
-  const LT = "#d8dbe0";                          // light HUD text on dark
-  const barCol = w => w.id === "p1" ? "#ff7a18" : "#6f86d6";  // lightened brand bars
-
-  /* each wrestler's current instruction, on a clear chip BELOW their own
-     sprite (on the lit mat, clear of the dark crowd and the ropes), in
-     their own colour, with a pointer up to whose it is. It tracks the
-     sprite up the turnbuckle during the superplex. */
+  /* each wrestler's current instruction, on a chip below their sprite */
   function drawCueLabels() {
     for (const w of [G.P1, G.P2]) {
       const t = PCW.cueText && PCW.cueText(w);
       if (!t) continue;
       const lift = figureLift(w);
-      // stagger the two chips onto separate rows so they can't overlap when
-      // the wrestlers are on top of each other (tie-ups, pins, the corner).
       const row = w.id === "p1" ? 42 : 68;
-      const cx = isoX(w.gx, w.gy), cy = isoY(w.gx, w.gy) - lift + row;  // below the feet
+      const cx = isoX(w.gx, w.gy), cy = isoY(w.gx, w.gy) - lift + row;
       const col = barCol(w);
       CTX.save();
       CTX.font = "bold 14px Impact";
       const tw = CTX.measureText(t).width, pw = tw + 22, ph = 22;
       const px = cx - pw / 2, py = cy - ph / 2;
-      // pointer up toward the wrestler
       CTX.fillStyle = "rgba(9,11,15,.94)";
       CTX.beginPath(); CTX.moveTo(cx - 6, py + 1); CTX.lineTo(cx + 6, py + 1); CTX.lineTo(cx, py - 7); CTX.closePath(); CTX.fill();
-      // chip
       CTX.fillStyle = "rgba(9,11,15,.94)"; CTX.fillRect(px, py, pw, ph);
       CTX.lineWidth = 2; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
       CTX.textAlign = "center"; CTX.textBaseline = "middle";
@@ -485,13 +451,12 @@
     }
   }
 
-  /* when a corner spot is called but the man isn't in a corner yet, mark
-     the four corners so the players know where to take him. */
+  /* mark the corners when a corner spot is called but nobody's there yet */
   function drawCornerHints() {
     const m = G.match, sp = m && m.script[m.spot];
     if (!m || m.phase !== "MATCH" || !sp || !sp.corner || G.superplex) return;
     const def = sp.bump === "STOVE" ? G.P1 : G.P2;
-    if (PCW.cornerIndexAt(def.gx, def.gy) >= 0) return;   // already there
+    if (PCW.atCorner(def)) return;
     const pulse = 0.4 + 0.35 * Math.abs(Math.sin(G.renderFrame * 0.12));
     CTX.save();
     for (const c of PCW.CORNERS) {
@@ -513,8 +478,6 @@
     if (match.phase === "MATCH" && sp) {
       CTX.fillStyle = "#fff"; CTX.font = "bold 15px Impact";
       CTX.fillText("SPOT " + (match.spot + 1) + "/" + match.script.length + " — " + sp.name, W / 2, H - 38);
-      // per-wrestler instructions now live on the sprites (drawCueLabels);
-      // the banner keeps the director's note for context.
       CTX.fillStyle = LT; CTX.font = "italic 12px 'Courier New'";
       CTX.fillText("“" + sp.promo + "”", W / 2, H - 20);
     } else if (match.phase === "MATCH") {
@@ -533,12 +496,15 @@
     gauge(24, H - 78, 180, 7, PCW.G.respect.p1, "RESPECT", "#c9a24a", LT);
     gauge(W - 204, H - 78, 180, 7, PCW.G.respect.p2, "RESPECT", "#c9a24a", LT);
 
-    if (G.exchange && !G.exchange.resolved) {
-      const a = G.exchange.attacker, x = isoX(a.gx, a.gy) - 38, y = isoY(a.gx, a.gy) + 34;
+    // the arm-drag reversal window, over the receiver, when a booked reversal
+    // tie-up is live (frames 4–9 of the tie-up are the sweet spot).
+    if (G.tieup && G.tieup.reversalSpot) {
+      const t = G.tieup, rec = t.receiver;
+      const x = isoX(rec.gx, rec.gy) - 38, y = isoY(rec.gx, rec.gy) + 34;
       for (let i = 1; i <= F.GRAPPLE_STARTUP; i++) {
         const inWin = i >= F.WINDOW_OPEN && i <= F.WINDOW_CLOSE, px = x + (i - 1) * 6.4;
         CTX.strokeStyle = "#cfd3da"; CTX.lineWidth = 1; CTX.strokeRect(px, y, 5, 10);
-        if (i <= G.exchange.frame) { CTX.fillStyle = inWin ? "#ffd27a" : "#cfd3da"; CTX.fillRect(px + .5, y + .5, 4, 9); }
+        if (i <= t.frame) { CTX.fillStyle = inWin ? "#ffd27a" : "#cfd3da"; CTX.fillRect(px + .5, y + .5, 4, 9); }
         else if (inWin) { CTX.fillStyle = "rgba(255,210,122,.25)"; CTX.fillRect(px + .5, y + .5, 4, 9); }
       }
     }
@@ -567,6 +533,7 @@
 
     drawCueLabels();
     drawCrowdSignals();
+    if (PCW.Commentary) PCW.Commentary.draw(CTX);
 
     if (match.phase === "ENDED" && match.endInfo) {
       const e = match.endInfo;
@@ -588,7 +555,7 @@
   /* ---- top-level frame ---- */
   function frame() {
     G.renderFrame++;
-    CTX.setTransform(PCW.DPR, 0, 0, PCW.DPR, 0, 0);   // crisp on hi-dpi
+    CTX.setTransform(PCW.DPR, 0, 0, PCW.DPR, 0, 0);
     CTX.save();
     if (G.shake > 0.5) CTX.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
     CTX.drawImage(paper, 0, 0);

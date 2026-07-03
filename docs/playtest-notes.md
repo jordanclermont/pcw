@@ -247,4 +247,61 @@ has no planning/crowd-model/trust layer yet — it's movement-only.)
 
 GAME_BIBLE §5.10 now records the movement grammar; §5.4 the gated superplex.
 
+## 2026-07-02 / v0.06 — THE TRANSPLANT (momentum engine is now the base)
+
+Big one. Per Jordan's call, the v1-demo movement feel is now the MAIN engine —
+the old teleporty grid-step is gone. All the systems (crowd, trust, respect,
+the Pitch planning screen, spots, endings) were kept and now sit on top of a
+body that actually moves. Then: the finish sequence, taunts, and commentary.
+
+What changed:
+- MOMENTUM LOCOMOTION. Hold a direction to accelerate to a run and carry
+  speed. Wrestlers are now JOINTED SKELETONS (real run cycles, wind-ups,
+  sells, bumps) — the animation target the eventual sprite pass will match.
+- THE GRAMMAR performs the spots. Grab = tie up; from the tie-up push a
+  direction to Irish-WHIP him (into the ropes to rebound, or a corner);
+  the controller Works to plant a slam; the receiver Works in the 4–9 window
+  to REVERSE it into the arm drag. Strike a charging man = CLOTHESLINE. Whip
+  him to a corner then Strike = the corner stomps. Grab a cornered man = go
+  up top for the cooperative superplex. Position gates everything — a spot
+  you can't set up isn't available; the cue tells you how to set it up.
+- CONTROLS CHANGED: the old "Run" key is now TAUNT (Stove H, Boulder L).
+  Running is automatic (hold a direction). Grab is G/K, Strike F/J, Work T/I.
+- TAUNTS. Play to the crowd between spots. Face taunt pops; heel taunt draws
+  heat and banks resentment for the comeback; either answers a chant for
+  Respect. Cheap on heat and rate-limited so it can't be farmed.
+- COMMENTARY BUBBLES. Two ringside voices (CHET play-by-play, DUTCH colour)
+  in comic speech bubbles, fed by the action — the bell, big moves,
+  near-falls, the shocking kick-out, the finish. This is what you read now;
+  the backstage log stays a debug readout.
+- THE ORCHESTRATED FINISH. The fixed tail is now a real six-beat sequence:
+  Front Burner → Boulder kicks out at two (booked near-fall) → The Boulder's
+  own finisher + a near-fall for the champ → second Front Burner → 1-2-3, new
+  champion. Boulder CAN kick out of the real finish (a priced shoot) to arm a
+  steal — betrayal stays available and priced.
+
+How it was checked: I can't open the canvas, so this was verified in a headless
+harness — no runtime errors across a planning fuzz, 6000 ticks of random
+two-player input, and a scripted cooperative run that completes EVERY recipe
+(tie-up plant, arm-drag reversal, corner stomps, superplex, comeback strikes)
+and the full finish to a clean 5★ title change. Feel, readability, and timing
+are yours to judge — that's this playtest.
+
+What to feel for on your first 0.06 play:
+- Does it finally FEEL like wrestling now that it's on the real systems? Is
+  the run/whip/rebound momentum right, or too floaty / too twitchy?
+  (Tuning: src/config.js PCW.MOVE — ACC, FRIC, VMAX_RUN, WHIP_V.)
+- Are the spot cues legible? Can you tell what verb the current spot wants
+  and where to set it up? (Corners are marked when a corner spot is called.)
+- Are the timing windows right in the new grammar — the 4–9 arm-drag reversal
+  inside the tie-up, the sell windows, the superplex beats? (config FRAMES.)
+- Do the taunts feel worth doing? Right heat/respect payoff, right cadence?
+  (config PCW.RESPECT + the taunt base in engine.js taunt().)
+- Do the commentary bubbles read, or do they cover ring action / clutter?
+  (Placement + line library in src/commentary.js.)
+- Does the six-beat finish land as a climax — do the two kick-outs pop?
+- Known thin spots: commentator names/desk art are placeholders; hiptoss and
+  the plain tie-ups (collar & elbow / test of strength) currently play as a
+  tie-up→plant like the other grapples — fine, but not yet distinct moves.
+
 ## (next entry goes here)

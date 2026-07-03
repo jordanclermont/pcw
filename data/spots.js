@@ -95,23 +95,52 @@
       cue: { p1: "Get him to a corner, then press G to climb", p2: "Be in the corner — trust him" },
       promo: "Off the top. The most dangerous spot in the match — on the champ." },
 
-    /* ---- fixed tail: the protected finish ---- */
+    /* ---- fixed tail: the protected finish (the orchestrated climax) ----
+       Six booked beats the office made non-negotiable. The champion goes
+       down STRONG: he kicks out of the first Front Burner, gets his own
+       finisher and a believable near-fall, and only a SECOND Front Burner
+       keeps him down. PIN spots carry an `outcome`: "kickout" is a booked
+       near-fall (the pinned man survives at two); "win" is the real three. */
     front_burner: {
       id: "front_burner", name: "THE FRONT BURNER", caller: "p1", move: "GRAPPLE",
       reversal: false, pop: 16, arcSlot: "finish", big: true, risk: 1, bump: "BOULDER",
-      desc: "Stove's finisher.",
-      cue: { p1: "Light him up — The Front Burner (G)", p2: "Take it flat. Stay down." },
-      promo: "The finisher. Plant the champion." },
+      desc: "Stove's finisher — the first one.",
+      cue: { p1: "Light him up — The Front Burner", p2: "Take it flat. Stay down." },
+      promo: "The finisher. Plant the champion — but he's booked to survive it." },
+    fb_cover_1: {
+      id: "fb_cover_1", name: "COVER — KICK OUT AT TWO", caller: "p1", move: "PIN",
+      outcome: "kickout", pop: 18, arcSlot: "finish", big: true, risk: 0, bump: "BOULDER",
+      desc: "Cover; the champ kicks out at two. Huge near-fall.",
+      cue: { p1: "Cover — hook the leg", p2: "KICK OUT at two — Work (I)" },
+      promo: "Count of two — and the champion survives! The place comes unglued." },
+    boulder_finisher: {
+      id: "boulder_finisher", name: "THE LANDSLIDE (CHAMP'S HOPE)", caller: "p2", move: "GRAPPLE",
+      reversal: false, pop: 15, arcSlot: "finish", big: true, risk: 2, bump: "STOVE",
+      desc: "The Boulder's finisher — the champion's last stand.",
+      cue: { p1: "Take The Landslide — sell death", p2: "Plant him — The Landslide" },
+      promo: "The champion will not die quietly — he plants the challenger with everything." },
+    bl_cover: {
+      id: "bl_cover", name: "CHAMP'S NEAR-FALL", caller: "p2", move: "PIN",
+      outcome: "kickout", pop: 17, arcSlot: "finish", big: true, risk: 0, bump: "STOVE",
+      desc: "Boulder covers; Stove kicks out at two. The hope spot.",
+      cue: { p1: "KICK OUT at two — Work (T)", p2: "Cover — hook the leg" },
+      promo: "The champ has him! Two count — NO! Stove Hot lives!" },
+    front_burner_2: {
+      id: "front_burner_2", name: "THE FRONT BURNER (AGAIN)", caller: "p1", move: "GRAPPLE",
+      reversal: false, pop: 18, arcSlot: "finish", big: true, risk: 1, bump: "BOULDER",
+      desc: "The second finisher. This is the one.",
+      cue: { p1: "One more — The Front Burner", p2: "Take it flat. This is the end." },
+      promo: "He's setting up a SECOND one — nobody survives two!" },
     finish_pin: {
       id: "finish_pin", name: "FINISH: 1-2-3", caller: "p1", move: "PIN",
-      pop: 22, arcSlot: "finish", big: true, risk: 0, bump: "BOULDER",
+      outcome: "win", pop: 24, arcSlot: "finish", big: true, risk: 0, bump: "BOULDER",
       desc: "Cover, hook the leg, new champion.",
-      cue: { p1: "Cover — hook the leg (G)", p2: "STAY DOWN. Do not kick out." },
+      cue: { p1: "Cover — hook the leg", p2: "STAY DOWN. Do not kick out." },
       promo: "Count the three. New champion. Send them home loud." }
   };
 
   const HEAD = ["collar_elbow"];
-  const TAIL = ["front_burner", "finish_pin"];
+  const TAIL = ["front_burner", "fb_cover_1", "boulder_finisher", "bl_cover", "front_burner_2", "finish_pin"];
   const MENU = ["test_strength", "armdrag", "hiptoss", "corner_stomps", "knee_drops",
     "chinlock", "landslide", "spinebuster", "comeback_hooks", "face_flurry", "superplex"];
 
