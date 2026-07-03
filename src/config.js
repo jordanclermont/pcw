@@ -14,7 +14,11 @@
 
   /* frame windows (60 Hz logic) */
   PCW.FRAMES = {
-    GRAPPLE_STARTUP: 12, WINDOW_OPEN: 4, WINDOW_CLOSE: 9,
+    // WINDOW_CLOSE widened (was 9) so a human has a fair chance at the reversal.
+    GRAPPLE_STARTUP: 12, WINDOW_OPEN: 4, WINDOW_CLOSE: 16,
+    // CPU pacing: a beat between the CPU's offensive moves, and a lock-up hold
+    // before it slams — so it performs deliberately instead of rushing.
+    AI_PACE: 58, AI_LOCKUP: 24,
     ARM_DRAG: 28, SLAM: 24, DOWN: 110, DOWN_SHORT: 70, GETUP: 26,
     HITSTUN: 16, SELL: 36, SELL_WINDOW: 26,
     WHIFF: 16, STRIKE_TOTAL: 14, STRIKE_ACTIVE_A: 5, STRIKE_ACTIVE_B: 8,
@@ -41,7 +45,7 @@
     TAUNT: 46,             // a taunt pose (play to the crowd)
     /* a grapple slam now has WEIGHT: the attacker locks him up and lifts for
        SLAM_LIFT frames, THEN drives him down with a heavy hit-stop. */
-    SLAM_LIFT: 14,         // lift/hold frames before the slam connects
+    SLAM_LIFT: 18,         // lift/hold frames before the slam connects (also the sandbag window)
     SLAM_HITSTOP: 9        // freeze-frame on the slam impact (weightier than a strike)
   };
 
@@ -91,25 +95,25 @@
      transplant is for; everything else (whip, rebound, clothesline) is
      built on it. Tuned on the 12-grid. */
   PCW.MOVE = {
-    // v0.10: slower still (Jordan: "everything is quite fast"). The match should
-    // breathe so you have time to READ a beat and DECIDE how to answer it.
-    ACC: 0.012, FRIC: 0.78,
-    VMAX_WALK: 0.05, VMAX_RUN: 0.12,
-    WHIP_V: 0.24,          // launch speed of an Irish whip
+    // v0.11: slower again — the CPU especially was moving too fast to respond to.
+    ACC: 0.011, FRIC: 0.78,
+    VMAX_WALK: 0.045, VMAX_RUN: 0.10,
+    WHIP_V: 0.21,          // launch speed of an Irish whip
     ROPE_KEEP: 0.94,       // fraction of speed kept off a rope rebound
-    RUN_THRESHOLD: 0.075,  // speed above which the gait reads as a run
-    CLOTHESLINE_MIN: 0.06  // a foe must be charging faster than this to be clotheslined
+    RUN_THRESHOLD: 0.07,   // speed above which the gait reads as a run
+    CLOTHESLINE_MIN: 0.055 // a foe must be charging faster than this to be clotheslined
   };
 
   /* SELLING — the receiver's performance. After a bump you go DOWN and DON'T
      get up on your own: staying down IS the sell, getting up is a choice, and
-     popping up too soon is a SANDBAG (under-selling, priced + reads flat). A
-     move's weight sets how long a good sell should last. */
+     popping up too soon is a NO-SELL (under-selling — reads flat, costs trust).
+     (Distinct from a SANDBAG, which is refusing to cooperate DURING a move; see
+     the slam lift.) A move's weight sets how long a good sell should last. */
   PCW.SELL = {
     LIGHT: 26,    // a struck bump / minor move
     MED: 72,      // a slam
     BIG: 130,     // a finisher, the superplex — stay down, this one hurt
-    EARLY: 0.42,  // get up before this fraction of the expected sell = a sandbag
+    EARLY: 0.42,  // get up before this fraction of the expected sell = a no-sell
     STALL: 2.4    // stay down past this multiple with no pin = the crowd gets bored
   };
 

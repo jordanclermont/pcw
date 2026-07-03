@@ -454,6 +454,13 @@
      stacked (tie-up, corner, pin) the chips never share a lane. A coloured
      name tab makes ownership unambiguous, and the chip is clamped to stay on
      the canvas even at the top or bottom rope. */
+  const CUE_TXT = "bold 17px Impact", CUE_KEY = "bold 18px Impact";
+  function cueTokens(t) { return t.split(/(\[[^\]]+\])/).filter(s => s.length); }
+  function tokenWidth(tok) {
+    const key = tok.match(/^\[(.+)\]$/);
+    if (key) { CTX.font = CUE_KEY; return CTX.measureText(key[1]).width + 16; }  // keycap box
+    CTX.font = CUE_TXT; return CTX.measureText(tok).width;
+  }
   function drawCueLabels() {
     for (const w of [G.P1, G.P2]) {
       const t = PCW.cueText && PCW.cueText(w);
@@ -462,34 +469,55 @@
       const above = w.id === "p1";                        // Stove above, Boulder below
       const fx = isoX(w.gx, w.gy), fy = isoY(w.gx, w.gy) - lift;
       const col = barCol(w);
-      CTX.save();
-      CTX.font = "bold 15px Impact";
-      const tw = CTX.measureText(t).width, pw = tw + 28, ph = 25;
-      // desired chip position, then clamped fully inside the canvas
-      let px = fx - pw / 2, py = (fy + (above ? -112 : 48)) - ph / 2;   // clears the taller sprites
+      const toks = cueTokens(t);
+      let inner = 0; for (const tk of toks) inner += tokenWidth(tk);
+      const pad = 14, ph = 30, pw = inner + pad * 2;
+      let px = fx - pw / 2, py = (fy + (above ? -118 : 52)) - ph / 2;
       px = Math.max(6, Math.min(W - pw - 6, px));
-      py = Math.max(24, Math.min(H - 118 - ph, py));
-      // pointer toward the figure (down from an above-chip, up from a below-chip)
-      const ptx = Math.max(px + 12, Math.min(px + pw - 12, fx));
-      CTX.fillStyle = "rgba(9,11,15,.95)";
+      py = Math.max(26, Math.min(H - 116 - ph, py));
+      CTX.save();
+      // pointer toward the figure
+      const ptx = Math.max(px + 14, Math.min(px + pw - 14, fx));
+      CTX.fillStyle = "rgba(9,11,15,.96)";
       CTX.beginPath();
-      if (above) { CTX.moveTo(ptx - 6, py + ph - 1); CTX.lineTo(ptx + 6, py + ph - 1); CTX.lineTo(ptx, py + ph + 9); }
-      else { CTX.moveTo(ptx - 6, py + 1); CTX.lineTo(ptx + 6, py + 1); CTX.lineTo(ptx, py - 9); }
+      if (above) { CTX.moveTo(ptx - 7, py + ph - 1); CTX.lineTo(ptx + 7, py + ph - 1); CTX.lineTo(ptx, py + ph + 10); }
+      else { CTX.moveTo(ptx - 7, py + 1); CTX.lineTo(ptx + 7, py + 1); CTX.lineTo(ptx, py - 10); }
       CTX.closePath(); CTX.fill();
       // chip
-      CTX.fillStyle = "rgba(9,11,15,.95)"; CTX.fillRect(px, py, pw, ph);
-      CTX.lineWidth = 2; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
-      // name tab (own colour) sitting on the chip's top edge
-      CTX.font = "bold 10px Impact"; CTX.textAlign = "left";
+      CTX.fillStyle = "rgba(9,11,15,.96)"; CTX.fillRect(px, py, pw, ph);
+      CTX.lineWidth = 2.5; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
+      // name tab
+      CTX.font = "bold 10px Impact"; CTX.textAlign = "left"; CTX.textBaseline = "alphabetic";
       const ntw = CTX.measureText(w.short).width + 10;
       CTX.fillStyle = col; CTX.fillRect(px, py - 13, ntw, 13);
       CTX.fillStyle = "#0b0c0f"; CTX.fillText(w.short, px + 5, py - 3.5);
-      // cue text
-      CTX.font = "bold 15px Impact"; CTX.textAlign = "center"; CTX.textBaseline = "middle";
-      CTX.fillStyle = col; CTX.fillText(t, px + pw / 2, py + ph / 2 + 1);
+      // tokens: plain text in the wrestler colour, [KEY] as an emphasized keycap
+      let x = px + pad, cy = py + ph / 2;
+      CTX.textBaseline = "middle";
+      for (const tk of toks) {
+        const key = tk.match(/^\[(.+)\]$/);
+        if (key) {
+          const kw = tokenWidth(tk), kh = ph - 8, ky = py + 4;
+          CTX.fillStyle = "#ffd24a"; roundRect(CTX, x, ky, kw, kh, 4); CTX.fill();   // bright keycap
+          CTX.lineWidth = 1.5; CTX.strokeStyle = "#0b0c0f"; CTX.stroke();
+          CTX.font = CUE_KEY; CTX.fillStyle = "#0b0c0f"; CTX.textAlign = "center";
+          CTX.fillText(key[1], x + kw / 2, cy + 1);
+          x += kw;
+        } else {
+          CTX.font = CUE_TXT; CTX.fillStyle = col; CTX.textAlign = "left";
+          CTX.fillText(tk, x, cy + 1);
+          x += CTX.measureText(tk).width;
+        }
+      }
       CTX.textBaseline = "alphabetic";
       CTX.restore();
     }
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
   /* mark the corners when a corner spot is called but nobody's there yet */

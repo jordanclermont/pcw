@@ -72,7 +72,8 @@
       this.cornerIndex = -1;            // which corner he's stunned in
       this.cornerAimed = false;         // this whip was aimed at a corner (for capture/miss feedback)
       this.sellExpect = 0;              // how long a good sell of the last bump should last (frames)
-      this.wronged = false;             // stiffed/sandbagged — a receipt is owed (retaliation primed)
+      this.wronged = false;             // sandbagged/no-sold on — a receipt is owed (retaliation primed)
+      this.aiCooldown = 0;              // CPU pacing: frames until it may start its next offensive move
     }
     setState(s) {
       if (this.state === s) return;

@@ -241,24 +241,25 @@
     const workedPlant = (kind === "PLANT" && sp.caller === w.id && defenderOf(sp) === def);
     // The outcome (crowd pop, trust, call-sheet) resolves on the IMPACT, not
     // the button press — the slam now has a lift-and-drive beat first.
-    beginSlam(w, def, function () {
+    beginSlam(w, def, function (sloppy) {
+      const q = sloppy ? 0.5 : 1.0;   // a sandbagged slam reads ugly from row twelve
       if (t.reversalSpot) {
         // the controller planted during the FACE's booked reversal — buried the
         // spot. Reads to the crowd as a slam; costs a real bump + trust.
         def.hurt(BODY.BOTCH_SLAM);
         adjustTrust(-TRUST.STIFF, w.short + " planted him instead of giving the arm drag");
-        G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 0.7, arcSlot: sp.arcSlot, actor: w });
+        G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 0.7 * q, arcSlot: sp.arcSlot, actor: w });
         markBotched(sp);
       } else if (workedPlant) {
         def.hurt(BODY.WORKED_SLAM);
-        popShake(G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 1.0, arcSlot: sp.arcSlot, big: !!sp.big, actor: w }));
-        PCW.log((sp.big ? sp.name + " — " : "") + "planted flush.", "ok");
-        say("pbp", sp.big ? sp.name + "! He got all of it!" : "Scoop and a slam, " + w.short + " in control.");
+        popShake(G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: q, arcSlot: sp.arcSlot, big: !!sp.big, actor: w }));
+        PCW.log((sloppy ? "Sloppy — " : (sp.big ? sp.name + " — " : "")) + "planted" + (sloppy ? "." : " flush."), sloppy ? "bad" : "ok");
+        say("pbp", sloppy ? "He got him over but it was UGLY!" : (sp.big ? sp.name + "! He got all of it!" : "Scoop and a slam, " + w.short + " in control."));
         markDone(sp);
       } else {
         def.hurt(BODY.SHOOT_SLAM);
         offScript(w, "dropped " + def.short + " off-script",
-          { picture: "slam", role: w.role, base: 8, quality: 0.9, arcSlot: "transition", actor: w }, TRUST.SLAM);
+          { picture: "slam", role: w.role, base: 8, quality: 0.9 * q, arcSlot: "transition", actor: w }, TRUST.SLAM);
       }
     }, (sp && sp.big) ? PCW.SELL.BIG : PCW.SELL.MED);   // a finisher demands a long sell
   }
@@ -282,18 +283,28 @@
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
     def.gx = clampGrid(atk.gx + dx / m * 0.5); def.gy = clampGrid(atk.gy + dy / m * 0.5);
     def.setState(S.LIFTED);
-    G.slam = { atk, def, frame: 0, push: 0.9, onImpact, sell: sellFrames || PCW.SELL.MED };
+    G.slam = { atk, def, frame: 0, push: 0.9, onImpact, sell: sellFrames || PCW.SELL.MED, sandbagged: false };
   }
   function slamTick() {
     const s = G.slam; s.frame++;
     if (s.frame < F.SLAM_LIFT) return;
     G.slam = null;
-    const atk = s.atk, def = s.def;
+    const atk = s.atk, def = s.def, sloppy = s.sandbagged;
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
     def.gx = clampGrid(def.gx + dx / m * s.push); def.gy = clampGrid(def.gy + dy / m * s.push);
-    PCW.render.inkBurst(def); G.hitstop = F.SLAM_HITSTOP; G.shake = 13;
+    PCW.render.inkBurst(def); G.hitstop = F.SLAM_HITSTOP; G.shake = sloppy ? 16 : 13;
     goDown(def, atk, s.sell);
-    s.onImpact();
+    if (sloppy) {
+      // the receiver went dead weight — the attacker had to BRUTE-FORCE it: a
+      // dangerous, ugly bump for the taker and a real strain on the man forcing
+      // it. A betrayal, priced; it also owes the attacker a receipt.
+      def.hurt(BODY.BOTCH_SLAM); atk.hurt(BODY.WORKED_SLAM);
+      adjustTrust(-TRUST.SLAM, def.short + " went dead weight — SANDBAGGED the slam");
+      atk.wronged = true;
+      PCW.awardRespect(def.id, PCW.RESPECT.SHOOT_FLOPPED);
+      say("color", def.short + " went limp on him — that's a sandbag! Somebody could get hurt.");
+    }
+    s.onImpact(sloppy);
   }
 
   /* the receiver attempts the arm-drag reversal (Work) */
@@ -348,8 +359,9 @@
   /* ============================================================
      SELLING — a downed man does NOT get up on a timer. Staying down is the
      sell; getting up is a choice; popping up too soon after a real bump is a
-     SANDBAG (under-selling) that reads flat and costs trust. Lying there
-     forever stalls the show and bores the crowd.
+     NO-SELL (under-selling) that reads flat and costs trust. Lying there
+     forever stalls the show and bores the crowd. (A SANDBAG — refusing to
+     cooperate DURING the move itself — is a separate thing; see the slam lift.)
      ============================================================ */
   function handleDown(w, pad) {
     const expect = w.sellExpect || PCW.SELL.MED;
@@ -372,8 +384,8 @@
         G.crowd.react({ picture: "weakstrike", role: atk.role, base: 2, quality: 0.35, arcSlot: "transition", actor: atk });
         atk.wronged = true;   // the man whose spot got cheaped is owed a receipt (wired next pass)
       }
-      PCW.awardRespect(w.id, PCW.RESPECT.SHOOT_FLOPPED);   // sandbagging doesn't impress the room
-      say("color", w.short + " barely sold that — cheap. The other guy won't forget it.");
+      PCW.awardRespect(w.id, PCW.RESPECT.SHOOT_FLOPPED);   // no-selling doesn't impress the room
+      say("color", w.short + " barely sold that — no-sold him. The other guy won't forget it.");
     }
     w.sellExpect = 0;
     w.setState(S.GETUP);
@@ -699,35 +711,38 @@
 
   function cueText(w) {
     const m = G.match; if (!m || m.phase !== "MATCH") return null;
+    const K = btn => "[" + padKey(w, btn) + "]";   // a keycap the renderer emphasizes
     const sx = G.superplex;
     if (sx) {
       const atk = w === sx.attacker;
       if (sx.step === "CLIMB") return atk ? "CLIMBING UP…" : "HE'S GOING UP TOP…";
-      if (sx.step === "POSITION") return atk ? "WAIT FOR HIM…" : "GET UP THERE — PRESS " + padKey(w, "work");
-      if (sx.step === "THROW") return atk ? "THROW HIM OFF — PRESS " + padKey(w, "work") : "HANG ON…";
-      if (sx.step === "LAND") return "LAND IT — PRESS " + padKey(w, "work");
+      if (sx.step === "POSITION") return atk ? "WAIT FOR HIM…" : "GET UP THERE — " + K("work");
+      if (sx.step === "THROW") return atk ? "THROW HIM OFF — " + K("work") : "HANG ON…";
+      if (sx.step === "LAND") return "LAND IT — " + K("work");
       return null;
+    }
+    // being lifted for a slam: cooperate, or fight it (a real SANDBAG)
+    if (G.slam && G.slam.def === w && w.state === S.LIFTED) {
+      return G.slam.sandbagged ? "GOING DEAD WEIGHT!" : "TAKE IT — or " + K("work") + " to fight it";
     }
     if (G.tieup) {
       const t = G.tieup, isCtrl = w === t.controller, isRecv = w === t.receiver, sp0 = spot();
       if (t.reversalSpot) {
-        if (isRecv) return "REVERSE HIM — PRESS " + padKey(w, "work") + " NOW";
+        if (isRecv) return "REVERSE HIM — " + K("work") + " NOW";
         if (isCtrl) return "LET HIM TAKE YOU OVER";
         return null;
       }
-      // plain tie-up: show only what the sheet wants now — a corner spot wants
-      // a whip, everything else wants a slam. The other options still work.
       const cornerWanted = sp0 && (sp0.corner || sp0.sequence === "superplex") && sp0.caller === t.controller.id;
-      if (isCtrl) return cornerWanted ? "WHIP HIM AT A CORNER — PUSH A DIRECTION" : "SLAM HIM — PRESS " + padKey(w, "work");
+      if (isCtrl) return cornerWanted ? "WHIP HIM AT A CORNER — PUSH A DIRECTION" : "SLAM HIM — " + K("work");
       if (isRecv) return cornerWanted ? "HE'LL WHIP YOU — HANG ON" : "HE'LL SLAM YOU — RIDE IT";
       return null;
     }
-    if (G.sellWin && G.sellWin.defender === w) return "SELL IT — PRESS " + padKey(w, "work");
+    if (G.sellWin && G.sellWin.defender === w) return "SELL IT — " + K("work");
     if (G.pin) {
       if (G.pin.defender === w) {
-        if (G.pin.steal) return "FIGHT OUT — PRESS " + padKey(w, "work");
+        if (G.pin.steal) return "FIGHT OUT — " + K("work");
         if (G.pin.outcome === "win") return "STAY DOWN — TOUCH NOTHING";
-        return "KICK OUT — PRESS " + padKey(w, "work");
+        return "KICK OUT — " + K("work");
       }
       return null;
     }
@@ -736,33 +751,31 @@
       if (sp0 && sp0.move === "PIN" && defenderOf(sp0) === w) return "STAY DOWN — HE'S COVERING";
       const expect = w.sellExpect || 0;
       if (expect >= PCW.SELL.MED && w.stateFrame < expect * PCW.SELL.EARLY)
-        return "SELL IT — STAY DOWN  ·  move = pop up (cheap)";
-      return "GET UP — MOVE or PRESS " + padKey(w, "work");
+        return "STAY DOWN — SELL IT  (move = no-sell)";
+      return "GET UP — MOVE or " + K("work");
     }
     const sp = spot(); if (!sp) return "MATCH'S OVER — GO HOME";
     const kind = performKind(sp), caller = wrestlerById(sp.caller), def = defenderOf(sp);
     const isCaller = w === caller, isDef = w === def;
     switch (kind) {
-      case "REVERSAL": {
-        // the caller (heel) locks up; the OTHER man reverses into the arm drag
-        if (isCaller) return "LOCK HIM UP — PRESS " + padKey(w, "grab");
+      case "REVERSAL":
+        if (isCaller) return "LOCK HIM UP — " + K("grab");
         if (w === other(caller)) return "REVERSE WHEN HE LOCKS UP";
         return null;
-      }
       case "PLANT":
-        return isCaller ? "LOCK HIM UP — PRESS " + padKey(w, "grab") : isDef ? "LET HIM LOCK UP" : null;
+        return isCaller ? "LOCK HIM UP — " + K("grab") : isDef ? "LET HIM LOCK UP" : null;
       case "STRIKES":
-        return isCaller ? "STRIKE HIM — PRESS " + padKey(w, "strike") : isDef ? "SELL EACH ONE — PRESS " + padKey(w, "work") : null;
+        return isCaller ? "STRIKE HIM — " + K("strike") : isDef ? "SELL EACH — " + K("work") : null;
       case "CORNER_STRIKES":
         if (!PCW.atCorner(def))
-          return isCaller ? "SEND HIM TO A CORNER — LOCK UP, PRESS " + padKey(w, "grab") : isDef ? "HE'S SENDING YOU TO THE CORNER" : null;
-        return isCaller ? "STOMP HIM — PRESS " + padKey(w, "strike") : isDef ? "SELL EACH ONE — PRESS " + padKey(w, "work") : null;
+          return isCaller ? "GET HIM TO A CORNER — " + K("grab") : isDef ? "HE'S SENDING YOU TO THE CORNER" : null;
+        return isCaller ? "STOMP HIM — " + K("strike") : isDef ? "SELL EACH — " + K("work") : null;
       case "SUPERPLEX":
         if (def.state !== S.CORNER)
-          return isCaller ? "SEND HIM TO A CORNER — LOCK UP, PRESS " + padKey(w, "grab") : isDef ? "GET TO A CORNER" : null;
-        return isCaller ? "GO UP TOP — PRESS " + padKey(w, "grab") : isDef ? "STAY THERE — TRUST HIM" : null;
+          return isCaller ? "GET HIM TO A CORNER — " + K("grab") : isDef ? "GET TO A CORNER" : null;
+        return isCaller ? "GO UP TOP — " + K("grab") : isDef ? "STAY THERE — TRUST HIM" : null;
       case "PIN":
-        if (isCaller) return "COVER HIM — PRESS " + padKey(w, "grab");
+        if (isCaller) return "COVER HIM — " + K("grab");
         if (isDef) return sp.outcome === "win" ? "STAY DOWN — TOUCH NOTHING" : "KICK OUT WHEN HE COVERS";
         return null;
     }
@@ -822,7 +835,7 @@
       if (t.controller === me) {
         const sp0 = spot(), cornerWanted = sp0 && (sp0.corner || sp0.sequence === "superplex") && sp0.caller === me.id;
         if (cornerWanted) { const c = aiNearestCorner(foe); const dx = c.gx - foe.gx, dy = c.gy - foe.gy, d = Math.hypot(dx, dy) || 1; cmd.ax = dx / d; cmd.ay = dy / d; }
-        else cmd.Y = true;   // slam out of the tie-up
+        else if (t.frame >= F.AI_LOCKUP) cmd.Y = true;   // hold the lock-up a beat, then slam
       }
       return cmd;   // receiver in a plain tie-up just takes the bump
     }
@@ -865,7 +878,13 @@
       const pad = G.pads[id]; if (!pad) continue;
       if (!AI.control[id]) { pad.aiAxis = null; continue; }
       const me = id === "p1" ? G.P1 : G.P2, foe = id === "p1" ? G.P2 : G.P1;
+      if (me.aiCooldown > 0) me.aiCooldown--;
       const cmd = aiDecide(me, foe);
+      // DELIBERATE PACING: the CPU still moves and reacts freely, but it only
+      // STARTS a new offensive move (grab/strike/taunt) once its beat has
+      // elapsed — then it breathes again. This is what stops it rushing.
+      if (me.aiCooldown > 0) { cmd.A = cmd.B = cmd.X = false; }
+      else if (cmd.A || cmd.B || cmd.X) { me.aiCooldown = F.AI_PACE; }
       pad.aiAxis = { gx: cmd.ax || 0, gy: cmd.ay || 0 };
       pad.just.A = cmd.A; pad.just.B = cmd.B; pad.just.X = cmd.X; pad.just.Y = cmd.Y;
     }
@@ -902,6 +921,9 @@
       /* WORK button (Y) — context-sensitive cooperation / the job */
       if (pad.just.Y) {
         if (G.superplex && (G.superplex.attacker === w || G.superplex.defender === w)) superplexInput(w);
+        else if (G.slam && G.slam.def === w && w.state === S.LIFTED) {   // fight the lift = SANDBAG
+          if (!G.slam.sandbagged) { G.slam.sandbagged = true; PCW.log(w.short + " fights the lift — going dead weight!", "shoot"); }
+        }
         else if (G.tieup && w === G.tieup.controller) controllerPlant(w);
         else if (G.tieup && w === G.tieup.receiver) receiverReverse(w);
         else if (G.sellWin && G.sellWin.defender === w) doSell(w);

@@ -7,6 +7,13 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.7 revisions (Build 0.11): corrected terminology (pop-up-early = no-sell) and
+built the real SANDBAG (fight the lift, attacker must brute-force) on the slam;
+CPU now performs deliberately (paced, held lock-ups) so it's answerable; cues
+emphasize the key as a keycap; slower locomotion + wider reversal window. §5.13.
+Answered a process question: the WWF.com-era redesign is Jordan-directs-taste,
+Claude-builds-it-in-code — no assets to hand-make.*
+
 *v1.6 revisions (Build 0.10): the receiver's game — selling and get-up are now
 a real choice, popping up early is a priced sandbag, and pins are manual (kick
 out or lose), §5.13. The match now boots straight into the ring (the booking
@@ -174,6 +181,10 @@ The single biggest fix to "it's just one guy presses a button, the other presses
 **Pins are manual, always (v0.10).** Nothing auto-kicks-out anymore. When you're pinned you MUST Work to kick out before three, or you eat the fall — and failing to kick out of the champion's near-fall means you *lose the match*. That's the stake: every pin is a live "kick out or it's over" decision. On the finish you're booked to lose, the cue says STAY DOWN and pressing Work is the shoot (as before).
 
 This is the first delivery of §2's promise that "the person taking the move is performing just as much as the one delivering it." The attacker-side stakes (a *stiff* you can choose to lay in, receipts, cooperation visibly breaking down) are the next pass.
+
+**Terminology note + the real sandbag (v0.11).** Popping up early is a **no-sell** (under-selling), corrected from the earlier loose use of "sandbag." A **sandbag** is a distinct, separate betrayal: refusing to cooperate *during* a move. Built first on the slam — while you're being lifted you can Work to *fight the lift* (go dead weight); the attacker then has to brute-force it, which makes the move ugly (half the crowd pop), dangerous (a real bump for the taker and a strain on the forcer), and costs trust and a receipt. The cue shows it ("TAKE IT — or [T] to fight it"). The same principle will extend to the superplex and other cooperative lifts.
+
+**Pacing (v0.11).** The CPU performer now works *deliberately* — a beat between its offensive moves and a held lock-up before it slams — so it's readable and answerable instead of rushing. Cues emphasize the literal key as a bright **keycap** so the input to press is unmistakable. Locomotion slowed again and the reversal window widened, all in service of "give the player time to read the beat and decide."
 
 ### 5.12 The CPU performer (solo play & testing, built v0.08)
 

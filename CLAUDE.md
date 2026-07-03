@@ -75,11 +75,17 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   (planning bypassed, press B to open it); selling & get-up are a real choice
   (stay down = sell, pop up early = a priced sandbag, cue shows the temptation);
   pins are MANUAL always (kick out or lose); slower pace. Bible §5.13.
-- NEXT (sequenced, nothing dropped): attacker-side stakes (stiff/receipts/
-  cooperation breakdown); real per-move animations (the big art pass); heel
-  heat (heel fuelled by drawn heat vs boredom); deeper taunting; and the
-  early-2000s WWF.com visual + font redesign (wants Jordan's designer eye —
-  a great dedicated session). Publishing: `origin` is set + Pages tracks main,
+- v0.11 "slow burn" — DONE: CPU paced (a beat between moves + a held lock-up,
+  config FRAMES.AI_PACE/AI_LOCKUP) so it's answerable; cues emphasize the key as
+  a bright keycap ("— [K]"); terminology fixed (pop-up-early = NO-SELL); the
+  real SANDBAG built on the slam (Work while being lifted = fight it, attacker
+  brute-forces, ugly+dangerous+priced); slower locomotion + wider reversal
+  window. Bible §5.13.
+- NEXT (sequenced, nothing dropped): the WWF.com early-2000s visual + font
+  redesign (recommended next — Jordan directs taste, Claude builds it in code;
+  no assets to hand-make); then attacker-side stakes (stiff/receipts/breakdown);
+  real per-move animations (the big art pass); heel heat (fuelled by drawn heat
+  vs boredom); deeper taunting. Publishing: `origin` is set + Pages tracks main,
   so any push auto-redeploys https://jordanclermont.github.io/pcw/ (~1 min).
   Then the sprite/asset pass (individual PNGs from assets/sprites/, naming:
   stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px

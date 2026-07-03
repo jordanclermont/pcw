@@ -491,4 +491,45 @@ To feel for next play (solo is fine now — press 1 or 2 for a CPU partner):
 - Do the manual kick-outs create real "am I going to make it" tension?
 - Is it still too fast, or getting closer?
 
+## 2026-07-03 / v0.11 — pacing, keycaps, and the REAL sandbag
+
+Jordan's 0.10 notes: gameplay improved but moves still too fast — the CPU
+especially moves so quickly it's hard to respond; control labels still small,
+the actual key to press should be emphasized; and a terminology correction —
+what I called "sandbag" (popping up early) is really NO-SELLING. Sandbagging is
+refusing to cooperate DURING a move (go dead weight so the attacker has to
+brute-force it, risking a sloppy/dangerous bump). Also asked whether the
+WWF.com redesign needs him to make assets (answer: no — he directs taste, I
+build it in code).
+
+Done:
+- CPU PACING. The CPU now performs deliberately: a ~1s beat between its
+  offensive moves (config FRAMES.AI_PACE) and a held lock-up before it slams
+  (AI_LOCKUP). It still moves and reacts freely, it just doesn't rush. Match
+  length went from ~1530 → ~2010 ticks. Locomotion slowed again (run .12→.10).
+- KEYCAPS. The key you press is now a bright gold keycap in the cue —
+  "LOCK HIM UP — [K]" — so the input is unmistakable. Cue chips are bigger.
+- TERMINOLOGY FIXED. Popping up early is now called NO-SELLING everywhere
+  (cue: "STAY DOWN — SELL IT (move = no-sell)").
+- THE REAL SANDBAG, built on the slam. While you're being LIFTED you can Work
+  to "fight the lift" (go dead weight). The attacker then brute-forces it:
+  the move reads ugly (half the pop), hurts BOTH bodies (dangerous bump +
+  strain), costs trust, and owes a receipt. Cue: "TAKE IT — or [T] to fight
+  it". Will extend to the superplex/other lifts later.
+- Reversal window widened (was 6 frames, now ~13) so a human can actually hit
+  it.
+
+Verified: drove the real app (keycaps render as bright keys; no-sell cue + the
+new pacing confirmed; no console errors); CPU-vs-CPU still auto-plays both
+cards to clean finishes; match is measurably slower.
+
+Roadmap unchanged (nothing dropped): attacker-side stiff/receipts; real
+per-move animations; heel heat; deeper taunting; and the early-2000s WWF.com
+visual + font redesign (my recommended next session — separable, transforms the
+look, your design domain).
+
+To feel for: is the CPU answerable now, or still too fast? Do the keycaps make
+the input obvious? Try sandbagging a slam (Work while being lifted) — does the
+ugly/dangerous consequence read?
+
 ## (next entry goes here)
