@@ -72,11 +72,11 @@
     const lines = wrap(ctx, b.text, bw - pad * 2);
     const innerW = Math.min(bw - pad * 2, Math.max(60, ...lines.map(l => ctx.measureText(l).width)));
     const boxW = innerW + pad * 2, boxH = lines.length * lh + pad * 2 + 8;
-    // anchor near the bottom, inboard of the body/respect gauges
-    const anchorY = H - 104;                       // bubble bottom sits here
-    const x = V.side === "L" ? 214 : W - 214 - boxW;
+    // anchor at the bottom corners, above the body/respect gauges and clear
+    // of the ring centre, so the two bubbles can never collide.
+    const anchorY = H - 106;                        // bubble bottom sits here
+    const x = V.side === "L" ? 24 : W - 24 - boxW;
     const y = anchorY - boxH;
-    const life = Math.min(1, b.ttl / 40) * (1 - Math.max(0, (b.age - 4)) * 0);
     ctx.save();
     ctx.globalAlpha = Math.min(1, b.ttl / 30);
     // pop-in scale for the first few frames
