@@ -532,4 +532,40 @@ To feel for: is the CPU answerable now, or still too fast? Do the keycaps make
 the input obvious? Try sandbagging a slam (Work while being lifted) — does the
 ugly/dangerous consequence read?
 
+## 2026-07-03 / v0.12 "dot-com" — the WWF.com visual rebuild + sandbag on heavy moves only
+
+Jordan added two WWF.com (2000–2001) reference images to references/ and asked
+for the visual rebuild, plus: the sandbag happens too fast — it should only be
+on heavier moves (spinebuster, finishers), and those should be slower to give
+reaction time.
+
+Done:
+- WWF.COM PAGE REBUILD. The whole HTML shell is now an early-2000s WWF.com
+  parody: scratchy PCW.com logo, a blood-red horizontal nav bar, the cheesy
+  yellow banner-ad strip ("PCW SUPERSTORE… CLICK HERE — NEW!"), content boxes
+  with red-gradient headers for the call sheet + match log, a grey "PCW
+  CORPORATE" footer with period copyright. Black / blood-red / chrome / gold.
+- FONTS OFF IMPACT. Embedded Anton (heavy condensed display, for the logo +
+  headers) and Oswald (condensed, for nav + labels + the in-canvas HUD) as
+  offline base64 — self-contained, no CDN, still opens from disk. The canvas
+  HUD swapped Impact → "Oswald, Impact" everywhere.
+- SANDBAG = HEAVY MOVES ONLY, AND SLOWER. Only big/risk≥2 moves (finishers,
+  spinebuster, landslide) can be sandbagged, and they now lift slowly
+  (SLAM_LIFT_HEAVY 46 vs the normal 16) so there's time to react and decide.
+  Ordinary slams are quick and just taken (no sandbag prompt).
+
+Verified: drove the real app — the page reads as a legit early-2000s wrestling
+site, the canvas HUD is legible in Oswald with the gold keycaps, no console
+errors; CPU-vs-CPU still auto-plays both cards to clean finishes.
+
+DEMO PUSHED: the live site (https://jordanclermont.github.io/pcw/) now shows
+this build — it finally looks like a product, not an experiment.
+
+Roadmap still open (nothing dropped): attacker-side stiff/receipts; real
+per-move animations (the big art pass); heel heat (fuelled by drawn heat vs
+boredom); deeper taunting; sandbag extended to the superplex.
+
+To feel for: does the WWF.com skin land? Is the heavy-move lift now slow enough
+to react to the sandbag window? Any canvas text hard to read in the new font?
+
 ## (next entry goes here)

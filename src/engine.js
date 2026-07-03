@@ -261,7 +261,8 @@
         offScript(w, "dropped " + def.short + " off-script",
           { picture: "slam", role: w.role, base: 8, quality: 0.9 * q, arcSlot: "transition", actor: w }, TRUST.SLAM);
       }
-    }, (sp && sp.big) ? PCW.SELL.BIG : PCW.SELL.MED);   // a finisher demands a long sell
+    }, (sp && sp.big) ? PCW.SELL.BIG : PCW.SELL.MED,      // a finisher demands a long sell
+      !!(sp && (sp.big || sp.risk >= 2)));                // heavy = finisher/spinebuster/landslide: slow lift + sandbaggable
   }
 
   /* put a man DOWN and set how long a GOOD sell of that bump should last.
@@ -278,16 +279,19 @@
   /* a grapple slam with WEIGHT: the attacker locks him up and LIFTS for
      SLAM_LIFT frames, then drives him down with a heavy hit-stop. Makes a
      grapple read as a grapple instead of an instant teleport-to-the-mat. */
-  function beginSlam(atk, def, onImpact, sellFrames) {
+  function beginSlam(atk, def, onImpact, sellFrames, heavy) {
     atk.setState(S.SLAM); def.stop();
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
     def.gx = clampGrid(atk.gx + dx / m * 0.5); def.gy = clampGrid(atk.gy + dy / m * 0.5);
     def.setState(S.LIFTED);
-    G.slam = { atk, def, frame: 0, push: 0.9, onImpact, sell: sellFrames || PCW.SELL.MED, sandbagged: false };
+    // a HEAVY move lifts slowly (time to react) and can be sandbagged; a normal
+    // slam is quick and just gets taken.
+    G.slam = { atk, def, frame: 0, push: 0.9, onImpact, sell: sellFrames || PCW.SELL.MED,
+      heavy: !!heavy, lift: heavy ? F.SLAM_LIFT_HEAVY : F.SLAM_LIFT, sandbagged: false };
   }
   function slamTick() {
     const s = G.slam; s.frame++;
-    if (s.frame < F.SLAM_LIFT) return;
+    if (s.frame < s.lift) return;
     G.slam = null;
     const atk = s.atk, def = s.def, sloppy = s.sandbagged;
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
@@ -721,8 +725,9 @@
       if (sx.step === "LAND") return "LAND IT — " + K("work");
       return null;
     }
-    // being lifted for a slam: cooperate, or fight it (a real SANDBAG)
+    // being lifted for a slam: cooperate, or (on a heavy move) fight it — a SANDBAG
     if (G.slam && G.slam.def === w && w.state === S.LIFTED) {
+      if (!G.slam.heavy) return "TAKE THE SLAM";
       return G.slam.sandbagged ? "GOING DEAD WEIGHT!" : "TAKE IT — or " + K("work") + " to fight it";
     }
     if (G.tieup) {
@@ -921,8 +926,8 @@
       /* WORK button (Y) — context-sensitive cooperation / the job */
       if (pad.just.Y) {
         if (G.superplex && (G.superplex.attacker === w || G.superplex.defender === w)) superplexInput(w);
-        else if (G.slam && G.slam.def === w && w.state === S.LIFTED) {   // fight the lift = SANDBAG
-          if (!G.slam.sandbagged) { G.slam.sandbagged = true; PCW.log(w.short + " fights the lift — going dead weight!", "shoot"); }
+        else if (G.slam && G.slam.def === w && w.state === S.LIFTED) {   // fight the lift = SANDBAG (heavy moves only)
+          if (G.slam.heavy && !G.slam.sandbagged) { G.slam.sandbagged = true; PCW.log(w.short + " fights the lift — going dead weight!", "shoot"); }
         }
         else if (G.tieup && w === G.tieup.controller) controllerPlant(w);
         else if (G.tieup && w === G.tieup.receiver) receiverReverse(w);
@@ -955,7 +960,7 @@
         case S.CLOTHESLINE: if (w.stateFrame >= F.CLOTHESLINE) w.setState(S.IDLE); break;
         case S.WHIP: if (w.stateFrame >= F.WHIP) w.setState(S.IDLE); break;
         case S.SLAM: if (w.stateFrame >= F.SLAM) w.setState(S.IDLE); break;
-        case S.LIFTED: if (w.stateFrame > F.SLAM_LIFT + 30) w.setState(S.IDLE); break;  // safety; normally slamTick drops him
+        case S.LIFTED: if (w.stateFrame > F.SLAM_LIFT_HEAVY + 30) w.setState(S.IDLE); break;  // safety; normally slamTick drops him
         case S.ARM_DRAG: if (w.stateFrame >= F.ARM_DRAG) w.setState(S.IDLE); break;
         case S.BUMP: if (w.stateFrame >= F.BUMP) goDown(w, w.bumpFrom, w.sellExpect || PCW.SELL.MED); break;
         case S.DOWN: handleDown(w, pad); break;   // no auto get-up — the sell/get-up is a CHOICE

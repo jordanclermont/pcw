@@ -81,11 +81,15 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   real SANDBAG built on the slam (Work while being lifted = fight it, attacker
   brute-forces, ugly+dangerous+priced); slower locomotion + wider reversal
   window. Bible §5.13.
-- NEXT (sequenced, nothing dropped): the WWF.com early-2000s visual + font
-  redesign (recommended next — Jordan directs taste, Claude builds it in code;
-  no assets to hand-make); then attacker-side stakes (stiff/receipts/breakdown);
-  real per-move animations (the big art pass); heel heat (fuelled by drawn heat
-  vs boredom); deeper taunting. Publishing: `origin` is set + Pages tracks main,
+- v0.12 "dot-com" — DONE: the page chrome rebuilt as an early-2000s WWF.com
+  throwback (scratchy PCW.com logo, red nav bar, banner ad, content boxes, corp
+  footer) with embedded Anton/Oswald fonts (offline base64, off Impact); the
+  canvas HUD moved to Oswald; sandbag restricted to HEAVY moves which now lift
+  slowly (config FRAMES.SLAM_LIFT_HEAVY). References in references/. Bible §9.
+- NEXT (sequenced, nothing dropped): attacker-side stakes (stiff/receipts/
+  breakdown); real per-move animations (the big art pass); heel heat (fuelled
+  by drawn heat vs boredom); deeper taunting; sandbag on the superplex.
+  Publishing: `origin` is set + Pages tracks main,
   so any push auto-redeploys https://jordanclermont.github.io/pcw/ (~1 min).
   Then the sprite/asset pass (individual PNGs from assets/sprites/, naming:
   stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px

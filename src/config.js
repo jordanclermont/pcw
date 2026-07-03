@@ -9,7 +9,7 @@
   "use strict";
   const PCW = (window.PCW = window.PCW || {});
 
-  PCW.VERSION = "0.06";
+  PCW.VERSION = "0.12";
   PCW.CANVAS = { W: 960, H: 640 };
 
   /* frame windows (60 Hz logic) */
@@ -45,7 +45,8 @@
     TAUNT: 46,             // a taunt pose (play to the crowd)
     /* a grapple slam now has WEIGHT: the attacker locks him up and lifts for
        SLAM_LIFT frames, THEN drives him down with a heavy hit-stop. */
-    SLAM_LIFT: 18,         // lift/hold frames before the slam connects (also the sandbag window)
+    SLAM_LIFT: 16,         // a normal slam: quick lift, no sandbag window
+    SLAM_LIFT_HEAVY: 46,   // a HEAVY move (finisher / spinebuster): slow lift, sandbag window open
     SLAM_HITSTOP: 9        // freeze-frame on the slam impact (weightier than a strike)
   };
 

@@ -7,3 +7,6 @@ Thumbs.db
 
 # Logs / temp
 *.log
+
+# WWF.com reference screenshots — local design refs, not shipped (third-party imagery)
+references/

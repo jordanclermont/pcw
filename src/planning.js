@@ -201,7 +201,7 @@
   /* ---------------- render (Audacity-Era backstage) ---------------- */
   // fonts: condensed block for headers, narrow sans for body, mono for data
   function setFont(size, weight) {
-    const fam = weight === "head" ? "Impact, 'Arial Narrow Bold', sans-serif"
+    const fam = weight === "head" ? "Oswald, Impact, 'Arial Narrow Bold', sans-serif"
       : weight === "mono" ? "'Courier New', monospace"
         : "'Arial Narrow', 'Helvetica Neue', sans-serif";
     CTX.font = (weight === "head" ? "" : weight === "bold" ? "bold " : "") + size + "px " + fam;

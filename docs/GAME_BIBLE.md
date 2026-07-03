@@ -7,6 +7,11 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.8 revisions (Build 0.12): the page chrome rebuilt as an early-2000s WWF.com
+throwback with embedded Anton/Oswald fonts (§9, Jordan's design reference);
+sandbag restricted to HEAVY moves, which now lift slowly for reaction time
+(§5.13). The canvas HUD moved off Impact onto Oswald for cohesion.*
+
 *v1.7 revisions (Build 0.11): corrected terminology (pop-up-early = no-sell) and
 built the real SANDBAG (fight the lift, attacker must brute-force) on the slam;
 CPU now performs deliberately (paced, held lock-ups) so it's answerable; cues
@@ -182,7 +187,7 @@ The single biggest fix to "it's just one guy presses a button, the other presses
 
 This is the first delivery of §2's promise that "the person taking the move is performing just as much as the one delivering it." The attacker-side stakes (a *stiff* you can choose to lay in, receipts, cooperation visibly breaking down) are the next pass.
 
-**Terminology note + the real sandbag (v0.11).** Popping up early is a **no-sell** (under-selling), corrected from the earlier loose use of "sandbag." A **sandbag** is a distinct, separate betrayal: refusing to cooperate *during* a move. Built first on the slam — while you're being lifted you can Work to *fight the lift* (go dead weight); the attacker then has to brute-force it, which makes the move ugly (half the crowd pop), dangerous (a real bump for the taker and a strain on the forcer), and costs trust and a receipt. The cue shows it ("TAKE IT — or [T] to fight it"). The same principle will extend to the superplex and other cooperative lifts.
+**Terminology note + the real sandbag (v0.11, refined v0.12).** Popping up early is a **no-sell** (under-selling), corrected from the earlier loose use of "sandbag." A **sandbag** is a distinct, separate betrayal: refusing to cooperate *during* a move. It exists only on **heavy** moves (finishers, the spinebuster, the landslide — anything big or risk ≥ 2), which now lift **slowly** so you have time to read the beat and decide; ordinary slams are quick and simply taken. While you're being lifted on a heavy move you can Work to *fight the lift* (go dead weight); the attacker then has to brute-force it, which makes the move ugly (half the crowd pop), dangerous (a real bump for the taker and a strain on the forcer), and costs trust and a receipt. The cue shows it only when it applies ("TAKE IT — or [T] to fight it"). The same principle will extend to the superplex and other cooperative lifts.
 
 **Pacing (v0.11).** The CPU performer now works *deliberately* — a beat between its offensive moves and a held lock-up before it slams — so it's readable and answerable instead of rushing. Cues emphasize the literal key as a bright **keycap** so the input to press is unmistakable. Locomotion slowed again and the reversal window widened, all in service of "give the player time to read the beat and decide."
 
@@ -241,6 +246,8 @@ The black-and-white ink style is retired. The new direction is a period parody: 
 **The signature moment.** Replacing the ink splatter: **flashbulbs.** On big pops, camera flashes ripple through the darkened crowd, dozens of white pinpricks firing in waves, scaled to the size of the pop. It is period-perfect, it makes crowd approval visible without any meter, and it turns the audience itself into the game's particle system. Near-falls at high heat should strobe the whole arena.
 
 **Presentation frame.** The match renders as a television broadcast: subtle letterboxing, the PCW watermark, lower-thirds for the performers, a title-match graphic. The planning screen is the inverse: fluorescent-lit backstage realism, a clipboard, a curtain, no glamour. The contrast between the show and the work is the two-audience model expressed visually.
+
+**The page chrome — an early-2000s WWF.com throwback (built v0.12).** The whole HTML shell that frames the canvas is a loving parody of the 2000–2001 WWF.com website (Jordan's reference, his design call): a scratchy **PCW.com** logo, a blood-red horizontal nav bar (NEWS · THE MATCH · THE CARD · MATCH LOG · HOW TO PLAY · SHOP-ZONE), a cheesy yellow banner-ad strip, content boxes with red-gradient headers for the call sheet and match log, and a grey "PCW CORPORATE" footer with the period copyright. Palette: black, blood red, chrome silver, bone white, a little gold. Typography moved off the cliché of Impact: **Anton** (heavy condensed display) for the logo/headers and **Oswald** (condensed) for nav, labels, and the in-canvas HUD — both embedded as offline base64 so the page stays self-contained and needs no network. Process note: Jordan directs the taste/references; the look is rebuilt in code (HTML/CSS/canvas), no hand-made assets.
 
 **Parody discipline.** Evoke the era, never the trademarks. Invented logos, invented event names, invented iconography adjacent to the references. The joke is the register, not the assets.
 

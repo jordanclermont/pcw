@@ -329,7 +329,7 @@
 
       // booing overlay
       if (this.booTimer > 0) {
-        ctx.font = "bold 15px Impact"; ctx.fillStyle = "rgba(230,235,250,.7)";
+        ctx.font = "bold 15px Oswald, Impact"; ctx.fillStyle = "rgba(230,235,250,.7)";
         for (let i = 0; i < 4; i++) {
           ctx.save();
           ctx.translate(120 + i * 220 + Math.sin(rf * .2 + i) * 6, 62 + ((i * 37) % 40));

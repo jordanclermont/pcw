@@ -96,7 +96,7 @@
     }
     CTX.save(); CTX.translate((c2[0] + c3[0]) / 2, (c2[1] + c3[1]) / 2 + 24);
     CTX.rotate(Math.atan2(c3[1] - c2[1], c3[0] - c2[0]));
-    CTX.font = "bold 22px Impact"; CTX.textAlign = "center"; CTX.fillStyle = "#e7e1d3";
+    CTX.font = "bold 22px Oswald, Impact"; CTX.textAlign = "center"; CTX.fillStyle = "#e7e1d3";
     CTX.fillText("P C W", 0, 0); CTX.restore();
     // mat (spotlit)
     CTX.save();
@@ -132,7 +132,7 @@
       case S.SPX_THROW: return Math.max(0, 72 - sf * 5);
       case S.SPX_RECEIVE: return Math.min(64, sf * 2.6);
       case S.BUMP: return Math.sin(Math.min(Math.PI, sf * 0.18)) * 18;
-      case S.LIFTED: return 22 + Math.min(F.SLAM_LIFT, sf) * 0.7;   // scooped up off the mat
+      case S.LIFTED: return 22 + Math.min(30, sf) * 0.7;   // scooped up off the mat
       default: return 0;
     }
   }
@@ -291,14 +291,14 @@
   }
 
   function nameplate(w, x, y) {
-    CTX.font = "bold 10px Impact"; CTX.textAlign = "center";
+    CTX.font = "bold 10px Oswald, Impact"; CTX.textAlign = "center";
     CTX.strokeStyle = "rgba(0,0,0,.75)"; CTX.lineWidth = 3;
     CTX.strokeText(w.short, x, y + 6); CTX.fillStyle = barCol(w); CTX.fillText(w.short, x, y + 6);
   }
 
   function drawPrompt(x, y, text, accent) {
     CTX.save(); CTX.translate(x, y); CTX.rotate(Math.sin(G.renderFrame * 0.3) * 0.06);
-    CTX.font = "bold 21px Impact"; CTX.textAlign = "center";
+    CTX.font = "bold 21px Oswald, Impact"; CTX.textAlign = "center";
     CTX.strokeStyle = "rgba(0,0,0,.7)"; CTX.lineWidth = 4; CTX.strokeText(text, 0, 0);
     CTX.fillStyle = accent || "#fff"; CTX.fillText(text, 0, 0); CTX.restore();
   }
@@ -308,7 +308,7 @@
      clear rows, so they never overlap each other or smear over the crowd. */
   function meterRow(lx, bx, y, bw, label, val, fill, labelCol) {
     const h = 12;
-    CTX.font = "bold 11px Impact"; CTX.textAlign = "left"; CTX.textBaseline = "middle";
+    CTX.font = "bold 11px Oswald, Impact"; CTX.textAlign = "left"; CTX.textBaseline = "middle";
     CTX.fillStyle = labelCol || "#d8dbe0"; CTX.fillText(label, lx, y + h / 2);
     CTX.fillStyle = "rgba(0,0,0,.55)"; CTX.fillRect(bx, y, bw, h);
     CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 1.5; CTX.strokeRect(bx, y, bw, h);
@@ -334,7 +334,7 @@
     CTX.strokeStyle = "#0b0c0f"; CTX.lineWidth = 2.4; CTX.strokeRect(x, y, wd, ht);
     const fill = Math.max(0, wd * (val / 100) - 4);
     CTX.fillStyle = accent; CTX.fillRect(x + 2, y + 2, fill, ht - 4);
-    CTX.fillStyle = labelColor || "#d8dbe0"; CTX.font = "bold 11px Impact"; CTX.textAlign = "left";
+    CTX.fillStyle = labelColor || "#d8dbe0"; CTX.font = "bold 11px Oswald, Impact"; CTX.textAlign = "left";
     CTX.fillText(label, x, y - 4);
   }
   function starText(s) {
@@ -376,10 +376,10 @@
       const s = G.P1, x = isoX(s.gx, s.gy), y = isoY(s.gx, s.gy) - 118;
       const pulse = 0.65 + 0.35 * Math.sin(rf * 0.22);
       CTX.save(); CTX.globalAlpha = pulse; CTX.textAlign = "center";
-      CTX.fillStyle = "#ffd27a"; CTX.font = "bold 18px Impact";
+      CTX.fillStyle = "#ffd27a"; CTX.font = "bold 18px Oswald, Impact";
       CTX.strokeStyle = "rgba(0,0,0,.55)"; CTX.lineWidth = 3;
       CTX.strokeText("FIRE UP!", x, y); CTX.fillText("FIRE UP!", x, y);
-      CTX.font = "bold 22px Impact";
+      CTX.font = "bold 22px Oswald, Impact";
       CTX.strokeText("▼", x, y + 16); CTX.fillText("▼", x, y + 16);
       CTX.restore();
     }
@@ -392,7 +392,7 @@
       CTX.lineWidth = 3; CTX.strokeStyle = "rgba(255,210,120," + pulse.toFixed(2) + ")";
       CTX.strokeRect(bx - 235, by - 30, 470, 62);
       CTX.textAlign = "center";
-      CTX.fillStyle = "#ffd27a"; CTX.font = "bold 23px Impact";
+      CTX.fillStyle = "#ffd27a"; CTX.font = "bold 23px Oswald, Impact";
       CTX.fillText("♪ " + hj.label + "! ♪", bx, by - 6);
       CTX.fillStyle = "#f4efe2"; CTX.font = "12px 'Courier New'";
       CTX.fillText(hj.hint, bx, by + 11);
@@ -403,7 +403,7 @@
       if (hj.target) {
         const w = hj.target === "p1" ? G.P1 : G.P2;
         const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy) - 116 + Math.sin(rf * 0.2) * 4;
-        CTX.save(); CTX.textAlign = "center"; CTX.font = "bold 26px Impact";
+        CTX.save(); CTX.textAlign = "center"; CTX.font = "bold 26px Oswald, Impact";
         CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3; CTX.fillStyle = "#ffd27a";
         CTX.strokeText("▼", x, y); CTX.fillText("▼", x, y);
         CTX.restore();
@@ -413,7 +413,7 @@
     for (const fl of crowd.floaters) {
       const a = 1 - fl.age / fl.life;
       CTX.save(); CTX.globalAlpha = Math.max(0, a); CTX.textAlign = "center";
-      CTX.font = "bold " + fl.size + "px Impact";
+      CTX.font = "bold " + fl.size + "px Oswald, Impact";
       CTX.strokeStyle = "rgba(0,0,0,.6)"; CTX.lineWidth = 3.5;
       CTX.strokeText(fl.text, fl.x, fl.y);
       CTX.fillStyle = fl.color; CTX.fillText(fl.text, fl.x, fl.y);
@@ -438,7 +438,7 @@
 
     if (match.trustFlash) {
       const tf = match.trustFlash, a = Math.min(1, tf.t / 55);
-      CTX.save(); CTX.globalAlpha = a; CTX.textAlign = "left"; CTX.font = "bold 15px Impact";
+      CTX.save(); CTX.globalAlpha = a; CTX.textAlign = "left"; CTX.font = "bold 15px Oswald, Impact";
       CTX.fillStyle = tf.delta < 0 ? "#ff4d4d" : "#5fd07a";
       const rise = (55 - tf.t) * 0.35;
       CTX.strokeStyle = "rgba(0,0,0,.5)"; CTX.lineWidth = 3;
@@ -454,7 +454,7 @@
      stacked (tie-up, corner, pin) the chips never share a lane. A coloured
      name tab makes ownership unambiguous, and the chip is clamped to stay on
      the canvas even at the top or bottom rope. */
-  const CUE_TXT = "bold 17px Impact", CUE_KEY = "bold 18px Impact";
+  const CUE_TXT = "bold 17px Oswald, Impact", CUE_KEY = "bold 18px Oswald, Impact";
   function cueTokens(t) { return t.split(/(\[[^\]]+\])/).filter(s => s.length); }
   function tokenWidth(tok) {
     const key = tok.match(/^\[(.+)\]$/);
@@ -487,7 +487,7 @@
       CTX.fillStyle = "rgba(9,11,15,.96)"; CTX.fillRect(px, py, pw, ph);
       CTX.lineWidth = 2.5; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
       // name tab
-      CTX.font = "bold 10px Impact"; CTX.textAlign = "left"; CTX.textBaseline = "alphabetic";
+      CTX.font = "bold 10px Oswald, Impact"; CTX.textAlign = "left"; CTX.textBaseline = "alphabetic";
       const ntw = CTX.measureText(w.short).width + 10;
       CTX.fillStyle = col; CTX.fillRect(px, py - 13, ntw, 13);
       CTX.fillStyle = "#0b0c0f"; CTX.fillText(w.short, px + 5, py - 3.5);
@@ -545,12 +545,12 @@
     CTX.fillStyle = "#c1121f"; CTX.fillRect(0, H - 58, W, 2);
     CTX.textAlign = "center";
     if (match.phase === "MATCH" && sp) {
-      CTX.fillStyle = "#fff"; CTX.font = "bold 15px Impact";
+      CTX.fillStyle = "#fff"; CTX.font = "bold 15px Oswald, Impact";
       CTX.fillText("SPOT " + (match.spot + 1) + "/" + match.script.length + " — " + sp.name, W / 2, H - 38);
       CTX.fillStyle = LT; CTX.font = "italic 12px 'Courier New'";
       CTX.fillText("“" + sp.promo + "”", W / 2, H - 20);
     } else if (match.phase === "MATCH") {
-      CTX.fillStyle = "#fff"; CTX.font = "bold 13px Impact"; CTX.fillText("SHEET COMPLETE — GO HOME", W / 2, H - 30);
+      CTX.fillStyle = "#fff"; CTX.font = "bold 13px Oswald, Impact"; CTX.fillText("SHEET COMPLETE — GO HOME", W / 2, H - 30);
     }
     CTX.restore();
 
@@ -575,7 +575,7 @@
     }
     if (G.pin && G.pin.count >= 1) {   // the ref's count — a big clean number
       CTX.save(); CTX.translate(W / 2, H / 2 - 40); CTX.rotate(-0.03);
-      CTX.font = "bold 76px Impact"; CTX.textAlign = "center";
+      CTX.font = "bold 76px Oswald, Impact"; CTX.textAlign = "center";
       CTX.strokeStyle = "rgba(0,0,0,.7)"; CTX.lineWidth = 6;
       const s = String(G.pin.count) + "!";
       CTX.strokeText(s, 0, 0); CTX.fillStyle = "#fff"; CTX.fillText(s, 0, 0); CTX.restore();
@@ -583,7 +583,7 @@
     if (crowd.stamp) {
       CTX.save(); CTX.translate(W / 2 + ((crowd.stamp.t * 13) % 60) - 30, 120);
       CTX.rotate(crowd.stamp.big ? -0.08 : 0.05);
-      CTX.font = "bold " + (crowd.stamp.big ? 34 : 20) + "px Impact"; CTX.textAlign = "center";
+      CTX.font = "bold " + (crowd.stamp.big ? 34 : 20) + "px Oswald, Impact"; CTX.textAlign = "center";
       CTX.globalAlpha = Math.min(1, crowd.stamp.t / 12);
       CTX.strokeStyle = "rgba(0,0,0,.6)"; CTX.lineWidth = 4;
       CTX.strokeText(crowd.stamp.text, 0, 0);
@@ -592,7 +592,7 @@
     }
     if (G.slowmo) {
       CTX.save(); CTX.translate(W / 2, 100); CTX.rotate(-0.04);
-      CTX.font = "bold 15px Impact"; CTX.textAlign = "center"; CTX.fillStyle = LT;
+      CTX.font = "bold 15px Oswald, Impact"; CTX.textAlign = "center"; CTX.fillStyle = LT;
       CTX.fillText("◼ SLOW-MO ◼", 0, 0); CTX.restore();
     }
 
@@ -606,13 +606,13 @@
       CTX.strokeStyle = "#16130e"; CTX.lineWidth = 3; CTX.strokeRect(W / 2 - 280, H / 2 - 120, 560, 220);
       CTX.strokeRect(W / 2 - 274, H / 2 - 114, 548, 208);
       CTX.textAlign = "center"; CTX.fillStyle = "#16130e";
-      CTX.font = "bold 20px Impact"; CTX.fillText("THE PCW OBSERVER — MATCH RATING", W / 2, H / 2 - 84);
-      CTX.font = "bold 52px Impact"; CTX.fillText(starText(e.stars), W / 2, H / 2 - 24);
+      CTX.font = "bold 20px Oswald, Impact"; CTX.fillText("THE PCW OBSERVER — MATCH RATING", W / 2, H / 2 - 84);
+      CTX.font = "bold 52px Oswald, Impact"; CTX.fillText(starText(e.stars), W / 2, H / 2 - 24);
       CTX.font = "12px 'Courier New'";
       CTX.fillText("finish: " + e.type + "  ·  avg heat " + e.avg + "  ·  botches " + match.botches + "  ·  shoots " + match.shoots, W / 2, H / 2 + 8);
       CTX.font = "13px 'Courier New'";
       wrapText(e.blurb, W / 2, H / 2 + 36, 500, 18);
-      CTX.font = "bold 13px Impact"; CTX.fillText("PRESS R TO RUN IT BACK", W / 2, H / 2 + 78);
+      CTX.font = "bold 13px Oswald, Impact"; CTX.fillText("PRESS R TO RUN IT BACK", W / 2, H / 2 + 78);
       CTX.restore();
     }
   }

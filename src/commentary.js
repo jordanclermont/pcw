@@ -92,7 +92,7 @@
     ctx.moveTo(tx - 7, y + M.boxH - 1); ctx.lineTo(tx + 7, y + M.boxH - 1); ctx.lineTo(tx, y + M.boxH + 11);
     ctx.closePath(); ctx.fillStyle = "#f4efe2"; ctx.fill(); ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5; ctx.stroke();
     // speaker tag
-    ctx.font = "bold 10px Impact"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.font = "bold 10px Oswald, Impact"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "#111"; ctx.fillRect(x + PAD, y + 6, ctx.measureText(V.name).width + 8, 12);
     ctx.fillStyle = V.accent === "#e7e1d3" ? "#fff" : V.accent;
     ctx.fillText(V.name, x + PAD + 4, y + 15);
