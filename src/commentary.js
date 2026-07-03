@@ -65,43 +65,40 @@
     return lines;
   }
 
-  function drawBubble(ctx, b, voice) {
-    const V = VOICES[voice];
-    const pad = 9, lh = 15, bw = 250;
+  const PAD = 9, LH = 15, BW = 250;
+  function measure(ctx, b) {
     ctx.font = "13px 'Arial Narrow', 'Helvetica Neue', sans-serif";
-    const lines = wrap(ctx, b.text, bw - pad * 2);
-    const innerW = Math.min(bw - pad * 2, Math.max(60, ...lines.map(l => ctx.measureText(l).width)));
-    const boxW = innerW + pad * 2, boxH = lines.length * lh + pad * 2 + 8;
-    // anchor at the bottom corners, above the body/respect gauges and clear
-    // of the ring centre, so the two bubbles can never collide.
-    const anchorY = H - 106;                        // bubble bottom sits here
-    const x = V.side === "L" ? 24 : W - 24 - boxW;
-    const y = anchorY - boxH;
+    const lines = wrap(ctx, b.text, BW - PAD * 2);
+    const innerW = Math.min(BW - PAD * 2, Math.max(60, ...lines.map(l => ctx.measureText(l).width)));
+    return { lines, boxW: innerW + PAD * 2, boxH: lines.length * LH + PAD * 2 + 8 };
+  }
+
+  /* draw a bubble horizontally centred on cx with its BOTTOM at bottomY, tail
+     pointing down — commentary rises from the bottom middle of the screen,
+     clear of the corner health/respect bars. */
+  function drawBubbleAt(ctx, b, voice, cx, bottomY, M) {
+    const V = VOICES[voice];
+    const x = Math.round(cx - M.boxW / 2), y = bottomY - M.boxH;
     ctx.save();
     ctx.globalAlpha = Math.min(1, b.ttl / 30);
-    // pop-in scale for the first few frames
-    if (b.age < 6) {
-      const s = 0.7 + 0.3 * (b.age / 6);
-      ctx.translate(x + boxW / 2, y + boxH); ctx.scale(s, s); ctx.translate(-(x + boxW / 2), -(y + boxH));
-    }
-    // bubble body (comic cream with a hard black outline)
-    roundRect(ctx, x, y, boxW, boxH, 8);
+    if (b.age < 6) { const s = 0.7 + 0.3 * (b.age / 6); ctx.translate(x + M.boxW / 2, bottomY); ctx.scale(s, s); ctx.translate(-(x + M.boxW / 2), -bottomY); }
+    // bubble body
+    roundRect(ctx, x, y, M.boxW, M.boxH, 8);
     ctx.fillStyle = "#f4efe2"; ctx.fill();
     ctx.lineWidth = 2.5; ctx.strokeStyle = "#111"; ctx.stroke();
-    // tail pointing down toward the desk/ringside
-    const tx = V.side === "L" ? x + 26 : x + boxW - 26;
+    // downward tail from the bubble's centre
+    const tx = x + M.boxW / 2;
     ctx.beginPath();
-    ctx.moveTo(tx - 7, y + boxH - 1); ctx.lineTo(tx + 7, y + boxH - 1);
-    ctx.lineTo(V.side === "L" ? tx - 4 : tx + 4, y + boxH + 12); ctx.closePath();
-    ctx.fillStyle = "#f4efe2"; ctx.fill(); ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.moveTo(tx - 7, y + M.boxH - 1); ctx.lineTo(tx + 7, y + M.boxH - 1); ctx.lineTo(tx, y + M.boxH + 11);
+    ctx.closePath(); ctx.fillStyle = "#f4efe2"; ctx.fill(); ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5; ctx.stroke();
     // speaker tag
     ctx.font = "bold 10px Impact"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "#111"; ctx.fillRect(x + pad, y + 6, ctx.measureText(V.name).width + 8, 12);
+    ctx.fillStyle = "#111"; ctx.fillRect(x + PAD, y + 6, ctx.measureText(V.name).width + 8, 12);
     ctx.fillStyle = V.accent === "#e7e1d3" ? "#fff" : V.accent;
-    ctx.fillText(V.name, x + pad + 4, y + 15);
+    ctx.fillText(V.name, x + PAD + 4, y + 15);
     // text
     ctx.fillStyle = "#14161a"; ctx.font = "13px 'Arial Narrow', 'Helvetica Neue', sans-serif";
-    lines.forEach((l, i) => ctx.fillText(l, x + pad, y + pad + 20 + i * lh));
+    M.lines.forEach((l, i) => ctx.fillText(l, x + PAD, y + PAD + 20 + i * LH));
     ctx.restore();
   }
 
@@ -116,8 +113,17 @@
   }
 
   function draw(ctx) {
-    if (state.pbp) drawBubble(ctx, state.pbp, "pbp");
-    if (state.color) drawBubble(ctx, state.color, "color");
+    // stack from the bottom middle upward: play-by-play low (primary), colour
+    // above it. Both centred, well clear of the bottom-corner body/respect bars.
+    const stack = [];
+    if (state.pbp) stack.push({ b: state.pbp, v: "pbp" });
+    if (state.color) stack.push({ b: state.color, v: "color" });
+    let bottomY = H - 70;
+    for (const it of stack) {
+      const M = measure(ctx, it.b);
+      drawBubbleAt(ctx, it.b, it.v, W / 2, bottomY, M);
+      bottomY -= (M.boxH + 10);
+    }
   }
 
   PCW.Commentary = { reset, say, update, draw };

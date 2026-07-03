@@ -350,4 +350,51 @@ To feel for:
 - Does whipping a man to the corner feel reliable now?
 - Any planning text still clipping?
 
+## 2026-07-03 / v0.08 — solo play (CPU performer), UI cleanup, no more end-shake
+
+From Jordan's 0.07 play: cues are great now, corner whip feels good, fine with
+the extra inputs being hidden — but (a) that hidden-input info should live in a
+controls section, (b) put the controls right under the gameplay area and leave
+only the call sheet + a renamed "Match Log" on the right, (c) commentary was
+covering the health bars — move it to the bottom middle, (d) the screen keeps
+shaking on the results screen (annoying), and (e) it's hard to play both
+characters while testing — automate one side.
+
+Done:
+- CONTROLS moved to a card directly under the ring; it now documents the full
+  toolbox behind the cues (grab = tie-up/cover/climb; in a tie-up push to whip
+  or Work to slam; grab to spin out; run into a strike = clothesline; taunt).
+  The right rail is now just TONIGHT'S CALL SHEET and MATCH LOG (renamed).
+- COMMENTARY now rises from the bottom-centre (play-by-play low, colour above),
+  well clear of the corner health/respect bars — no more overlap.
+- RESULTS-SCREEN SHAKE removed. It was frozen because the logic loop stops
+  ticking once the match ends, so the last screen-shake never decayed; now the
+  shake (and strobe/flashbulbs) are zeroed on match end and the renderer never
+  shakes an ended match.
+- CPU PERFORMER (the big one): press 1 to hand STOVE to the CPU, 2 for THE
+  BOULDER (a "· CPU" tag shows on that wrestler's body bar). Play the other
+  side and feel a real partner. It's cooperative, not an opponent — it does its
+  job (calls its spots, whips to corners, goes up top, takes bumps, sells,
+  kicks out on cue, reverses in the window, works the superplex beats) and
+  never shoots. It plays through the normal pad, so it obeys the same rules and
+  timing. Book solo with a preset card (a couple of keypresses); a
+  planning-screen CPU is a later nicety.
+
+Verified headless: both sides on CPU auto-play full matches (both preset bodies)
+to clean 5★ finishes, every recipe firing, no runtime errors; end-of-match
+transients confirmed zeroed. NOT verifiable without you: whether the CPU *feels*
+like a competent partner to perform with (does it get into position naturally,
+is its timing convincing, does it ever look dumb), and whether the new controls-
+below / log-right layout reads well. That's this playtest.
+
+To feel for:
+- Play a full match with the other side on CPU. Does it feel like performing
+  WITH someone? Where does the CPU look wrong or leave you waiting?
+- One deliberate CPU behaviour to sanity-check: when the CPU is the caller of
+  the arm-drag (its partner must reverse), it WAITS for you rather than forcing
+  a botch. If you don't reverse, that spot won't advance — is that the right
+  call, or should it eventually just take the bump itself?
+- Is the controls-under-ring / call-sheet+log-right layout comfortable?
+- Anything still overlapping (commentary, cues, meters)?
+
 ## (next entry goes here)

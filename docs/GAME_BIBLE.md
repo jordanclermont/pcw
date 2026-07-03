@@ -7,6 +7,12 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.4 revisions (Build 0.08): added the CPU performer for solo play/testing
+(§5.12); commentary bubbles now rise from the bottom-centre, clear of the
+health bars (§5.9); plus UI/bugfix work not needing bible changes (controls
+moved below the ring, right rail is call sheet + Match Log, the frozen
+end-of-match shake removed).*
+
 *v1.3 revisions (Build 0.07): the cue grammar is now a hard rule (§5.3) —
 plain wrestling language plus the literal key, "work"/"plant" banned from
 screen, fixed above/below cue lanes; the corner-whip assist and its miss
@@ -126,7 +132,7 @@ The ref is a character with a trust ledger of their own, and their behaviour is 
 
 ### 5.9 Commentary (built, v0.06)
 
-Built as designed: two voices — play-by-play (CHET) and colour (DUTCH, a grizzled ex-wrestler) — presented as comic-style speech bubbles at ringside, not scrolling text. Each voice shows only its latest line and lines are short and auto-truncated, so an overstuffed bubble never stops reading as a bubble. This keeps commentary diegetic, in keeping with the Audacity Era presentation. The engine feeds it: the bell, big moves, near-falls, reversals, the shocking kick-out, the finish. It is meta-guidance as well as flavour and is free to drift from the backstage log — the log stays a debug-facing technical readout; commentary is what the player actually reads. Still to come: kayfabe out-of-position hints and a fuller line library (names and desk art are placeholders).
+Built as designed: two voices — play-by-play (CHET) and colour (DUTCH, a grizzled ex-wrestler) — presented as comic-style speech bubbles, not scrolling text. They rise from the bottom-centre of the broadcast (play-by-play low, colour stacked above), deliberately clear of the corner health/respect bars so they never cover a meter. Each voice shows only its latest line and lines are short and auto-truncated, so an overstuffed bubble never stops reading as a bubble. This keeps commentary diegetic, in keeping with the Audacity Era presentation. The engine feeds it: the bell, big moves, near-falls, reversals, the shocking kick-out, the finish. It is meta-guidance as well as flavour and is free to drift from the backstage log — the log stays a debug-facing technical readout; commentary is what the player actually reads. Still to come: kayfabe out-of-position hints and a fuller line library (names and desk art are placeholders).
 
 ### 5.10 Movement and the ring as real space (ADOPTED as the main engine, v0.06)
 
@@ -144,6 +150,10 @@ Outside-the-ring brawling is the next extension of the same boundary logic and i
 ### 5.11 The taunt (built, v0.06)
 
 Each performer has a taunt (its own button, distinct from Work). A taunt is always legitimate crowd work — never a shoot — and it is the verb for *playing to the room* between spots. A face taunt pops the crowd; a heel taunt draws heat and banks resentment toward the comeback (the same engine that pays off a long heel-control segment). Either can answer a live hijack chant, which is where a taunt earns Respect. It is deliberately cheap in heat and rate-limited by its own animation, so it flavours the pacing without becoming a heat farm — the crowd's decay and finite belief keep it honest. It fills the gap the playtest notes flagged between "throw a move" and "hit a finisher," and gives the crowd something to request.
+
+### 5.12 The CPU performer (solo play & testing, built v0.08)
+
+Two people at one keyboard is a real barrier to feeling the match, so either side can be handed to a **CPU performer** (press 1 for Stove, 2 for The Boulder; on-screen "· CPU" tag on that wrestler's body bar). This is emphatically **not an opponent to beat** — that would violate anti-goal #1. PCW is a co-operative performance, so the CPU does its *job*: it closes distance, calls its own booked spots (ties up and slams, whips to a corner and stomps, goes up top for the superplex), takes its bumps, sells on cue, kicks out on the booked near-fall, reverses the arm drag inside the window, and works the superplex beats — and it **never shoots**. It plays entirely through the normal pad (a synthetic movement axis plus the same just-pressed button flags a human generates), so it obeys the exact same rules, timing windows, and two-audience pricing; nothing is special-cased for it. When the CPU is the *caller* of a spot its partner must answer (the arm-drag reversal), it deliberately waits rather than forcing a botch — cooperation over completion. Verified by both sides on CPU auto-playing full matches to a clean finish in the headless harness. (Booking is still done by the player; the preset cards make solo booking a couple of keypresses. A planning-screen CPU is a later nicety.)
 
 ---
 

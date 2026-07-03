@@ -31,6 +31,7 @@
     }
     held(n) { return keysDown.has(this.map[n]); }
     axis() {
+      if (this.aiAxis) return this.aiAxis;   // a CPU performer drives movement here
       let sx = 0, sy = 0;
       if (this.held("up")) sy -= 1; if (this.held("down")) sy += 1;
       if (this.held("left")) sx -= 1; if (this.held("right")) sx += 1;

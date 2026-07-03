@@ -582,6 +582,11 @@
     const match = G.match, crowd = G.crowd;
     if (match.phase !== "MATCH") return;
     match.phase = "ENDED";
+    // the logic loop stops ticking once ENDED, so any live visual transient
+    // would FREEZE on the results screen (a permanent shake was the worst
+    // offender). Calm them all here so the rating card sits still.
+    G.shake = 0;
+    crowd.strobe = 0; crowd.popTimer = 0; crowd.booTimer = 0; crowd.flashes = [];
     const avg = crowd.avgHeat();
     let stars = avg / 18 - match.botches * 0.6 - match.shoots * 0.4;
     if (match.trust >= 80) stars += 0.5;
@@ -684,6 +689,104 @@
   PCW.cueText = cueText;
 
   /* ============================================================
+     CPU PERFORMER — a cooperative AI that plays one side's ROLE in
+     the booked match, so the game can be tested (and played) solo.
+     PCW is a co-op performance, not a fight, so the CPU does its JOB:
+     it calls its own spots, closes distance, takes its bumps, sells
+     on cue, kicks out on the booked near-fall, reverses in the window,
+     and works the superplex beats. It never shoots. It drives its
+     wrestler by writing the same pad the keyboard would — a synthetic
+     axis (Pad.aiAxis) for movement and the just-pressed flags for
+     buttons — so it runs through the exact same rules as a human.
+     ============================================================ */
+  const AI = { control: { p1: false, p2: false } };
+  const aiStrikeable = w => w.state === S.IDLE || w.state === S.WALK || w.state === S.RUN || w.state === S.HITSTUN || w.state === S.CORNER;
+  function aiNearestCorner(w) {
+    let best = PCW.CORNERS[0], bd = Infinity;
+    for (const c of PCW.CORNERS) { const d = Math.hypot(w.gx - c.gx, w.gy - c.gy); if (d < bd) { bd = d; best = c; } }
+    return best;
+  }
+  function aiDecide(me, foe) {
+    const cmd = { ax: 0, ay: 0, A: false, B: false, X: false, Y: false };
+    const m = G.match; if (!m || m.phase !== "MATCH") return cmd;
+    const approach = (tx, ty, stop) => { const dx = tx - me.gx, dy = ty - me.gy, d = Math.hypot(dx, dy); if (d > (stop || 1.2)) { cmd.ax = dx / d; cmd.ay = dy / d; } };
+
+    /* live cooperative reactions, independent of whose spot it is */
+    if (G.sellWin && G.sellWin.defender === me) { cmd.Y = true; return cmd; }        // sell on cue
+    if (G.pin && G.pin.defender === me) {
+      if (G.pin.steal) cmd.Y = true;   // fight out of a stolen pin; win = stay down; booked kick-out auto-resolves at two
+      return cmd;
+    }
+    if (G.superplex) {
+      const sx = G.superplex, F = PCW.FRAMES;
+      if (sx.step === "POSITION" && sx.defender === me && sx.frame >= F.SPX_POS_OPEN) cmd.Y = true;
+      else if (sx.step === "THROW" && sx.attacker === me && sx.frame >= F.SPX_THROW_OPEN) cmd.Y = true;
+      else if (sx.step === "LAND" && sx.frame >= F.SPX_LAND_OPEN) cmd.Y = true;
+      return cmd;
+    }
+    if (G.tieup) {
+      const t = G.tieup;
+      if (t.reversalSpot) { if (t.receiver === me && t.frame >= 6) cmd.Y = true; return cmd; }   // reverse in-window
+      if (t.controller === me) {
+        const sp0 = spot(), cornerWanted = sp0 && (sp0.corner || sp0.sequence === "superplex") && sp0.caller === me.id;
+        if (cornerWanted) { const c = aiNearestCorner(foe); const dx = c.gx - foe.gx, dy = c.gy - foe.gy, d = Math.hypot(dx, dy) || 1; cmd.ax = dx / d; cmd.ay = dy / d; }
+        else cmd.Y = true;   // slam out of the tie-up
+      }
+      return cmd;   // receiver in a plain tie-up just takes the bump
+    }
+
+    /* spot-driven behaviour when free */
+    const sp = spot(); if (!sp) return cmd;
+    const kind = performKind(sp), caller = wrestlerById(sp.caller), def = defenderOf(sp);
+    if (me === caller) {
+      switch (kind) {
+        case "PLANT": case "REVERSAL":
+          approach(foe.gx, foe.gy, 1.25);
+          if (foe.free() && me.distTo(foe) <= 1.4) cmd.B = true;
+          break;
+        case "STRIKES":
+          approach(foe.gx, foe.gy, 1.3);
+          if (me.distTo(foe) <= 1.4 && aiStrikeable(foe)) cmd.A = true;
+          break;
+        case "CORNER_STRIKES":
+          if (!PCW.atCorner(def)) { approach(foe.gx, foe.gy, 1.25); if (foe.free() && me.distTo(foe) <= 1.4) cmd.B = true; }
+          else { approach(def.gx, def.gy, 1.4); if (me.distTo(def) <= 1.5 && aiStrikeable(def)) cmd.A = true; }
+          break;
+        case "SUPERPLEX":
+          if (def.state !== S.CORNER) { approach(foe.gx, foe.gy, 1.25); if (foe.free() && me.distTo(foe) <= 1.4) cmd.B = true; }
+          else { approach(def.gx, def.gy, 1.6); if (me.distTo(def) <= 1.85) cmd.B = true; }
+          break;
+        case "PIN":
+          approach(foe.gx, foe.gy, 0.6);
+          if ((foe.state === S.DOWN || foe.state === S.GETUP) && me.distTo(foe) < 1.6) cmd.B = true;
+          break;
+      }
+      return cmd;
+    }
+    // receiving side: stay reachable so the human can tie up / whip / strike;
+    // the actual bump/sell/kick-out is handled by the live-reaction branches.
+    approach(foe.gx, foe.gy, 1.5);
+    return cmd;
+  }
+  AI.drive = function () {
+    for (const id of ["p1", "p2"]) {
+      const pad = G.pads[id]; if (!pad) continue;
+      if (!AI.control[id]) { pad.aiAxis = null; continue; }
+      const me = id === "p1" ? G.P1 : G.P2, foe = id === "p1" ? G.P2 : G.P1;
+      const cmd = aiDecide(me, foe);
+      pad.aiAxis = { gx: cmd.ax || 0, gy: cmd.ay || 0 };
+      pad.just.A = cmd.A; pad.just.B = cmd.B; pad.just.X = cmd.X; pad.just.Y = cmd.Y;
+    }
+  };
+  AI.toggle = function (id) {
+    AI.control[id] = !AI.control[id];
+    const who = id === "p1" ? "STOVE" : "BOULDER";
+    PCW.log(who + (AI.control[id] ? " is now a CPU performer." : " is back on manual."), "ok");
+    if (PCW.Commentary) PCW.Commentary.say("color", (id === "p1" ? "Stove Hot" : "The Boulder") + (AI.control[id] ? " is on autopilot tonight, folks." : " is back in his own hands."));
+  };
+  PCW.AI = AI;
+
+  /* ============================================================
      LOGIC TICK — fixed 60 Hz
      ============================================================ */
   function logicTick() {
@@ -692,6 +795,7 @@
     const justSet = PCW.drainPresses();
     G.pads.p1.beginTick(justSet); G.pads.p2.beginTick(justSet);
     if (G.match.phase === "ENDED") return;
+    AI.drive();   // any CPU-controlled side overrides its pad before the rules run
 
     G.crowd.update();
     if (PCW.Commentary) PCW.Commentary.update();
@@ -772,6 +876,8 @@
   /* ---------------- meta keys + main loop ---------------- */
   addEventListener("keydown", e => {
     if (e.code === "Space" && !e.repeat) G.slowmo = !G.slowmo;
+    if (e.code === "Digit1" && !e.repeat) AI.toggle("p1");   // hand STOVE to the CPU
+    if (e.code === "Digit2" && !e.repeat) AI.toggle("p2");   // hand THE BOULDER to the CPU
     if (e.code === "KeyR" && !e.repeat) {
       if (G.appPhase === "MATCH" && G.match && G.match.phase === "ENDED") PCW.Planning.reset();
       else if (G.appPhase === "PLANNING") PCW.Planning.reset();

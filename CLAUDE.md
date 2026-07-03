@@ -61,8 +61,13 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   "plant" banned from screen); cues in fixed above/below lanes with name tags,
   clamped on-screen; corner-whip assist (aim-toward-post, 80%→100% capture)
   with miss feedback; planning-screen text measured so it can't overrun panels.
-- NEXT — continued feel/tuning pass from Jordan's 0.07 playtest (do the cues
-  read fast enough in the hand; movement speed; window tightness); then the
+- v0.08 "one-man band" — DONE: the CPU performer (press 1/2 to hand STOVE/THE
+  BOULDER to a cooperative AI, bible §5.12) so the match is playable/testable
+  solo; UI pass (controls card moved below the ring; right rail is now just the
+  call sheet + "Match Log"); commentary bubbles rise from the bottom-centre off
+  the health bars; removed the frozen end-of-match screen shake.
+- NEXT — Jordan's 0.08 solo playtest (does the CPU feel like a real partner;
+  do the cues read fast enough in the hand; movement/window tuning); then the
   sprite/asset pass (individual PNGs from assets/sprites/, naming:
   stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px
   display; keep the procedural skeletons as the fallback), and the

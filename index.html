@@ -52,6 +52,7 @@
   #log .ok{color:#4fae56;font-weight:bold}
   #log .bad{color:#e0454f;font-weight:bold}
   #log .shoot{color:var(--gold);font-weight:bold}
+  #controlscard{margin-top:12px}
   #controls{font-size:13px;line-height:1.6;font-family:'Arial Narrow',sans-serif}
   #controls kbd{border:1px solid var(--steel2);padding:0 5px;border-radius:2px;
     background:#0d0f13;color:var(--bone);font-family:'Courier New',monospace;font-size:11px}
@@ -64,41 +65,40 @@
   <h1>PCW <span class="tag">Persona Championship Wrestling</span></h1>
   <div style="text-align:right">
     <span class="live">LIVE</span>
-    <div class="build">BUILD 0.07 · "SAY IT PLAIN" · READABLE CUES</div>
+    <div class="build">BUILD 0.08 · "ONE-MAN BAND" · CPU PERFORMER</div>
   </div>
 </header>
 
 <div id="wrap">
-  <div id="stage"><canvas id="game" width="960" height="640"></canvas></div>
+  <div id="stage">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div class="card" id="controlscard">
+      <h2>Controls</h2>
+      <div id="controls">
+        <span class="stove"><b>STOVE HOT</b> (face)</span> — Move <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ·
+        Grab <kbd>G</kbd> · Strike <kbd>F</kbd> · Taunt <kbd>H</kbd> · <b>Work</b> <kbd>T</kbd><br>
+        <span class="boulder"><b>THE BOULDER</b> (heel)</span> — Move <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> ·
+        Grab <kbd>K</kbd> · Strike <kbd>J</kbd> · Taunt <kbd>L</kbd> · <b>Work</b> <kbd>I</kbd><br><br>
+        <b>The cue floating on your wrestler always names the one thing to do now.</b>
+        The full toolbox behind it:<br>
+        • <b>Grab</b> ties up — or covers a downed man, or (from a corner) climbs for the superplex.<br>
+        • In a tie-up, <b>push a direction</b> to Irish-whip him (into the ropes to rebound, or at a corner), or <b>Work</b> to slam. Being tied up? <b>Grab</b> to spin out and take control.<br>
+        • Hold a direction to build to a <b>run</b>; <b>Strike</b> a charging man to <b>clothesline</b> him.<br>
+        • <b>Work</b> is always “do your job now” — reverse, sell, kick out, land the big one. Off the script it's a <b>shoot</b>.<br>
+        • <b>Taunt</b> plays to the crowd — heat for the heel, a pop for the face.<br><br>
+        <b>Testing solo?</b> Press <kbd>1</kbd> / <kbd>2</kbd> to hand STOVE / THE BOULDER to a CPU performer and play the other side.<br>
+        <kbd>SPACE</kbd> Slow-mo · <kbd>R</kbd> New match
+      </div>
+    </div>
+  </div>
   <div id="panel">
     <div class="card">
       <h2>Tonight's Call Sheet</h2>
       <div id="callsheet"></div>
     </div>
     <div class="card">
-      <h2>Backstage Log</h2>
+      <h2>Match Log</h2>
       <div id="log"></div>
-    </div>
-    <div class="card">
-      <h2>Controls</h2>
-      <div id="controls">
-        <span class="stove"><b>STOVE HOT (face) — the crowd's guy</b></span><br>
-        Move <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ·
-        Grab/Pin <kbd>G</kbd> · Strike <kbd>F</kbd> ·
-        Taunt <kbd>H</kbd> · <b>Work</b> <kbd>T</kbd><br><br>
-        <span class="boulder"><b>THE BOULDER (heel) — the office champ</b></span><br>
-        Move <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> ·
-        Grab/Pin <kbd>K</kbd> · Strike <kbd>J</kbd> ·
-        Taunt <kbd>L</kbd> · <b>Work</b> <kbd>I</kbd><br><br>
-        Hold a direction to build to a <b>run</b>. <b>Grab</b> ties up —
-        then push a direction to <b>Irish-whip</b> him (into the ropes to
-        rebound, or a corner). <b>Strike</b> a charging man to
-        <b>clothesline</b> him. Perform each booked spot with these tools.<br><br>
-        The <b>Work</b> button is your job right now: reverse the lock-up,
-        sell a shot, meet him up top, kick out. Off the script, it's a
-        <b>shoot</b>.<br><br>
-        <kbd>SPACE</kbd> Slow-mo · <kbd>R</kbd> New match
-      </div>
     </div>
   </div>
 </div>

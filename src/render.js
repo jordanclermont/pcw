@@ -511,8 +511,9 @@
     const trustLabel = tr < 20 ? "⚠ TRUST BREAKING DOWN" : tr < 40 ? "⚠ TRUST SLIPPING" : "TRUST (backstage)";
     const trustLabelCol = tr < 20 ? "#e0454f" : tr < 40 ? "#e0902b" : LT;
     gauge(W / 2 - 80, 64, 160, 9, tr, trustLabel, trustAccent, trustLabelCol);
-    gauge(24, H - 100, 180, 10, G.P1.body, G.P1.short + " — BODY", barCol(G.P1), LT);
-    gauge(W - 204, H - 100, 180, 10, G.P2.body, G.P2.short + " — BODY", barCol(G.P2), LT);
+    const cpu = id => (PCW.AI && PCW.AI.control[id]) ? "  · CPU" : "";
+    gauge(24, H - 100, 180, 10, G.P1.body, G.P1.short + " — BODY" + cpu("p1"), barCol(G.P1), LT);
+    gauge(W - 204, H - 100, 180, 10, G.P2.body, G.P2.short + " — BODY" + cpu("p2"), barCol(G.P2), LT);
     gauge(24, H - 78, 180, 7, PCW.G.respect.p1, "RESPECT", "#c9a24a", LT);
     gauge(W - 204, H - 78, 180, 7, PCW.G.respect.p2, "RESPECT", "#c9a24a", LT);
 
@@ -577,7 +578,7 @@
     G.renderFrame++;
     CTX.setTransform(PCW.DPR, 0, 0, PCW.DPR, 0, 0);
     CTX.save();
-    if (G.shake > 0.5) CTX.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
+    if (G.shake > 0.5 && G.match.phase !== "ENDED") CTX.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
     CTX.drawImage(paper, 0, 0);
     G.crowd.draw(CTX, G.renderFrame);
     const ring = drawRing();
