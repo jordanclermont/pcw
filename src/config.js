@@ -23,9 +23,12 @@
        own length and a timed Work-button window inside it (same pattern
        as the grapple reversal). CLIMB has no input; the other three do. */
     SPX_CLIMB: 42,
-    SPX_POS_TOTAL: 32, SPX_POS_OPEN: 8, SPX_POS_CLOSE: 22,
-    SPX_THROW_TOTAL: 30, SPX_THROW_OPEN: 8, SPX_THROW_CLOSE: 20,
-    SPX_LAND_TOTAL: 26, SPX_LAND_OPEN: 6, SPX_LAND_CLOSE: 20,
+    // POSITION and THROW WAIT for the required press (they do NOT auto-
+    // advance) — pressing in the early window is clean, later is sloppy,
+    // and never pressing before the timeout ABORTS the whole spot.
+    SPX_POS_OPEN: 8, SPX_POS_CLOSE: 26, SPX_POS_TIMEOUT: 120,
+    SPX_THROW_OPEN: 8, SPX_THROW_CLOSE: 24, SPX_THROW_TIMEOUT: 120,
+    SPX_LAND_OPEN: 6, SPX_LAND_CLOSE: 22, SPX_LAND_TIMEOUT: 44,
     SPX_RECOVER: 30
   };
 

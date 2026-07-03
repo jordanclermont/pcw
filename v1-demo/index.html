@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCW — Movement V1 (experiment)</title>
+<style>
+  :root{ --void:#0b0c0f; --steel:#1a1e25; --steel2:#262c37; --blood:#c1121f;
+         --bone:#e7e1d3; --dim:#a8adb7; --stove:#ff7a18; --boulder:#6f86d6; --gold:#e8b923; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--void);color:var(--bone);
+    font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:12px;
+    background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);}
+  header{width:min(1040px,100%);display:flex;align-items:center;justify-content:space-between;
+    border-bottom:4px solid var(--blood);padding-bottom:6px;margin-bottom:10px}
+  h1{font-family:Impact,sans-serif;letter-spacing:1px;font-size:clamp(20px,3.4vw,32px);
+    text-transform:uppercase;color:#fff;text-shadow:2px 2px 0 var(--blood);transform:skewX(-5deg)}
+  h1 .tag{font-size:.4em;letter-spacing:2px;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+  .build{font-family:Impact,sans-serif;font-size:12px;letter-spacing:2px;color:var(--dim)}
+  canvas#game{width:min(1040px,100%);display:block;background:#000;
+    border:2px solid var(--steel2);box-shadow:0 0 0 4px #000,0 10px 30px rgba(0,0,0,.7)}
+  .cols{display:flex;gap:14px;width:min(1040px,100%);margin-top:10px;flex-wrap:wrap}
+  .card{flex:1 1 300px;border:1px solid var(--steel2);background:var(--steel);padding:8px 12px;font-size:13px;line-height:1.55}
+  .card h2{font-family:Impact,sans-serif;font-size:13px;letter-spacing:2px;color:#fff;background:var(--blood);margin:-8px -12px 8px;padding:4px 12px}
+  kbd{border:1px solid var(--steel2);padding:0 5px;border-radius:2px;background:#0d0f13;color:var(--bone);font-family:'Courier New',monospace;font-size:11px}
+  .stove{color:var(--stove)} .boulder{color:var(--boulder)} .dim{color:var(--dim)}
+</style>
+</head>
+<body>
+<header>
+  <h1>PCW <span class="tag">Movement V1 — experiment</span></h1>
+  <div class="build">FEEL PROTOTYPE · IRISH WHIP · ROPES · AUDACITY</div>
+</header>
+<canvas id="game" width="1040" height="620"></canvas>
+<div class="cols">
+  <div class="card">
+    <h2>Controls</h2>
+    <span class="stove"><b>STOVE HOT</b></span> — Move <kbd>W A S D</kbd> · Grab <kbd>G</kbd> · Strike <kbd>F</kbd> · Work <kbd>T</kbd><br>
+    <span class="boulder"><b>THE BOULDER</b></span> — Move <kbd>↑←↓→</kbd> · Grab <kbd>K</kbd> · Strike <kbd>J</kbd> · Work <kbd>I</kbd>
+  </div>
+  <div class="card">
+    <h2>How wrestling works here</h2>
+    <b>Tie up</b> (Grab when close), then push a <b>direction to Irish-whip</b> him — into the ropes to rebound, or into a corner.<br>
+    <b>Run the ropes</b> yourself for momentum. <b>Strike a charging</b> opponent to <b>clothesline</b> him flat.<br>
+    In a corner, <b>Grab</b> to go up top — the <b>superplex</b> needs <b>both</b> players to hit <kbd>Work</kbd> on each beat.
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   PCW — MOVEMENT V1 (experiment)
+   A from-scratch swing at making it FEEL like wrestling: momentum
+   locomotion with real run cycles, the Irish whip, running the ropes
+   and rebounding, the clothesline off the rebound, corner staggers,
+   and a genuinely cooperative (input-gated) top-rope superplex —
+   all rendered with a jointed procedural skeleton in the dark arena.
+   Logic on a fixed 60 Hz step; rendering free. Everything is live in
+   the ring — no cutscenes.
+   ============================================================ */
+const CVS=document.getElementById("game"), W=CVS.width, H=CVS.height;
+const DPR=Math.max(2,Math.ceil(window.devicePixelRatio||1));
+CVS.width=W*DPR; CVS.height=H*DPR;
+const CTX=CVS.getContext("2d");
+
+/* ---------- iso ring ---------- */
+const GRID=12, TILE_W=64, TILE_H=32, ORIGIN={x:W/2,y:150};
+const isoX=(gx,gy)=>ORIGIN.x+(gx-gy)*TILE_W/2;
+const isoY=(gx,gy)=>ORIGIN.y+(gx+gy)*TILE_H/2;
+const IN=0.7;                                  // rope inset from the grid edge
+const LO=IN, HI=GRID-IN;                        // playable bounds
+const CORNERS=[{gx:LO,gy:LO},{gx:HI,gy:LO},{gx:HI,gy:HI},{gx:LO,gy:HI}];
+const CORNER_R=1.4;
+function nearCorner(gx,gy){for(let i=0;i<4;i++){const c=CORNERS[i];if(Math.hypot(gx-c.gx,gy-c.gy)<=CORNER_R)return i;}return -1;}
+
+/* ---------- input ---------- */
+const MAP={
+  p1:{up:"KeyW",down:"KeyS",left:"KeyA",right:"KeyD",grab:"KeyG",strike:"KeyF",work:"KeyT"},
+  p2:{up:"ArrowUp",down:"ArrowDown",left:"ArrowLeft",right:"ArrowRight",grab:"KeyK",strike:"KeyJ",work:"KeyI"}
+};
+const down=new Set(); let queue=[];
+addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();if(!e.repeat)queue.push(e.code);down.add(e.code);});
+addEventListener("keyup",e=>down.delete(e.code));
+function Pad(m){this.m=m;this.just={};}
+Pad.prototype.begin=function(js){for(const k in this.m)this.just[k]=js.has(this.m[k]);};
+Pad.prototype.held=function(k){return down.has(this.m[k]);};
+Pad.prototype.dir=function(){let x=0,y=0;if(this.held("up"))y--;if(this.held("down"))y++;if(this.held("left"))x--;if(this.held("right"))x++;
+  // screen arrows -> grid axes (iso)
+  let gx=x+y, gy=y-x; const mg=Math.hypot(gx,gy)||1; return {x:(x||y)?gx/mg:0, y:(x||y)?gy/mg:0, any:!!(x||y)};};
+
+/* ============================================================
+   WRESTLER — physics + state machine + skeleton
+   ============================================================ */
+const ACC=0.020, FRIC=0.86, VMAX_WALK=0.075, VMAX_RUN=0.19, WHIP_V=0.30;
+const clampB=v=>Math.max(LO,Math.min(HI,v));
+
+class Wrestler{
+  constructor(id,name,short,accent,gx,gy){
+    this.id=id;this.name=name;this.short=short;this.accent=accent;
+    this.gx=gx;this.gy=gy;this.vx=0;this.vy=0;this.face=1;   // face: +1 right, -1 left (screen)
+    this.state="IDLE";this.t=0;this.gait=0;this.hp=100;
+    this.grabTarget=null;
+  }
+  set(s){ if(this.state!==s){this.state=s;this.t=0;} }
+  speed(){return Math.hypot(this.vx,this.vy);}
+  busy(){return !["IDLE","WALK","RUN"].includes(this.state);}
+  screenX(){return isoX(this.gx,this.gy);}
+  screenY(){return isoY(this.gx,this.gy);}
+  distTo(o){return Math.hypot(this.gx-o.gx,this.gy-o.gy);}
+}
+
+/* ---------- world ---------- */
+let P1,P2,pads,heat,tick,flashes,ropeShake,shakeT,slowmo=false,announce;
+function reset(){
+  P1=new Wrestler("p1","STOVE HOT","STOVE","#ff7a18",4,7);
+  P2=new Wrestler("p2","THE BOULDER","BOULDER","#6f86d6",8,5);
+  pads={p1:new Pad(MAP.p1),p2:new Pad(MAP.p2)};
+  heat=30; tick=0; flashes=[]; ropeShake={t:0,side:0}; shakeT=0;
+  spx=null; announce={text:"LOCK UP — THEN WHIP HIM INTO THE ROPES",t:260};
+}
+
+/* ---------- crowd ---------- */
+const crowd=[];
+(function(){for(let r=0;r<3;r++){const n=26+r*4;for(let i=0;i<n;i++)crowd.push({x:30+(i+Math.random()*.6)*(W-60)/n,y:34+r*22+Math.random()*6,sc:.8+r*.16,seed:Math.random()*99});}})();
+function pop(power,label){ heat=Math.min(100,heat+power); for(let i=0;i<Math.min(160,10+power*4);i++){const m=crowd[(Math.random()*crowd.length)|0];flashes.push({x:m.x+(Math.random()-.5)*10,y:m.y-4,r:2.4+Math.random()*3,life:8+(Math.random()*6|0),delay:(i%6)*2});}
+  if(label)announce={text:label,t:150}; }
+
+/* ============================================================
+   MOVE LOGIC
+   ============================================================ */
+let spx=null;   // superplex sequence
+
+function tie(a,b){                 // a grabs b into a tie-up
+  if(a.busy()||b.busy())return;
+  if(a.distTo(b)>1.6)return;
+  // snap to face each other
+  a.face=(b.screenX()>=a.screenX())?1:-1; b.face=-a.face;
+  a.set("TIEUP_A"); b.set("TIEUP_B");
+  a.grabTarget=b; b.grabTarget=a; a.vx=a.vy=b.vx=b.vy=0;
+  a._tieDir=null;
+}
+function irishWhip(a,b,dir){       // a whips b along dir (grid unit vector)
+  a.set("WHIP"); b.set("WHIPPED");
+  a.grabTarget=null; b.grabTarget=null;
+  b.vx=dir.x*WHIP_V; b.vy=dir.y*WHIP_V;
+  b.whipFrom=a; b._bounces=0;
+  pop(3);
+}
+function kneeStrike(a,b){
+  a.set("STRIKE"); b.set("SELL"); b.hp-=3;
+  b.vx=(b.gx-a.gx)*0.02; b.vy=(b.gy-a.gy)*0.02;
+  spawnHit(b); pop(2);
+}
+function strike(a,b){
+  // clothesline a charging opponent; otherwise a normal worked strike
+  const charging=(b.state==="WHIPPED"||b.state==="REBOUND"||b.state==="RUN");
+  if(a.distTo(b)<1.7 && charging && b.speed()>VMAX_WALK){
+    a.set("CLOTHESLINE"); clothesline(a,b); return;
+  }
+  a.set("STRIKE");
+  if(a.distTo(b)<1.5 && !b.busy()){ b.set("SELL"); b.hp-=3; b.vx=(b.gx-a.gx)*0.03; b.vy=(b.gy-a.gy)*0.03; spawnHit(b); pop(2); }
+}
+function clothesline(a,b){
+  b.set("BUMP");
+  const d=Math.hypot(b.vx,b.vy)||1;
+  b.vx=(b.gx-a.gx)*0.06 - b.vx*0.4; b.vy=(b.gy-a.gy)*0.06 - b.vy*0.4;   // knocked the other way
+  b.hp-=8; b._bumpSpin=(Math.random()<.5?-1:1);
+  spawnHit(b); shakeT=10; pop(9,"CLOTHESLINE — HE TURNED HIM INSIDE OUT!");
+}
+function toCorner(b,ci){
+  const c=CORNERS[ci]; b.gx=c.gx; b.gy=c.gy; b.vx=b.vy=0;
+  b.set("CORNER"); b.corner=ci; pop(4,"INTO THE CORNER");
+}
+
+/* --- the cooperative superplex --- */
+function startSuperplex(a,b){
+  if(b.state!=="CORNER")return;
+  const c=CORNERS[b.corner]; const side=c.gx<GRID/2?1:-1;
+  a.gx=clampB(c.gx+side*0.8); a.gy=c.gy; a.face=side;
+  a.set("SPX_CLIMB"); b.set("SPX_WAIT");
+  spx={a,b,corner:b.corner,step:"CLIMB",t:0,pos:null,posClean:false,thr:null,thrClean:false,la:null,laW:false,ld:null,ldW:false};
+  announce={text:"UP TOP — BOTH OF YOU WORK EACH BEAT",t:200};
+}
+const F={ CLIMB:44, POS_OPEN:8,POS_CLOSE:28,POS_TO:130, THR_OPEN:8,THR_CLOSE:26,THR_TO:130, LAND_OPEN:6,LAND_CLOSE:24,LAND_TO:48 };
+function spxInput(w){
+  if(!spx)return; const s=spx, inW=(o,c)=>s.t>=o&&s.t<=c;
+  if(s.step==="POSITION"&&w===s.b&&s.pos==null){s.pos=true;s.posClean=inW(F.POS_OPEN,F.POS_CLOSE);}
+  else if(s.step==="THROW"&&w===s.a&&s.thr==null){s.thr=true;s.thrClean=inW(F.THR_OPEN,F.THR_CLOSE);}
+  else if(s.step==="LAND"){ if(w===s.a&&s.la==null){s.la=true;s.laW=inW(F.LAND_OPEN,F.LAND_CLOSE);} if(w===s.b&&s.ld==null){s.ld=true;s.ldW=inW(F.LAND_OPEN,F.LAND_CLOSE);} }
+}
+function spxAbort(reason){ spx.a.set("IDLE"); spx.b.set("IDLE"); announce={text:"SPOT FELL APART — "+reason,t:150}; spx=null; }
+function spxTick(){
+  const s=spx; if(!s)return; s.t++;
+  if(s.step==="CLIMB"){ if(s.t>=F.CLIMB){s.step="POSITION";s.t=0;s.a.set("SPX_TOP");s.b.set("SPX_RECV");} }
+  else if(s.step==="POSITION"){ if(s.pos!=null){s.step="THROW";s.t=0;} else if(s.t>=F.POS_TO)spxAbort("nobody went up"); }
+  else if(s.step==="THROW"){ if(s.thr!=null){s.step="LAND";s.t=0;s.a.set("SPX_THROW");} else if(s.t>=F.THR_TO)spxAbort("he never brought him over"); }
+  else if(s.step==="LAND"){ if((s.la!=null&&s.ld!=null)||s.t>=F.LAND_TO)spxResolve(); }
+}
+function spxResolve(){
+  const s=spx,a=s.a,b=s.b; spx=null;
+  const landClean=s.laW&&s.ldW, miss=(s.posClean?0:1)+(s.thrClean?0:1)+(landClean?0:1);
+  const c=CORNERS[s.corner]; b.gx=clampB(c.gx+(c.gx<GRID/2?1.6:-1.6)); b.gy=c.gy;
+  b.set("BUMP"); b.vx=b.vy=0; b._bumpSpin=1; b.hp-=10+miss*5;
+  a.gx=clampB(b.gx+0.3); a.set("DOWN");
+  spawnHit(b); shakeT=14;
+  pop(miss?12:22, miss? "SUPERPLEX — a little sloppy" : "TOP-ROPE SUPERPLEX — PICTURE PERFECT!");
+}
+
+/* ---------- impact fx ---------- */
+let hits=[];
+function spawnHit(w){ hits.push({x:w.screenX(),y:w.screenY()-30,t:0}); }
+
+/* ============================================================
+   LOGIC STEP (60 Hz)
+   ============================================================ */
+function stepLogic(){
+  tick++;
+  const js=new Set(queue); queue=[];
+  pads.p1.begin(js); pads.p2.begin(js);
+
+  heat=Math.max(0,heat-0.02);
+  if(announce&&--announce.t<=0)announce=null;
+  if(shakeT>0)shakeT--;
+  if(ropeShake.t>0)ropeShake.t--;
+  for(const f of flashes)f.delay>0?f.delay--:f.life--; flashes=flashes.filter(f=>f.life>0);
+  for(const h of hits)h.t++; hits=hits.filter(h=>h.t<10);
+
+  for(const [w,pad,foe] of [[P1,pads.p1,P2],[P2,pads.p2,P1]]){
+    w.t++;
+    // WORK button routes to the superplex when active
+    if(pad.just.work && spx && (spx.a===w||spx.b===w)) spxInput(w);
+
+    switch(w.state){
+      case "IDLE": case "WALK": case "RUN": {
+        const d=pad.dir();
+        if(d.any){ w.vx+=d.x*ACC; w.vy+=d.y*ACC;
+          const sp=w.speed(), cap=VMAX_RUN;
+          if(sp>cap){w.vx*=cap/sp;w.vy*=cap/sp;}
+          w.face=(isoX(w.gx+w.vx,w.gy+w.vy)>=w.screenX())?1:-1;
+        } else { w.vx*=FRIC; w.vy*=FRIC; }
+        const sp=w.speed();
+        w.set(sp>VMAX_WALK*1.4?"RUN":sp>0.006?"WALK":"IDLE");
+        if(pad.just.grab){ if(foe.state==="CORNER"&&w.distTo(foe)<1.7)startSuperplex(w,foe); else tie(w,foe); }
+        else if(pad.just.strike) strike(w,foe);
+        break; }
+      case "TIEUP_A": {
+        const d=pad.dir();
+        if(d.any){ irishWhip(w,w.grabTarget,d); }
+        else if(pad.just.strike){ kneeStrike(w,w.grabTarget); }
+        else if(w.t>150){ w.set("IDLE"); if(w.grabTarget){w.grabTarget.set("IDLE");w.grabTarget=null;} }
+        // receiver reversal
+        break; }
+      case "TIEUP_B": {
+        if(pad.just.grab){ // reverse the tie-up
+          const a=w.grabTarget; if(a&&a.state==="TIEUP_A"){ a.set("TIEUP_B"); w.set("TIEUP_A"); a.grabTarget=w; w.grabTarget=a; w.t=0; }
+        }
+        break; }
+      case "STRIKE": if(w.t>=14)w.set("IDLE"); break;
+      case "CLOTHESLINE": if(w.t>=20)w.set("IDLE"); break;
+      case "WHIP": if(w.t>=18)w.set("IDLE"); break;
+      case "SELL": if(w.t>=22)w.set("IDLE"); break;
+      case "CORNER": if(w.t>=200)w.set("IDLE"); break;
+      case "GETUP": if(w.t>=28)w.set("IDLE"); break;
+      case "DOWN": if(w.t>=90)w.set("GETUP"); break;
+      case "WHIPPED": case "REBOUND": {
+        // moving under whip momentum — handled in physics below
+        if(pad.just.strike) strike(w,foe);   // can clothesline the guy chasing
+        break; }
+      case "BUMP": if(w.t>=26){w.set("DOWN");w.t=0;} break;
+      default: break;   // SPX_* driven by spxTick
+    }
+
+    // physics integrate (skip locked states)
+    if(!["TIEUP_A","TIEUP_B","DOWN","GETUP","CORNER","SPX_CLIMB","SPX_TOP","SPX_THROW","SPX_WAIT","SPX_RECV","BUMP"].includes(w.state)){
+      w.gx+=w.vx; w.gy+=w.vy;
+      // rope collisions + rebound
+      const bounce=(w.state==="WHIPPED"||w.state==="REBOUND"||w.state==="RUN");
+      let hitRope=false, side=0;
+      if(w.gx<LO){ w.gx=LO; if(w.vx<0){w.vx=-w.vx*0.94; hitRope=true; side=3;} }
+      if(w.gx>HI){ w.gx=HI; if(w.vx>0){w.vx=-w.vx*0.94; hitRope=true; side=1;} }
+      if(w.gy<LO){ w.gy=LO; if(w.vy<0){w.vy=-w.vy*0.94; hitRope=true; side=0;} }
+      if(w.gy>HI){ w.gy=HI; if(w.vy>0){w.vy=-w.vy*0.94; hitRope=true; side=2;} }
+      if(hitRope){
+        ropeShake={t:12,side};
+        const ci=nearCorner(w.gx,w.gy);
+        if(w.state==="WHIPPED" && ci>=0){ toCorner(w,ci); }
+        else if(bounce){ w.set("REBOUND"); w._bounces=(w._bounces||0)+1; }
+      }
+      // a rebound settles back to a run, then to idle as it slows
+      if(w.state==="REBOUND"&&w.t>6)w.set("RUN");
+      if(w.state==="WHIPPED"&&w.speed()<VMAX_WALK)w.set("RUN");
+    }
+    if(w.hp<=0&&w.state!=="DOWN"&&w.state!=="BUMP"){ w.hp=0; }
+  }
+
+  if(spx)spxTick();
+}
+
+/* ============================================================
+   SKELETON — jointed procedural animation
+   ============================================================ */
+function limb(a,b,c,wd,col){ // two-segment capsule a->b->c
+  CTX.lineCap="round"; CTX.lineJoin="round"; CTX.strokeStyle=col; CTX.lineWidth=wd;
+  CTX.beginPath(); CTX.moveTo(a.x,a.y); CTX.lineTo(b.x,b.y); CTX.lineTo(c.x,c.y); CTX.stroke();
+}
+function seg(a,b,wd,col){ CTX.lineCap="round"; CTX.strokeStyle=col; CTX.lineWidth=wd; CTX.beginPath(); CTX.moveTo(a.x,a.y); CTX.lineTo(b.x,b.y); CTX.stroke(); }
+
+function drawWrestler(w){
+  const x=w.screenX(), y=w.screenY();
+  const f=w.face, sc=1.15, sk="#e7e1d3", dark="#12141a";
+  const rf=renderFrame;
+  // shadow
+  CTX.save(); CTX.fillStyle="rgba(0,0,0,.34)"; CTX.beginPath(); CTX.ellipse(x,y,24*sc,9*sc,0,0,7); CTX.fill(); CTX.restore();
+
+  // --- compute pose (body space: origin at feet midpoint, up is -y) ---
+  const S=13*sc;                       // unit scale
+  let pelvisY=-2.6*S, chestY=pelvisY-1.9*S, headY=chestY-1.15*S;
+  let lean=0, px=0, lift=0, prone=false, footLx=-.5*S, footRx=.5*S, footLy=0, footRy=0;
+  let armLp={x:0,y:0}, armRp={x:0,y:0}, armLe, armRe, armLh, armRh;
+  const sp=w.speed();
+  const gaitOn=(w.state==="RUN"||w.state==="WALK"||w.state==="WHIPPED"||w.state==="REBOUND");
+  if(gaitOn){
+    const spd=w.state==="WHIPPED"||w.state==="REBOUND"?1.5:(w.state==="RUN"?1.15:0.7);
+    w.gait+=0.28*spd; const p=w.gait;
+    lean=f*(2.2+spd*2.2); px=0;
+    footLx=f*Math.sin(p)*1.3*S; footRx=f*Math.sin(p+Math.PI)*1.3*S;
+    footLy=-Math.max(0,Math.cos(p))*.55*S; footRy=-Math.max(0,Math.cos(p+Math.PI))*.55*S;
+    pelvisY=-2.6*S - Math.abs(Math.sin(p))*.18*S;
+  }
+  // arms defaults (relaxed)
+  const shL={x:px-.55*S+f*lean*0.06,y:chestY}, shR={x:px+.55*S+f*lean*0.06,y:chestY};
+  function arm(sh,ang,bend,len){ const a1=sh, e={x:a1.x+Math.sin(ang)*len*.55,y:a1.y+Math.cos(ang)*len*.55}, h={x:e.x+Math.sin(ang+bend)*len*.5,y:e.y+Math.cos(ang+bend)*len*.5}; return {e,h}; }
+  let LA=arm(shL, f*0.25, -f*0.5, 2.0*S), RA=arm(shR, -f*0.25, f*0.5, 2.0*S);
+
+  // per-state overrides
+  switch(w.state){
+    case "RUN": case "WALK": case "WHIPPED": case "REBOUND": {
+      const p=w.gait;
+      LA=arm(shL, -f*Math.sin(p)*1.1, -f*0.6, 2.0*S);
+      RA=arm(shR, -f*Math.sin(p+Math.PI)*1.1, f*0.6, 2.0*S);
+      break; }
+    case "STRIKE": {
+      const e=Math.min(1,w.t/5), r=w.t<5?-0.6:1.5;
+      lean=f*(w.t<5?-5:8);
+      LA=arm(shL, f*(r*e), -f*0.3, 2.1*S);  // lead arm chops out
+      break; }
+    case "CLOTHESLINE": {
+      lean=f*7; LA=arm(shL,f*1.55,0,2.3*S); RA=arm(shR,f*1.4,0,2.1*S);   // arm straight out
+      const p=w.gait+=0.3; footLx=f*1.1*S; footRx=-f*.6*S;
+      break; }
+    case "WHIP": {
+      const sw=Math.sin(w.t*0.3)*1.2; lean=-f*6;
+      LA=arm(shL, f*(1.4-sw), 0, 2.2*S);   // throwing sweep
+      break; }
+    case "TIEUP_A": case "TIEUP_B": {
+      lean=f*4; const o=w.grabTarget;
+      LA=arm(shL, f*1.15, 0.1, 1.9*S); RA=arm(shR, f*0.95, -0.1, 1.9*S);  // both arms forward, locked up
+      const jitter=Math.sin(rf*0.4+ (w.id==="p1"?0:1))*0.6; lean+=jitter;
+      break; }
+    case "SELL": {
+      lean=-f*(12+Math.sin(w.t*0.6)*5); headY-=2;
+      LA=arm(shL,-f*0.9,-0.4,2.0*S); RA=arm(shR,-f*0.6,0.4,2.0*S);
+      break; }
+    case "CORNER": {
+      lean=-f*10; pelvisY=-2.3*S; footLx=-.7*S; footRx=.7*S;
+      LA=arm(shL,-f*1.3,0,2.0*S); RA=arm(shR,-f*1.3,0,2.0*S);  // arms draped on ropes
+      break; }
+    case "BUMP": {
+      const spin=(w._bumpSpin||1); lean=spin*Math.min(80,w.t*6); lift=Math.sin(Math.min(Math.PI,w.t*0.18))*20*sc;
+      break; }
+    case "DOWN": prone=true; break;
+    case "GETUP": pelvisY=-1.3*S-(w.t/28)*1.3*S; lean=-f*6; break;
+    case "SPX_CLIMB": lift=Math.min(70,w.t*1.7); lean=0; LA=arm(shL,0,0,2.0*S); RA=arm(shR,0,0,2.0*S); footLy=footRy=0; break;
+    case "SPX_TOP": lift=70; pelvisY=-2.1*S; break;
+    case "SPX_THROW": lift=Math.max(0,70-w.t*5); lean=f*10; break;
+    case "SPX_WAIT": lean=0; break;
+    case "SPX_RECV": lift=Math.min(58,w.t*2.4); break;
+  }
+
+  CTX.save(); CTX.translate(x, y-lift);
+  if(prone){ drawProne(w,sc,sk,dark); CTX.restore(); nameTag(w,x,y); return; }
+  CTX.rotate(lean*Math.PI/180 * (w.state==="BUMP"?1:0.4));
+
+  const pelvis={x:px,y:pelvisY}, chest={x:px+f*lean*0.05,y:chestY}, head={x:chest.x+f*1,y:headY};
+  const hipL={x:pelvis.x-.42*S,y:pelvis.y}, hipR={x:pelvis.x+.42*S,y:pelvis.y};
+  const footL={x:footLx,y:footLy}, footR={x:footRx,y:footRy};
+  const kneeL={x:(hipL.x+footL.x)/2 + f*.25*S,y:(hipL.y+footL.y)/2}, kneeR={x:(hipR.x+footR.x)/2 + f*.25*S,y:(hipR.y+footR.y)/2};
+
+  // back leg/arm first (depth)
+  seg(hipR,kneeR,5.4*sc,dark); seg(kneeR,footR,4.6*sc,dark);
+  limb(shR,RA.e,RA.h,4.4*sc,sk);
+  // torso
+  seg(pelvis,chest,9*sc,sk);
+  CTX.strokeStyle=w.accent; CTX.lineWidth=3.4*sc; CTX.beginPath(); CTX.moveTo(pelvis.x-3,pelvis.y+2); CTX.lineTo(pelvis.x+3,pelvis.y+2); CTX.stroke(); // trunks
+  // front leg/arm
+  seg(hipL,kneeL,5.6*sc,sk); seg(kneeL,footL,4.8*sc,sk);
+  // boots
+  CTX.fillStyle=dark; CTX.beginPath(); CTX.ellipse(footL.x+f*2,footL.y,4*sc,2.4*sc,0,0,7); CTX.fill();
+  CTX.beginPath(); CTX.ellipse(footR.x+f*2,footR.y,4*sc,2.4*sc,0,0,7); CTX.fill();
+  limb(shL,LA.e,LA.h,4.6*sc,sk);
+  // head
+  CTX.fillStyle=sk; CTX.strokeStyle=dark; CTX.lineWidth=1.5;
+  CTX.beginPath(); CTX.arc(head.x,head.y,4.6*sc,0,7); CTX.fill(); CTX.stroke();
+  CTX.fillStyle=w.accent; CTX.beginPath(); CTX.arc(head.x,head.y-1,4.6*sc,Math.PI*1.05,Math.PI*1.95); CTX.fill(); // colour cap/hair
+  CTX.restore();
+
+  // prompts / cue handled elsewhere
+  nameTag(w,x,y);
+}
+function drawProne(w,sc,sk,dark){
+  const L=30*sc,T=8*sc, f=w.face;
+  CTX.strokeStyle=sk; CTX.lineCap="round"; CTX.lineWidth=9*sc;
+  CTX.beginPath(); CTX.moveTo(-L/2,-T); CTX.lineTo(L/2,-T); CTX.stroke();
+  CTX.strokeStyle=dark; CTX.lineWidth=4.5*sc;
+  CTX.beginPath(); CTX.moveTo(L/2,-T); CTX.lineTo(L/2+8*sc,-T+3); CTX.stroke();
+  CTX.fillStyle=sk; CTX.strokeStyle=dark; CTX.lineWidth=1.5;
+  CTX.beginPath(); CTX.arc(-L/2-4*sc,-T,4.6*sc,0,7); CTX.fill(); CTX.stroke();
+  CTX.strokeStyle=w.accent; CTX.lineWidth=3*sc; CTX.beginPath(); CTX.moveTo(-4,-T-1); CTX.lineTo(4,-T-1); CTX.stroke();
+}
+function nameTag(w,x,y){
+  CTX.font="bold 10px Impact"; CTX.textAlign="center";
+  CTX.strokeStyle="rgba(0,0,0,.75)"; CTX.lineWidth=3; CTX.strokeText(w.short,x,y+16);
+  CTX.fillStyle=w.accent; CTX.fillText(w.short,x,y+16);
+}
+
+/* ---------- cue text (below sprite, staggered) ---------- */
+function cueText(w){
+  if(spx){ const a=w===spx.a;
+    if(spx.step==="CLIMB")return a?"CLIMBING…":"HE'S GOING UP…";
+    if(spx.step==="POSITION")return a?"WAIT FOR HIM":"MEET HIM — WORK!";
+    if(spx.step==="THROW")return a?"BRING HIM OVER — WORK!":"HANG ON…";
+    if(spx.step==="LAND")return "LAND IT — WORK!";
+  }
+  if(w.state==="TIEUP_A")return "PUSH A DIRECTION TO WHIP";
+  if(w.state==="TIEUP_B")return "GRAB TO REVERSE";
+  if(w.state==="CORNER")return "STUNNED IN THE CORNER";
+  if(w.grabTarget&&w.state.startsWith("TIEUP"))return null;
+  return null;
+}
+function drawCue(w){
+  const t=cueText(w); if(!t)return;
+  const cx=w.screenX(), cy=w.screenY()+(w.id==="p1"?34:58);
+  CTX.font="bold 13px Impact"; const tw=CTX.measureText(t).width, pw=tw+18,ph=20;
+  CTX.fillStyle="rgba(9,11,15,.94)"; CTX.fillRect(cx-pw/2,cy-ph/2,pw,ph);
+  CTX.lineWidth=2; CTX.strokeStyle=w.accent; CTX.strokeRect(cx-pw/2,cy-ph/2,pw,ph);
+  CTX.textAlign="center"; CTX.textBaseline="middle"; CTX.fillStyle=w.accent; CTX.fillText(t,cx,cy+1); CTX.textBaseline="alphabetic";
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let renderFrame=0;
+const paper=document.createElement("canvas"); paper.width=W; paper.height=H;
+(function(){const c=paper.getContext("2d");
+  const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#0a0b0f");g.addColorStop(.5,"#0e1015");g.addColorStop(1,"#050506");
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  const s=c.createRadialGradient(W/2,260,30,W/2,320,W*0.55); s.addColorStop(0,"rgba(150,160,185,.15)");s.addColorStop(1,"rgba(0,0,0,0)");
+  c.fillStyle=s;c.fillRect(0,0,W,H);
+})();
+
+function drawCrowd(){
+  const g=CTX.createLinearGradient(0,0,0,140); g.addColorStop(0,"rgba(9,11,22,.92)");g.addColorStop(1,"rgba(9,11,22,0)");
+  CTX.fillStyle=g; CTX.fillRect(0,0,W,140);
+  const hot=heat>60;
+  for(const m of crowd){ const sway=Math.sin(renderFrame*.04+m.seed)*1.4;
+    CTX.save(); CTX.translate(m.x+sway,m.y);
+    CTX.fillStyle="#0b0e1a"; CTX.fillRect(-6*m.sc,-3*m.sc,12*m.sc,9*m.sc);
+    CTX.beginPath(); CTX.arc(0,-6*m.sc,3.6*m.sc,0,7); CTX.fill();
+    if(hot){CTX.strokeStyle="rgba(200,210,235,.45)";CTX.lineWidth=1.4;const w2=Math.sin(renderFrame*.5+m.seed)*2;CTX.beginPath();CTX.moveTo(-5*m.sc,-2);CTX.lineTo(-8*m.sc,-12*m.sc+w2);CTX.moveTo(5*m.sc,-2);CTX.lineTo(8*m.sc,-12*m.sc-w2);CTX.stroke();}
+    CTX.restore();
+  }
+  // flashbulbs
+  CTX.save(); CTX.globalCompositeOperation="lighter";
+  for(const fl of flashes){ if(fl.delay>0)continue; const a=fl.life/14; CTX.globalAlpha=Math.min(1,a);
+    const gr=CTX.createRadialGradient(fl.x,fl.y,0,fl.x,fl.y,fl.r*5); gr.addColorStop(0,"#fff");gr.addColorStop(.4,"rgba(235,240,255,.7)");gr.addColorStop(1,"rgba(200,215,255,0)");
+    CTX.fillStyle=gr; CTX.beginPath(); CTX.arc(fl.x,fl.y,fl.r*5,0,7); CTX.fill();
+    CTX.fillStyle="#fff"; CTX.beginPath(); CTX.arc(fl.x,fl.y,fl.r*.8,0,7); CTX.fill();
+  } CTX.restore();
+}
+
+function drawRing(){
+  const c0=[isoX(0,0),isoY(0,0)],c1=[isoX(GRID,0),isoY(GRID,0)],c2=[isoX(GRID,GRID),isoY(GRID,GRID)],c3=[isoX(0,GRID),isoY(0,GRID)];
+  // apron
+  for(const [a,b] of [[c1,c2],[c2,c3]]){ CTX.fillStyle="#111318";
+    CTX.beginPath();CTX.moveTo(a[0],a[1]);CTX.lineTo(b[0],b[1]);CTX.lineTo(b[0],b[1]+38);CTX.lineTo(a[0],a[1]+38);CTX.closePath();CTX.fill();
+    CTX.strokeStyle="#c1121f";CTX.lineWidth=3;CTX.beginPath();CTX.moveTo(a[0],a[1]+36);CTX.lineTo(b[0],b[1]+36);CTX.stroke();
+  }
+  CTX.save();CTX.translate((c2[0]+c3[0])/2,(c2[1]+c3[1])/2+24);CTX.rotate(Math.atan2(c3[1]-c2[1],c3[0]-c2[0]));
+  CTX.font="bold 22px Impact";CTX.textAlign="center";CTX.fillStyle="#e7e1d3";CTX.fillText("P C W",0,0);CTX.restore();
+  // mat (spotlit)
+  CTX.save();CTX.beginPath();CTX.moveTo(c0[0],c0[1]);CTX.lineTo(c1[0],c1[1]);CTX.lineTo(c2[0],c2[1]);CTX.lineTo(c3[0],c3[1]);CTX.closePath();CTX.clip();
+  const mid=[(c0[0]+c2[0])/2,(c0[1]+c2[1])/2],mg=CTX.createRadialGradient(mid[0],mid[1],20,mid[0],mid[1],360);
+  mg.addColorStop(0,"#9b9a93");mg.addColorStop(.7,"#6f6f6a");mg.addColorStop(1,"#4a4a47");CTX.fillStyle=mg;CTX.fillRect(0,0,W,H);
+  CTX.restore();
+  // corner target glow when someone can be cornered
+  // frame
+  CTX.strokeStyle="#5a6069";CTX.lineWidth=3.4;
+  CTX.beginPath();CTX.moveTo(c0[0],c0[1]);CTX.lineTo(c1[0],c1[1]);CTX.lineTo(c2[0],c2[1]);CTX.lineTo(c3[0],c3[1]);CTX.closePath();CTX.stroke();
+  const posts=[c0,c1,c2,c3],PH=86;
+  // back ropes with rope-give shake
+  drawRopes(c3,c0,60,PH,0); drawRopes(c0,c1,63,PH,3);
+  for(const [px,py] of posts){ const pg=CTX.createLinearGradient(px-4,0,px+4,0);pg.addColorStop(0,"#3b3f47");pg.addColorStop(.5,"#5a6069");pg.addColorStop(1,"#3b3f47");
+    CTX.fillStyle=pg;CTX.fillRect(px-4,py-PH,8,PH); CTX.fillStyle="#c1121f";CTX.beginPath();CTX.ellipse(px,py-PH,7,5,0,0,7);CTX.fill(); }
+  return {front(){ drawRopes(c1,c2,66,PH,1); drawRopes(c2,c3,69,PH,2); }};
+}
+function drawRopes(a,b,seed,PH,sideId){
+  const give=(ropeShake.t>0&&ropeShake.side===sideId)?Math.sin(ropeShake.t*0.9)*ropeShake.t*0.5:0;
+  for(let r=1;r<=3;r++){ const yo=PH*r/3.2; const col=r===3?"#c1121f":"#c9ccd2";
+    CTX.strokeStyle=col;CTX.lineWidth=r===3?2.2:1.8;CTX.beginPath();
+    CTX.moveTo(a[0],a[1]-yo); CTX.quadraticCurveTo((a[0]+b[0])/2, (a[1]+b[1])/2-yo+give, b[0],b[1]-yo); CTX.stroke(); }
+}
+
+function drawHUD(){
+  // heat bar
+  CTX.fillStyle="#16130e";CTX.font="bold 11px Impact";CTX.textAlign="left";
+  CTX.fillStyle="#d8dbe0";CTX.fillText("CROWD HEAT",W/2-150,20);
+  CTX.strokeStyle="#0b0c0f";CTX.lineWidth=2;CTX.strokeRect(W/2-150,24,300,14);
+  CTX.fillStyle="#e8562a";CTX.fillRect(W/2-148,26,Math.max(0,296*heat/100),10);
+  // bodies
+  function body(w,x){ CTX.fillStyle=w.accent;CTX.font="bold 10px Impact";CTX.textAlign="left";CTX.fillText(w.short,x,H-24);
+    CTX.strokeStyle="#0b0c0f";CTX.strokeRect(x,H-20,150,8); CTX.fillStyle=w.id==="p1"?"#ff7a18":"#6f86d6";CTX.fillRect(x+1,H-19,Math.max(0,148*w.hp/100),6); }
+  body(P1,24); body(P2,W-174);
+  // announce
+  if(announce){ CTX.save(); CTX.globalAlpha=Math.min(1,announce.t/30); CTX.textAlign="center";
+    CTX.font="bold 22px Impact"; CTX.strokeStyle="rgba(0,0,0,.7)";CTX.lineWidth=5; CTX.strokeText(announce.text,W/2,90); CTX.fillStyle="#ffd27a"; CTX.fillText(announce.text,W/2,90); CTX.restore(); }
+  // hit sparks
+  for(const h of hits){ const a=1-h.t/10; CTX.save();CTX.globalAlpha=a;CTX.strokeStyle="#fff";CTX.lineWidth=2.5;
+    for(let i=0;i<6;i++){const an=i/6*Math.PI*2, r=6+h.t*3;CTX.beginPath();CTX.moveTo(h.x+Math.cos(an)*6,h.y+Math.sin(an)*6);CTX.lineTo(h.x+Math.cos(an)*r,h.y+Math.sin(an)*r);CTX.stroke();}CTX.restore(); }
+  // slowmo
+  if(slowmo){CTX.fillStyle="#d8dbe0";CTX.font="bold 14px Impact";CTX.textAlign="center";CTX.fillText("◼ SLOW-MO ◼",W/2,120);}
+}
+
+function frame(){
+  renderFrame++;
+  CTX.setTransform(DPR,0,0,DPR,0,0);
+  CTX.save();
+  if(shakeT>0.5)CTX.translate((Math.random()-.5)*shakeT,(Math.random()-.5)*shakeT);
+  CTX.drawImage(paper,0,0);
+  drawCrowd();
+  const ring=drawRing();
+  const order=[P1,P2].sort((a,b)=>a.screenY()-b.screenY());
+  for(const w of order)drawWrestler(w);
+  ring.front();
+  CTX.restore();
+  for(const w of [P1,P2])drawCue(w);
+  drawHUD();
+}
+
+/* ---------- meta + loop ---------- */
+addEventListener("keydown",e=>{ if(e.code==="Space"&&!e.repeat)slowmo=!slowmo; if(e.code==="KeyR"&&!e.repeat)reset(); });
+reset();
+let acc=0,last=performance.now();
+function loop(now){ const dt=Math.min(100,now-last);last=now;acc+=dt; const stepMs=slowmo?1000/15:1000/60;
+  while(acc>=stepMs){stepLogic();acc-=stepMs;} frame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

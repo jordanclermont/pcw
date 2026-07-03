@@ -217,4 +217,34 @@ Do the per-sprite cues actually help, or add clutter?
 Deferred as before: taunts, shoot-as-abyss, the full finish kick-out
 sequence (kick-out / near-fall / second Front Burner), v0.06 sprite art.
 
+## 2026-07-02 / v0.05.1 — bug fixes + the movement experiment (v1-demo/)
+
+Two bugs in the main build, fixed:
+- Superplex was auto-completing on timers without Player 2. It now WAITS
+  for each gated press (POSITION needs P2's Work, THROW needs P1's, LAND
+  needs both) and ABORTS if ignored — nobody rides it out anymore.
+- The per-wrestler cue chips overlapped when wrestlers were on top of each
+  other. They now sit on two staggered rows so they can't collide.
+
+The big swing (per Jordan's ask): a from-scratch MOVEMENT DEMO at
+v1-demo/index.html — a self-contained single file, open it in a browser.
+It's about making it FEEL like wrestling:
+- Momentum locomotion (accelerate to a run, carry speed).
+- Irish whip from a tie-up: push a direction to launch him into the ropes
+  or a corner. Tie-up can be reversed (Grab).
+- Run the ropes → rebound with momentum. Strike a charging man → CLOTHESLINE.
+- Whip into a corner → stagger → Grab to go up → cooperative superplex
+  (both players Work each beat; aborts if not).
+- Jointed procedural skeletons with real run cycles / wind-ups / bumps —
+  the animation target for the eventual sprite pass.
+Controls are on the page. R resets, Space is slow-mo (great for watching
+the animation).
+
+To judge: does the movement finally feel like wrestling? Which mechanic
+lands, which is fiddly? Should this become the new main engine, or do we
+graft its movement onto the existing spot/crowd/trust systems? (The demo
+has no planning/crowd-model/trust layer yet — it's movement-only.)
+
+GAME_BIBLE §5.10 now records the movement grammar; §5.4 the gated superplex.
+
 ## (next entry goes here)

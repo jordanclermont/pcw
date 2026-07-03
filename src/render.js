@@ -273,10 +273,9 @@
     nameplate(w, x, y + 20);
   }
   function nameplate(w, x, y) {
-    CTX.font = "10px 'Courier New'"; CTX.textAlign = "center";
+    CTX.font = "bold 10px Impact"; CTX.textAlign = "center";
     CTX.strokeStyle = "rgba(0,0,0,.75)"; CTX.lineWidth = 3;
-    const s = w.short + " · " + w.state;
-    CTX.strokeText(s, x, y); CTX.fillStyle = "#e7e1d3"; CTX.fillText(s, x, y);
+    CTX.strokeText(w.short, x, y); CTX.fillStyle = barCol(w); CTX.fillText(w.short, x, y);
   }
 
   function drawDown(w, x, y, s, slab, fill) {
@@ -455,21 +454,33 @@
   const LT = "#d8dbe0";                          // light HUD text on dark
   const barCol = w => w.id === "p1" ? "#ff7a18" : "#6f86d6";  // lightened brand bars
 
-  /* each wrestler's current instruction, anchored to their own sprite in
-     their own colour — so you read your cue where you're already looking,
-     not in a shared strip at the bottom of the screen. */
+  /* each wrestler's current instruction, on a clear chip BELOW their own
+     sprite (on the lit mat, clear of the dark crowd and the ropes), in
+     their own colour, with a pointer up to whose it is. It tracks the
+     sprite up the turnbuckle during the superplex. */
   function drawCueLabels() {
     for (const w of [G.P1, G.P2]) {
       const t = PCW.cueText && PCW.cueText(w);
       if (!t) continue;
-      const x = isoX(w.gx, w.gy), y = isoY(w.gx, w.gy) - 46 - figureLift(w);
-      const pulse = 0.75 + 0.25 * Math.sin(G.renderFrame * 0.18 + (w.id === "p1" ? 0 : 2));
-      CTX.save(); CTX.globalAlpha = pulse; CTX.textAlign = "center";
-      CTX.font = "bold 13px Impact";
-      CTX.strokeStyle = "rgba(0,0,0,.8)"; CTX.lineWidth = 3.5;
-      CTX.strokeText(t, x, y); CTX.fillStyle = barCol(w); CTX.fillText(t, x, y);
-      // a little tick pointing down at the wrestler
-      CTX.fillText("▾", x, y + 11);
+      const lift = figureLift(w);
+      // stagger the two chips onto separate rows so they can't overlap when
+      // the wrestlers are on top of each other (tie-ups, pins, the corner).
+      const row = w.id === "p1" ? 42 : 68;
+      const cx = isoX(w.gx, w.gy), cy = isoY(w.gx, w.gy) - lift + row;  // below the feet
+      const col = barCol(w);
+      CTX.save();
+      CTX.font = "bold 14px Impact";
+      const tw = CTX.measureText(t).width, pw = tw + 22, ph = 22;
+      const px = cx - pw / 2, py = cy - ph / 2;
+      // pointer up toward the wrestler
+      CTX.fillStyle = "rgba(9,11,15,.94)";
+      CTX.beginPath(); CTX.moveTo(cx - 6, py + 1); CTX.lineTo(cx + 6, py + 1); CTX.lineTo(cx, py - 7); CTX.closePath(); CTX.fill();
+      // chip
+      CTX.fillStyle = "rgba(9,11,15,.94)"; CTX.fillRect(px, py, pw, ph);
+      CTX.lineWidth = 2; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
+      CTX.textAlign = "center"; CTX.textBaseline = "middle";
+      CTX.fillStyle = col; CTX.fillText(t, cx, cy + 1);
+      CTX.textBaseline = "alphabetic";
       CTX.restore();
     }
   }

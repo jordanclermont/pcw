@@ -108,6 +108,19 @@ The ref is a character with a trust ledger of their own, and their behaviour is 
 
 Not yet built, but the shape is decided: two voices, play-by-play and color, presented as comic-style speech bubbles anchored to a commentary desk, not as scrolling text. This keeps commentary diegetic, in keeping with the Audacity Era presentation, and naturally caps how much can be said at once, since an overstuffed bubble stops reading as a bubble. Commentary is meta-guidance as well as flavor: if a wrestler is out of position for a spot that needs them somewhere specific, a commentator line can hint at it in kayfabe voice rather than breaking the fourth wall. The backstage log is a separate, permanent thing: a debug-facing technical readout, not part of the player-facing experience. Commentary replaces the log as what the player actually reads; it does not need to stay in sync with it.
 
+### 5.10 Movement and the ring as real space (prototyped v0.05, in v1-demo/)
+
+The core thesis (§2) promises that players "run the ropes, throw strikes, hit slams" — real wrestling locomotion, not menu combat. That movement layer is being prototyped in a separate from-scratch build, `v1-demo/index.html`, because the incremental spot engine had grown a stiff, teleporty feel that a patch wouldn't fix. The prototype establishes the movement grammar the main build will adopt:
+
+- **Momentum locomotion.** Wrestlers accelerate to a walk and then a run and carry velocity; they do not snap between fixed speeds. This is what makes everything else feel physical.
+- **The Irish whip.** From a collar-and-elbow tie-up, the wrestler in control pushes a direction to launch the other along it. It is the primary tool for *moving your opponent* — into the ropes, or into a corner. The receiver can contest the tie-up (a reversal press) to seize control instead.
+- **Running the ropes.** The four ropes are elastic boundaries: a wrestler who hits them with speed rebounds with momentum, whether whipped or running on their own. This is the engine for criss-cross sequences and rebound spots.
+- **Rebound collisions.** A stationary wrestler who strikes a charging opponent turns it into a **clothesline** — a big collision bump. Timing a move against a rebounding body is its own skill.
+- **Position gates spots.** A whip into a corner leaves the man stunned there, which is the prerequisite for corner offence and the top-rope superplex. Spots that need a place (corner now; ropes, apron, outside later) simply are not available until the bodies are in the right place — the ring is a real space, not a backdrop. (See §5.4 for the superplex chain, which the prototype runs as a genuinely input-gated cooperative sequence.)
+- **Procedural jointed animation.** Bodies are drawn as jointed skeletons (pelvis, torso, head, two-segment arms and legs) posed per state, with real run cycles, wind-ups, sells and bumps — the motion language that sells "wrestling" without hand-drawn frames, and the target the sprite pass (v0.06) will match.
+
+Outside-the-ring brawling is the next extension of the same boundary logic and is not yet built.
+
 ---
 
 ## 6. The personas

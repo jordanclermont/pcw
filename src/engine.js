@@ -283,18 +283,29 @@
     }
   }
 
+  function superplexAbort(reason) {
+    const sx = G.superplex; G.superplex = null;
+    sx.attacker.setState(S.WHIFF); sx.defender.setState(S.IDLE);
+    PCW.log("The superplex fell apart — " + reason + ". Reset it.", "bad");
+    G.crowd.react({ picture: "weakstrike", role: sx.attacker.role, base: 1, quality: 0.3, arcSlot: "transition", actor: sx.attacker });
+  }
   function superplexTick() {
     const sx = G.superplex; if (!sx) return;
     sx.frame++;
     const A = sx.attacker, D = sx.defender;
+    // Each gated beat WAITS for its press — it does not advance on a timer.
+    // No input from the right player = the spot stalls, then aborts. Both
+    // performers have to actively work it; nobody rides it out.
     if (sx.step === "CLIMB") {
-      if (sx.frame >= F.SPX_CLIMB) { sx.step = "POSITION"; sx.frame = 0; A.setState(S.SPX_TOP); D.setState(S.SPX_RECEIVE); }
+      if (sx.frame >= F.SPX_CLIMB) { sx.step = "POSITION"; sx.frame = 0; A.setState(S.SPX_TOP); D.setState(S.SPX_RECEIVE); PCW.log(D.short + " — meet him up top! (Work)"); }
     } else if (sx.step === "POSITION") {
-      if (sx.frame >= F.SPX_POS_TOTAL) { sx.step = "THROW"; sx.frame = 0; }
+      if (sx.posHit != null) { sx.step = "THROW"; sx.frame = 0; PCW.log(A.short + " — bring him over! (Work)"); }
+      else if (sx.frame >= F.SPX_POS_TIMEOUT) superplexAbort(D.short + " never went up with him");
     } else if (sx.step === "THROW") {
-      if (sx.frame >= F.SPX_THROW_TOTAL) { sx.step = "LAND"; sx.frame = 0; A.setState(S.SPX_THROW); }
+      if (sx.throwHit != null) { sx.step = "LAND"; sx.frame = 0; A.setState(S.SPX_THROW); }
+      else if (sx.frame >= F.SPX_THROW_TIMEOUT) superplexAbort(A.short + " never brought him over");
     } else if (sx.step === "LAND") {
-      if (sx.frame >= F.SPX_LAND_TOTAL) superplexResolve();
+      if ((sx.landAtk != null && sx.landDef != null) || sx.frame >= F.SPX_LAND_TIMEOUT) superplexResolve();
     }
   }
 
