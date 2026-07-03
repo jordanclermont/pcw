@@ -70,6 +70,7 @@
       this.bounces = 0;                 // rope rebounds this launch
       this.bumpSpin = 1;                // clothesline/superplex spin direction
       this.cornerIndex = -1;            // which corner he's stunned in
+      this.cornerAimed = false;         // this whip was aimed at a corner (for capture/miss feedback)
     }
     setState(s) {
       if (this.state === s) return;

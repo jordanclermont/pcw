@@ -428,24 +428,44 @@
   }
 
   /* each wrestler's current instruction, on a chip below their sprite */
+  /* Each wrestler's instruction on a chip in a FIXED vertical lane: Stove's
+     always ABOVE his figure, the Boulder's always BELOW — so when the two are
+     stacked (tie-up, corner, pin) the chips never share a lane. A coloured
+     name tab makes ownership unambiguous, and the chip is clamped to stay on
+     the canvas even at the top or bottom rope. */
   function drawCueLabels() {
     for (const w of [G.P1, G.P2]) {
       const t = PCW.cueText && PCW.cueText(w);
       if (!t) continue;
       const lift = figureLift(w);
-      const row = w.id === "p1" ? 42 : 68;
-      const cx = isoX(w.gx, w.gy), cy = isoY(w.gx, w.gy) - lift + row;
+      const above = w.id === "p1";                        // Stove above, Boulder below
+      const fx = isoX(w.gx, w.gy), fy = isoY(w.gx, w.gy) - lift;
       const col = barCol(w);
       CTX.save();
-      CTX.font = "bold 14px Impact";
-      const tw = CTX.measureText(t).width, pw = tw + 22, ph = 22;
-      const px = cx - pw / 2, py = cy - ph / 2;
-      CTX.fillStyle = "rgba(9,11,15,.94)";
-      CTX.beginPath(); CTX.moveTo(cx - 6, py + 1); CTX.lineTo(cx + 6, py + 1); CTX.lineTo(cx, py - 7); CTX.closePath(); CTX.fill();
-      CTX.fillStyle = "rgba(9,11,15,.94)"; CTX.fillRect(px, py, pw, ph);
+      CTX.font = "bold 13px Impact";
+      const tw = CTX.measureText(t).width, pw = tw + 24, ph = 21;
+      // desired chip position, then clamped fully inside the canvas
+      let px = fx - pw / 2, py = (fy + (above ? -96 : 40)) - ph / 2;
+      px = Math.max(6, Math.min(W - pw - 6, px));
+      py = Math.max(24, Math.min(H - 118 - ph, py));
+      // pointer toward the figure (down from an above-chip, up from a below-chip)
+      const ptx = Math.max(px + 12, Math.min(px + pw - 12, fx));
+      CTX.fillStyle = "rgba(9,11,15,.95)";
+      CTX.beginPath();
+      if (above) { CTX.moveTo(ptx - 6, py + ph - 1); CTX.lineTo(ptx + 6, py + ph - 1); CTX.lineTo(ptx, py + ph + 9); }
+      else { CTX.moveTo(ptx - 6, py + 1); CTX.lineTo(ptx + 6, py + 1); CTX.lineTo(ptx, py - 9); }
+      CTX.closePath(); CTX.fill();
+      // chip
+      CTX.fillStyle = "rgba(9,11,15,.95)"; CTX.fillRect(px, py, pw, ph);
       CTX.lineWidth = 2; CTX.strokeStyle = col; CTX.strokeRect(px, py, pw, ph);
-      CTX.textAlign = "center"; CTX.textBaseline = "middle";
-      CTX.fillStyle = col; CTX.fillText(t, cx, cy + 1);
+      // name tab (own colour) sitting on the chip's top edge
+      CTX.font = "bold 9px Impact"; CTX.textAlign = "left";
+      const ntw = CTX.measureText(w.short).width + 8;
+      CTX.fillStyle = col; CTX.fillRect(px, py - 11, ntw, 11);
+      CTX.fillStyle = "#0b0c0f"; CTX.fillText(w.short, px + 4, py - 2.5);
+      // cue text
+      CTX.font = "bold 13px Impact"; CTX.textAlign = "center"; CTX.textBaseline = "middle";
+      CTX.fillStyle = col; CTX.fillText(t, px + pw / 2, py + ph / 2 + 1);
       CTX.textBaseline = "alphabetic";
       CTX.restore();
     }

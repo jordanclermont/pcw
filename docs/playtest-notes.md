@@ -304,4 +304,50 @@ What to feel for on your first 0.06 play:
   the plain tie-ups (collar & elbow / test of strength) currently play as a
   tie-up→plant like the other grapples — fine, but not yet distinct moves.
 
+## 2026-07-02 / v0.07 — cues speak human, fixed lanes, corner-whip assist
+
+From Jordan's 0.06 play: the momentum engine is right, but the control prompts
+made the match hard to get through — they used design-doc words ("PLANT",
+"WORK"), overlapped during tie-ups, and the corner whip silently failed.
+Four jobs this session:
+
+1. EVERY CUE REWRITTEN in plain player language + the literal key for that
+   player. New rule (now in bible §5.3): say what to do in wrestling terms,
+   then name the key — "SLAM HIM — PRESS T", "REVERSE HIM — PRESS T NOW",
+   "KICK OUT — PRESS I", "STAY DOWN — TOUCH NOTHING". The words WORK and PLANT
+   are banned from anything on screen. One instruction per cue (the tie-up cue
+   no longer offers a plant-OR-whip menu; it reads the spot and shows only what
+   the sheet wants now). Swept cueText, the superplex beats, and every string
+   in data/spots.js. Fixed the hiptoss cue (was "press G", the move is grab
+   then the finisher press).
+2. CUE PLACEMENT: Stove's cue always renders ABOVE his figure, the Boulder's
+   always BELOW — fixed lanes so stacked wrestlers never share a chip. Each
+   chip now carries a coloured name tab and is clamped on-screen at the top/
+   bottom rope.
+3. CORNER-WHIP ASSIST: when a corner spot is booked, the whipped man now runs
+   himself at the nearest post within a 35° cone of your aim (the honest
+   kayfabe fix). Headless simulation: capture went 80% → 100% across the ring;
+   whips with nothing corner-gated booked stay unassisted/honest. A corner
+   whip that still misses now fires a colour line ("Too shallow — square him up
+   with the buckle!") + a log line instead of looping in silence. Capture
+   radius widened 1.5 → 2.0.
+4. PLANNING SCREEN TEXT no longer overruns its panels: added a measured
+   fit/ellipsize helper (txtFit) and routed the preset spot lists (the ones
+   that clipped THE CLASSIC / THE WAR), the spot-card descriptions, and the
+   lock-in run-of-show through it.
+
+Verified headless: no runtime errors; full match still completes to a clean
+title change; whip capture 100% assisted / 80% unassisted (unchanged honest
+physics). NOT verifiable without you: whether the new cue WORDING actually
+reads fast enough mid-match, whether above/below lanes feel clear, whether the
+corner whip now feels reliable in the hand, and whether the planning text is
+comfortable. That's this playtest.
+
+To feel for:
+- Can you now get through a match reading only the on-figure cues (not the
+  bible)? Any cue that still made you freeze — tell me the exact spot.
+- Do the above/below lanes + name tabs make ownership instant?
+- Does whipping a man to the corner feel reliable now?
+- Any planning text still clipping?
+
 ## (next entry goes here)

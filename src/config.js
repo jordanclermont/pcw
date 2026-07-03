@@ -103,7 +103,7 @@
     { gx: PCW.BOUND_LO, gy: PCW.BOUND_LO }, { gx: PCW.BOUND_HI, gy: PCW.BOUND_LO },
     { gx: PCW.BOUND_HI, gy: PCW.BOUND_HI }, { gx: PCW.BOUND_LO, gy: PCW.BOUND_HI }
   ];
-  PCW.CORNER_RADIUS = 1.5;
+  PCW.CORNER_RADIUS = 2.0;   // widened in v0.07 as a corner-whip capture margin
   PCW.cornerIndexAt = (gx, gy) => {
     for (let i = 0; i < PCW.CORNERS.length; i++) {
       const c = PCW.CORNERS[i];

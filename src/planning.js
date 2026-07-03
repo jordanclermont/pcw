@@ -200,13 +200,40 @@
 
   /* ---------------- render (Audacity-Era backstage) ---------------- */
   // fonts: condensed block for headers, narrow sans for body, mono for data
-  function txt(s, x, y, size, col, weight, align) {
+  function setFont(size, weight) {
     const fam = weight === "head" ? "Impact, 'Arial Narrow Bold', sans-serif"
       : weight === "mono" ? "'Courier New', monospace"
         : "'Arial Narrow', 'Helvetica Neue', sans-serif";
     CTX.font = (weight === "head" ? "" : weight === "bold" ? "bold " : "") + size + "px " + fam;
+  }
+  function txt(s, x, y, size, col, weight, align) {
+    setFont(size, weight);
     CTX.textAlign = align || "left"; CTX.fillStyle = col || BONE;
     CTX.fillText(s, x, y);
+  }
+  /* dynamic text MEASURED to fit inside maxW: wrap up to maxLines, then
+     ellipsize the tail. Nothing drawn on the planning screen should overrun
+     its panel — route any variable-length string through this. */
+  function txtFit(s, x, y, size, col, weight, maxW, maxLines, lh) {
+    setFont(size, weight);
+    maxLines = maxLines || 1; lh = lh || size + 3;
+    const words = ("" + s).split(" "), lines = []; let line = "", placed = 0;
+    for (const wd of words) {
+      const test = line ? line + " " + wd : wd;
+      if (CTX.measureText(test).width > maxW && line) {
+        lines.push(line); placed += line.split(" ").length; line = wd;
+        if (lines.length === maxLines) break;
+      } else line = test;
+    }
+    if (lines.length < maxLines && line) { lines.push(line); placed += line.split(" ").length; }
+    if (placed < words.length && lines.length) {   // content left over — ellipsize the last line
+      let last = lines[lines.length - 1];
+      while (last.length && CTX.measureText(last + "…").width > maxW) last = last.slice(0, -1);
+      lines[lines.length - 1] = last + "…";
+    }
+    CTX.textAlign = "left"; CTX.fillStyle = col || BONE;
+    lines.forEach((l, i) => CTX.fillText(l, x, y + i * lh));
+    return lines.length;
   }
   function riskDots(x, y, risk) {
     for (let i = 0; i < 3; i++) {
@@ -352,7 +379,7 @@
       txt((sel ? "▶ " : "   ") + o.name, 40, y + 40, 30, sel ? "#fff" : BONE, "head");
       if (o.tag) { const tw = 128; CTX.fillStyle = o.tag === "HIGH RISK" ? BLOOD : "#2e7d38"; CTX.fillRect(360, y + 20, tw, 24); txt(o.tag, 366, y + 37, 15, "#fff", "head"); }
       txt(o.blurb, 40, y + 68, 15, DIM, "");
-      if (!o.scratch) txt(o.body.map(id => PCW.SPOTS[id].name).join("  ·  "), 510, y + 40, 11, "#9aa0aa", "");
+      if (!o.scratch) txtFit(o.body.map(id => PCW.SPOTS[id].name).join("  ·  "), 510, y + 36, 11, "#9aa0aa", "", 412, 2, 15);
       y += 104;
     });
     const blink = st.frame % 60 < 42;
@@ -407,7 +434,7 @@
   function spotCard(sp, x, y, w) {
     txt(sp.name.toUpperCase(), x, y, 17, "#fff", "head");
     txt(sp.arcSlot.toUpperCase(), x + w, y, 12, GOLD, "head", "right");
-    txt(sp.desc, x, y + 18, 12, DIM, "");
+    txtFit(sp.desc, x, y + 18, 12, DIM, "", w, 1, 14);
     riskDots(x, y + 35, sp.risk);
     txt("RISK", x + 32, y + 38, 10, DIM, "head");
     txt("BUMP: " + sp.bump, x + 78, y + 38, 11, ownerCol(sp.bump === "STOVE" ? "p1" : "p2"), "head");
@@ -496,7 +523,7 @@
 
     const names = PCW.assembleScript(st.slots.slice()).map(s => s.name.toUpperCase());
     txt("RUN OF SHOW:", 432, 410, 12, GOLD, "head");
-    names.forEach((n, i) => txt((i + 1) + ". " + n, 432 + (i % 2) * 252, 430 + Math.floor(i / 2) * 18, 11, BONE, ""));
+    names.forEach((n, i) => txtFit((i + 1) + ". " + n, 432 + (i % 2) * 252, 430 + Math.floor(i / 2) * 18, 11, BONE, "", 244, 1, 13));
 
     const blink = st.frame % 50 < 34;
     if (blink) { CTX.fillStyle = BLOOD; CTX.fillRect(432, 574, 496, 30); txt("★  HIT THE RING — [F] / [J]  ★", 680, 595, 20, "#fff", "head", "center"); }

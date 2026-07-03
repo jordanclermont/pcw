@@ -56,12 +56,17 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
 - v0.06 "transplant" — DONE: momentum engine adopted as the base; spots
   performed through the momentum grammar; jointed-skeleton rendering; the
   taunt verb; commentary bubbles; the orchestrated finish sequence.
-- NEXT — feel/tuning pass from Jordan's 0.06 playtest (movement speed, window
-  tightness, spot discoverability, bubble placement); then the sprite/asset
-  pass (individual PNGs from assets/sprites/, naming: stovehot_idle.png;
-  anchor at feet centreline; ~480 px source for ~240 px display; keep the
-  procedural skeletons as the fallback), and the hype-package + aftermath
-  screens.
+- v0.07 "readable cues" — DONE: every cue rewritten in plain player language
+  + the literal key (cue grammar is now a hard rule, bible §5.3; "work"/
+  "plant" banned from screen); cues in fixed above/below lanes with name tags,
+  clamped on-screen; corner-whip assist (aim-toward-post, 80%→100% capture)
+  with miss feedback; planning-screen text measured so it can't overrun panels.
+- NEXT — continued feel/tuning pass from Jordan's 0.07 playtest (do the cues
+  read fast enough in the hand; movement speed; window tightness); then the
+  sprite/asset pass (individual PNGs from assets/sprites/, naming:
+  stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px
+  display; keep the procedural skeletons as the fallback), and the
+  hype-package + aftermath screens.
 
 ## Technical conventions
 

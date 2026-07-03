@@ -143,7 +143,14 @@
     if (hitRope) {
       G.ropeShake = { t: 12, side };
       const ci = PCW.cornerIndexAt(w.gx, w.gy);
-      if (w.state === S.WHIPPED && ci >= 0) { toCorner(w, ci); return; }
+      if (w.state === S.WHIPPED && ci >= 0) { w.cornerAimed = false; toCorner(w, ci); return; }
+      // a corner whip whose first rope contact missed the buckle: say so, out
+      // loud, once — no more silent broken loop with the cue still asking.
+      if (w.state === S.WHIPPED && w.cornerAimed) {
+        w.cornerAimed = false;
+        say("color", "Too shallow — square him up with the buckle!");
+        PCW.log("Whip missed the corner — line " + w.short + " up with a post and try again.", "bad");
+      }
       if (bouncing) { w.setState(S.REBOUND); w.bounces = (w.bounces || 0) + 1; }
     }
     if (w.state === S.REBOUND && w.stateFrame > F.REBOUND_SETTLE) w.setState(S.RUN);
@@ -186,9 +193,34 @@
     G.tieup = null;
     a.grabTarget = null; b.grabTarget = null;
     a.setState(S.WHIP); b.setState(S.WHIPPED);
-    b.vx = dir.gx * MOVE.WHIP_V; b.vy = dir.gy * MOVE.WHIP_V;
+    let vx = dir.gx, vy = dir.gy;
+    const sp = spot();
+    // In a worked match the whipped man RUNS to the buckle himself. When the
+    // booked spot is corner-gated, bend his launch straight at whichever post
+    // sits within ~35° of the whip direction, so an intuitive aim always lands.
+    // Whips with nothing corner-gated booked stay honest (unassisted).
+    b.cornerAimed = !!(sp && (sp.corner || sp.sequence === "superplex"));
+    if (b.cornerAimed) {
+      const post = aimAtPostInCone(b, dir, 35 * Math.PI / 180);
+      if (post) { vx = post.x; vy = post.y; }
+    }
+    b.vx = vx * MOVE.WHIP_V; b.vy = vy * MOVE.WHIP_V;
     b.whipFrom = a; b.bounces = 0;
-    PCW.log(a.short + " whips " + b.short + " across the ring.");
+    PCW.log(a.short + " whips " + b.short + (b.cornerAimed ? " toward the corner." : " across the ring."));
+  }
+
+  /* the post whose direction from b best aligns with the whip within `cone`
+     radians; null if no post is in the cone (leave the whip unassisted). */
+  function aimAtPostInCone(b, dir, cone) {
+    const dm = Math.hypot(dir.gx, dir.gy) || 1, dx = dir.gx / dm, dy = dir.gy / dm;
+    let best = null, bestDot = Math.cos(cone);
+    for (const c of PCW.CORNERS) {
+      const tx = c.gx - b.gx, ty = c.gy - b.gy, m = Math.hypot(tx, ty);
+      if (m < 0.001) continue;
+      const dot = (tx / m) * dx + (ty / m) * dy;
+      if (dot >= bestDot) { bestDot = dot; best = { x: tx / m, y: ty / m }; }
+    }
+    return best;
   }
 
   function reverseTie(receiver) {
@@ -576,56 +608,79 @@
      the current on-canvas instruction for a wrestler (world cue)
      ============================================================ */
   const other = w => w === G.P1 ? G.P2 : G.P1;
+  /* Every player-facing cue: say WHAT TO DO in wrestling terms, then name the
+     literal key for THAT player. The words "work"/"plant" never appear on
+     screen — they stay in the bible and code; the cue names the key.
+     KEYLABEL maps each pad button to its actual key letter per player. */
+  const KEYLABEL = {
+    p1: { work: "T", grab: "G", strike: "F", taunt: "H" },
+    p2: { work: "I", grab: "K", strike: "J", taunt: "L" }
+  };
+  const padKey = (w, btn) => KEYLABEL[w.id][btn];
+
   function cueText(w) {
     const m = G.match; if (!m || m.phase !== "MATCH") return null;
     const sx = G.superplex;
     if (sx) {
       const atk = w === sx.attacker;
-      if (sx.step === "CLIMB") return atk ? "CLIMBING…" : "HE'S GOING UP…";
-      if (sx.step === "POSITION") return atk ? "WAIT FOR HIM" : "MEET HIM — WORK!";
-      if (sx.step === "THROW") return atk ? "BRING HIM OVER — WORK!" : "HANG ON…";
-      if (sx.step === "LAND") return "LAND IT — WORK!";
+      if (sx.step === "CLIMB") return atk ? "CLIMBING UP…" : "HE'S GOING UP TOP…";
+      if (sx.step === "POSITION") return atk ? "WAIT FOR HIM…" : "GET UP THERE — PRESS " + padKey(w, "work");
+      if (sx.step === "THROW") return atk ? "THROW HIM OFF — PRESS " + padKey(w, "work") : "HANG ON…";
+      if (sx.step === "LAND") return "LAND IT — PRESS " + padKey(w, "work");
       return null;
     }
     if (G.tieup) {
-      const isCtrl = w === G.tieup.controller;
-      if (G.tieup.reversalSpot) return (w === G.tieup.receiver) ? "REVERSE — WORK! (4–9)" : "give the arm drag";
-      return isCtrl ? "PLANT — WORK  ·  push = WHIP" : "WORK to reverse  ·  GRAB to spin out";
+      const t = G.tieup, isCtrl = w === t.controller, isRecv = w === t.receiver, sp0 = spot();
+      if (t.reversalSpot) {
+        if (isRecv) return "REVERSE HIM — PRESS " + padKey(w, "work") + " NOW";
+        if (isCtrl) return "LET HIM TAKE YOU OVER";
+        return null;
+      }
+      // plain tie-up: show only what the sheet wants now — a corner spot wants
+      // a whip, everything else wants a slam. The other options still work.
+      const cornerWanted = sp0 && (sp0.corner || sp0.sequence === "superplex") && sp0.caller === t.controller.id;
+      if (isCtrl) return cornerWanted ? "WHIP HIM AT A CORNER — PUSH A DIRECTION" : "SLAM HIM — PRESS " + padKey(w, "work");
+      if (isRecv) return cornerWanted ? "HE'LL WHIP YOU — HANG ON" : "HE'LL SLAM YOU — RIDE IT";
+      return null;
     }
-    if (G.sellWin && G.sellWin.defender === w) return "SELL IT — WORK!";
+    if (G.sellWin && G.sellWin.defender === w) return "SELL IT — PRESS " + padKey(w, "work");
     if (G.pin) {
       if (G.pin.defender === w) {
-        if (G.pin.steal) return "FIGHT OUT — WORK!";
-        if (G.pin.outcome === "kickout") return "KICK OUT — WORK!";
-        if (G.pin.outcome === "win") return "STAY DOWN";
-        return "KICK OUT — WORK!";
+        if (G.pin.steal) return "FIGHT OUT — PRESS " + padKey(w, "work");
+        if (G.pin.outcome === "win") return "STAY DOWN — TOUCH NOTHING";
+        return "KICK OUT — PRESS " + padKey(w, "work");
       }
       return null;
     }
-    const sp = spot(); if (!sp) return "GO HOME";
+    const sp = spot(); if (!sp) return "MATCH'S OVER — GO HOME";
     const kind = performKind(sp), caller = wrestlerById(sp.caller), def = defenderOf(sp);
     const isCaller = w === caller, isDef = w === def;
     switch (kind) {
-      case "REVERSAL":
-        return isCaller ? "TIE HIM UP — GRAB" : isDef ? "TIE HIM UP — GRAB" : null;
+      case "REVERSAL": {
+        // the caller (heel) locks up; the OTHER man reverses into the arm drag
+        if (isCaller) return "LOCK HIM UP — PRESS " + padKey(w, "grab");
+        if (w === other(caller)) return "REVERSE WHEN HE LOCKS UP";
+        return null;
+      }
       case "PLANT":
-        return isCaller ? "TIE UP (GRAB) → WORK" : isDef ? "let him lock up" : null;
+        return isCaller ? "LOCK HIM UP — PRESS " + padKey(w, "grab") : isDef ? "LET HIM LOCK UP" : null;
       case "STRIKES":
-        return isCaller ? "STRIKE HIM — " + strikeKey(w) : isDef ? "SELL — WORK" : null;
+        return isCaller ? "STRIKE HIM — PRESS " + padKey(w, "strike") : isDef ? "SELL EACH ONE — PRESS " + padKey(w, "work") : null;
       case "CORNER_STRIKES":
         if (!PCW.atCorner(def))
-          return isCaller ? "WHIP HIM TO A CORNER" : isDef ? "you're headed to the buckle" : null;
-        return isCaller ? "STOMP — " + strikeKey(w) : isDef ? "SELL — WORK" : null;
+          return isCaller ? "SEND HIM TO A CORNER — LOCK UP, PRESS " + padKey(w, "grab") : isDef ? "HE'S SENDING YOU TO THE CORNER" : null;
+        return isCaller ? "STOMP HIM — PRESS " + padKey(w, "strike") : isDef ? "SELL EACH ONE — PRESS " + padKey(w, "work") : null;
       case "SUPERPLEX":
         if (def.state !== S.CORNER)
-          return isCaller ? "WHIP HIM TO A CORNER" : isDef ? "get to a corner" : null;
-        return isCaller ? "GO UP TOP — GRAB" : isDef ? "trust him — WORK on cue" : null;
+          return isCaller ? "SEND HIM TO A CORNER — LOCK UP, PRESS " + padKey(w, "grab") : isDef ? "GET TO A CORNER" : null;
+        return isCaller ? "GO UP TOP — PRESS " + padKey(w, "grab") : isDef ? "STAY THERE — TRUST HIM" : null;
       case "PIN":
-        return isCaller ? "COVER — GRAB" : isDef ? "STAY DOWN" : null;
+        if (isCaller) return "COVER HIM — PRESS " + padKey(w, "grab");
+        if (isDef) return sp.outcome === "win" ? "STAY DOWN — TOUCH NOTHING" : "KICK OUT WHEN HE COVERS";
+        return null;
     }
     return null;
   }
-  const strikeKey = w => w.id === "p1" ? "F" : "J";
   PCW.cueText = cueText;
 
   /* ============================================================
