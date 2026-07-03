@@ -71,6 +71,8 @@
       this.bumpSpin = 1;                // clothesline/superplex spin direction
       this.cornerIndex = -1;            // which corner he's stunned in
       this.cornerAimed = false;         // this whip was aimed at a corner (for capture/miss feedback)
+      this.sellExpect = 0;              // how long a good sell of the last bump should last (frames)
+      this.wronged = false;             // stiffed/sandbagged — a receipt is owed (retaliation primed)
     }
     setState(s) {
       if (this.state === s) return;

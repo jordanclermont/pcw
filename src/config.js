@@ -18,7 +18,7 @@
     ARM_DRAG: 28, SLAM: 24, DOWN: 110, DOWN_SHORT: 70, GETUP: 26,
     HITSTUN: 16, SELL: 36, SELL_WINDOW: 26,
     WHIFF: 16, STRIKE_TOTAL: 14, STRIKE_ACTIVE_A: 5, STRIKE_ACTIVE_B: 8,
-    SPLATTER: 5, HITSTOP: 5, PIN_COUNT: 55,
+    SPLATTER: 5, HITSTOP: 5, PIN_COUNT: 62,   // slightly slower ref count = more near-fall suspense
     /* the top-rope superplex chain — four beats, each a state with its
        own length and a timed Work-button window inside it (same pattern
        as the grapple reversal). CLIMB has no input; the other three do. */
@@ -91,15 +91,26 @@
      transplant is for; everything else (whip, rebound, clothesline) is
      built on it. Tuned on the 12-grid. */
   PCW.MOVE = {
-    // v0.09 feel pass: heavier, less slippery. Lower accel + lower top speed
-    // (guys were "walking on ice" and moving a touch fast), and a much grippier
-    // friction so they plant their feet instead of sliding to a stop.
-    ACC: 0.015, FRIC: 0.78,
-    VMAX_WALK: 0.058, VMAX_RUN: 0.15,
-    WHIP_V: 0.27,          // launch speed of an Irish whip
+    // v0.10: slower still (Jordan: "everything is quite fast"). The match should
+    // breathe so you have time to READ a beat and DECIDE how to answer it.
+    ACC: 0.012, FRIC: 0.78,
+    VMAX_WALK: 0.05, VMAX_RUN: 0.12,
+    WHIP_V: 0.24,          // launch speed of an Irish whip
     ROPE_KEEP: 0.94,       // fraction of speed kept off a rope rebound
-    RUN_THRESHOLD: 0.088,  // speed above which the gait reads as a run
-    CLOTHESLINE_MIN: 0.072 // a foe must be charging faster than this to be clotheslined
+    RUN_THRESHOLD: 0.075,  // speed above which the gait reads as a run
+    CLOTHESLINE_MIN: 0.06  // a foe must be charging faster than this to be clotheslined
+  };
+
+  /* SELLING — the receiver's performance. After a bump you go DOWN and DON'T
+     get up on your own: staying down IS the sell, getting up is a choice, and
+     popping up too soon is a SANDBAG (under-selling, priced + reads flat). A
+     move's weight sets how long a good sell should last. */
+  PCW.SELL = {
+    LIGHT: 26,    // a struck bump / minor move
+    MED: 72,      // a slam
+    BIG: 130,     // a finisher, the superplex — stay down, this one hurt
+    EARLY: 0.42,  // get up before this fraction of the expected sell = a sandbag
+    STALL: 2.4    // stay down past this multiple with no pin = the crowd gets bored
   };
 
   /* the four corners — ring-inside points sitting under the turnbuckle

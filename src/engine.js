@@ -260,18 +260,29 @@
         offScript(w, "dropped " + def.short + " off-script",
           { picture: "slam", role: w.role, base: 8, quality: 0.9, arcSlot: "transition", actor: w }, TRUST.SLAM);
       }
-    });
+    }, (sp && sp.big) ? PCW.SELL.BIG : PCW.SELL.MED);   // a finisher demands a long sell
+  }
+
+  /* put a man DOWN and set how long a GOOD sell of that bump should last.
+     He no longer gets up on a timer — staying down IS the sell, getting up is
+     a choice, and popping up early is a sandbag (handled in handleDown). */
+  function goDown(w, attacker, sellFrames) {
+    w.stop();
+    w.bumpFrom = attacker || null;
+    w.sellExpect = sellFrames || PCW.SELL.MED;
+    w.downTime = F.DOWN;                 // legacy field; kept harmless
+    w.setState(S.DOWN);
   }
 
   /* a grapple slam with WEIGHT: the attacker locks him up and LIFTS for
      SLAM_LIFT frames, then drives him down with a heavy hit-stop. Makes a
      grapple read as a grapple instead of an instant teleport-to-the-mat. */
-  function beginSlam(atk, def, onImpact) {
+  function beginSlam(atk, def, onImpact, sellFrames) {
     atk.setState(S.SLAM); def.stop();
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
     def.gx = clampGrid(atk.gx + dx / m * 0.5); def.gy = clampGrid(atk.gy + dy / m * 0.5);
     def.setState(S.LIFTED);
-    G.slam = { atk, def, frame: 0, push: 0.9, onImpact };
+    G.slam = { atk, def, frame: 0, push: 0.9, onImpact, sell: sellFrames || PCW.SELL.MED };
   }
   function slamTick() {
     const s = G.slam; s.frame++;
@@ -280,8 +291,8 @@
     const atk = s.atk, def = s.def;
     const dx = def.gx - atk.gx, dy = def.gy - atk.gy, m = Math.hypot(dx, dy) || 1;
     def.gx = clampGrid(def.gx + dx / m * s.push); def.gy = clampGrid(def.gy + dy / m * s.push);
-    def.stop(); def.downTime = F.DOWN; def.setState(S.DOWN);
     PCW.render.inkBurst(def); G.hitstop = F.SLAM_HITSTOP; G.shake = 13;
+    goDown(def, atk, s.sell);
     s.onImpact();
   }
 
@@ -298,7 +309,7 @@
     controller.gx = clampGrid(w.gx - dx / m * 2.1); controller.gy = clampGrid(w.gy - dy / m * 2.1);
     controller.stop(); w.setState(S.ARM_DRAG);
     if (t.reversalSpot && inWin) {
-      controller.hurt(BODY.ARM_DRAG); controller.downTime = F.DOWN_SHORT; controller.setState(S.DOWN);
+      controller.hurt(BODY.ARM_DRAG); goDown(controller, w, PCW.SELL.LIGHT);
       PCW.render.spawnSplatter(w); G.hitstop = F.HITSTOP; G.shake = 6;
       popShake(G.crowd.react({ picture: "reversal", role: w.role, base: sp.pop, quality: perfect ? 1.25 : 1.0, arcSlot: sp.arcSlot, actor: w }));
       PCW.log(w.short + (perfect ? " — PICTURE-PERFECT arm drag (f" + f + ")" : " — clean arm drag (f" + f + ")"), "ok");
@@ -308,14 +319,14 @@
       // booked reversal, mistimed: the crowd sees the controller shrug him off
       // into a slam. A real bump + a broken cue, both invisible to the crowd.
       controller.setState(S.WHIFF);
-      w.stop(); w.hurt(BODY.BOTCH_SLAM); w.downTime = F.DOWN; w.setState(S.DOWN);
+      w.hurt(BODY.BOTCH_SLAM); goDown(w, controller, PCW.SELL.MED);
       adjustTrust(-TRUST.STIFF, w.short + " blew the arm-drag timing (f" + f + ", window 4–9)");
       G.crowd.react({ picture: "slam", role: controller.role, base: sp.pop, quality: 0.6, arcSlot: sp.arcSlot, actor: controller });
       markBotched(sp);
     } else {
       // reversing a tie-up that wasn't the booked spot: a clean counter to the
       // crowd (a pop) but a broken cue backstage (a shoot).
-      controller.hurt(BODY.ARM_DRAG); controller.downTime = F.DOWN_SHORT; controller.setState(S.DOWN);
+      controller.hurt(BODY.ARM_DRAG); goDown(controller, w, PCW.SELL.LIGHT);
       PCW.render.spawnSplatter(w); G.hitstop = F.HITSTOP; G.shake = 6;
       offScript(w, "reversed a spot that wasn't called",
         { picture: "reversal", role: w.role, base: 6, quality: 1.0, arcSlot: "transition", actor: w }, TRUST.REVERSAL);
@@ -335,6 +346,40 @@
   }
 
   /* ============================================================
+     SELLING — a downed man does NOT get up on a timer. Staying down is the
+     sell; getting up is a choice; popping up too soon after a real bump is a
+     SANDBAG (under-selling) that reads flat and costs trust. Lying there
+     forever stalls the show and bores the crowd.
+     ============================================================ */
+  function handleDown(w, pad) {
+    const expect = w.sellExpect || PCW.SELL.MED;
+    const a = pad.axis();
+    const wantsUp = !!(a.gx || a.gy) || pad.just.Y || pad.just.B;
+    if (wantsUp) { getUp(w, false); return; }
+    if (w.stateFrame > expect * PCW.SELL.STALL) {
+      G.crowd.restless = Math.min(100, (G.crowd.restless || 0) + 0.5);   // dead air — a different negativity
+      if (w.stateFrame > expect * PCW.SELL.STALL + 120) getUp(w, true);  // he can't lie there all night
+    }
+  }
+  function getUp(w, forced) {
+    const expect = w.sellExpect || PCW.SELL.MED;
+    // popping up well before a real bump is done selling makes the attacker's
+    // move look like nothing (flat to the crowd) and is a liberty backstage.
+    if (!forced && expect >= PCW.SELL.MED && w.stateFrame < expect * PCW.SELL.EARLY) {
+      const atk = w.bumpFrom;
+      adjustTrust(-TRUST.STIFF, w.short + " popped straight up — under-sold the bump");
+      if (atk) {
+        G.crowd.react({ picture: "weakstrike", role: atk.role, base: 2, quality: 0.35, arcSlot: "transition", actor: atk });
+        atk.wronged = true;   // the man whose spot got cheaped is owed a receipt (wired next pass)
+      }
+      PCW.awardRespect(w.id, PCW.RESPECT.SHOOT_FLOPPED);   // sandbagging doesn't impress the room
+      say("color", w.short + " barely sold that — cheap. The other guy won't forget it.");
+    }
+    w.sellExpect = 0;
+    w.setState(S.GETUP);
+  }
+
+  /* ============================================================
      STRIKES + the clothesline
      ============================================================ */
   function strikeContact(a, foe) {
@@ -348,7 +393,9 @@
   function clothesline(a, foe) {
     a.setState(S.CLOTHESLINE);
     foe.bumpSpin = (a.facing >= 0 ? 1 : -1);
-    foe.stop(); foe.hurt(BODY.SHOOT_SLAM); foe.setState(S.BUMP);
+    foe.stop(); foe.hurt(BODY.SHOOT_SLAM);
+    foe.bumpFrom = a; foe.sellExpect = PCW.SELL.MED;   // a real collision — a proper sell
+    foe.setState(S.BUMP);
     PCW.render.spawnSplatter(foe); G.hitstop = F.HITSTOP; G.shake = 12;
     // a big collision nobody called — priced as a liberty, but sanctioned if
     // the crowd is chanting for action/a big one.
@@ -478,9 +525,9 @@
     D.hurt(BODY.WORKED_SLAM + misses * 5);
     const c = PCW.CORNERS[sx.corner];
     D.gx = clampGrid(c.gx + (c.gx < PCW.GRID / 2 ? 1.4 : -1.4)); D.gy = clampGrid(c.gy);
-    D.stop(); D.downTime = F.DOWN; D.setState(S.DOWN);
     A.gx = clampGrid(D.gx + 0.2); A.stop(); A.setState(S.WHIFF);
     PCW.render.inkBurst(D); G.hitstop = F.HITSTOP; G.shake = 12;
+    goDown(D, A, PCW.SELL.BIG);   // off the top — stay down, this one hurt
     if (sp && sp.sequence === "superplex" && sp.caller === A.id) {
       popShake(G.crowd.react({ picture: "slam", role: A.role, base: sp.pop, quality, arcSlot: sp.arcSlot, big: true, actor: A }));
       PCW.log("TOP-ROPE SUPERPLEX" + (misses ? " — sloppy, " + misses + " missed beat" + (misses > 1 ? "s" : "") : " — PICTURE PERFECT!"), misses ? "bad" : "ok");
@@ -527,23 +574,34 @@
     popShake(G.crowd.react({ picture: "nearfall", role: pin.attacker.role, base: 5, quality: 1.0, arcSlot: pin.finish ? "finish" : "transition", actor: pin.attacker }));
     PCW.log("REF: ..." + pin.count + "!");
     say("pbp", pin.count === 1 ? "ONE!" : pin.count === 2 ? "TWO!—" : "THREE!");
+    // NOTHING auto-kicks out anymore — the pinned man must Work to kick out
+    // (handlePinWork) before three, or he eats the fall.
+    if (pin.count >= 3) resolvePinCount3();
+  }
 
-    if (pin.count === 2) {
-      // a booked near-fall resolves at two whether or not the pinned man
-      // pressed Work (Work just makes it crisper) — so the finish never strands.
-      if (pin.outcome === "kickout") { bookedNearFall("auto"); return; }
-      // a stray/unplanned pin: scripted survival, the other man kicks out.
-      if (!pin.finish && !pin.steal) { pinKickout(false); return; }
+  /* the count reached three because nobody kicked out — the pinner goes over,
+     wanted or not. Stakes: fail to kick out of the champ's near-fall and you
+     LOSE the match. */
+  function resolvePinCount3() {
+    const pin = G.pin; G.pin = null;
+    const atk = pin.attacker, def = pin.defender;
+    def.setState(S.PINNED);
+    if (pin.steal) { say("pbp", "He STOLE it! Three on the challenger — bedlam!"); matchEnd("SCREWJOB", atk); return; }
+    if (pin.outcome === "win") {
+      popShake(G.crowd.react({ picture: "pin", role: atk.role, base: pin.pop, quality: 1.0, arcSlot: "finish", big: true, actor: atk }));
+      if (spot()) spot().status = "done";
+      say("pbp", "THREE! It's over! We have a NEW CHAMPION!");
+      matchEnd("CLEAN", atk); return;
     }
-    if (pin.count >= 3) {
-      if (pin.steal) { say("pbp", "He STOLE it! A three-count on the challenger — bedlam!"); matchEnd("SCREWJOB", pin.attacker); return; }
-      if (pin.finish && pin.outcome === "win") {
-        popShake(G.crowd.react({ picture: "pin", role: pin.attacker.role, base: pin.pop, quality: 1.0, arcSlot: "finish", big: true, actor: pin.attacker }));
-        spot().status = "done";
-        say("pbp", "THREE! It's over! We have a NEW CHAMPION!");
-        matchEnd("CLEAN", pin.attacker);
-      }
+    // a booked near-fall (or a stray pin) the defender failed to escape:
+    if (atk.role === "face") {
+      popShake(G.crowd.react({ picture: "pin", role: atk.role, base: pin.pop, quality: 0.8, arcSlot: "finish", big: true, actor: atk }));
+      if (spot()) spot().status = "done";
+      say("pbp", "Three?! It's over — but that came out of nowhere!");
+      matchEnd("CLEAN", atk); return;
     }
+    say("pbp", "The heel got three — that is NOT how this was booked!");
+    matchEnd("SCREWJOB", atk);
   }
 
   /* a booked kick-out near-fall: the pinned man survives at two, the spot's
@@ -551,7 +609,7 @@
   function bookedNearFall(via) {
     const pin = G.pin, def = pin.defender, atk = pin.attacker, sp = spot();
     G.pin = null;
-    def.downTime = 44; def.setState(S.DOWN); atk.setState(S.WHIFF);
+    atk.setState(S.WHIFF); goDown(def, null, PCW.SELL.LIGHT);
     const crisp = via === "work";
     popShake(G.crowd.react({ picture: "kickout", role: def.role, base: 12, quality: crisp ? 1.15 : 1.0, arcSlot: "finish", big: true, actor: def }));
     say("pbp", def.short + " KICKS OUT AT TWO! I do not believe it!");
@@ -561,15 +619,16 @@
   /* the Work button while pinned routes by the pin's booked outcome */
   function handlePinWork(def) {
     const pin = G.pin;
-    if (pin.outcome === "kickout") { bookedNearFall("work"); return; }   // cooperative near-fall
-    if (pin.outcome === "win") { pinKickout(true); return; }              // SHOOT — kicking out of the real finish
     if (pin.steal) { stealEscape(); return; }                            // fighting out of a betrayal
+    if (pin.outcome === "kickout") { bookedNearFall("work"); return; }   // the booked near-fall
+    if (pin.outcome === "win") { pinKickout(true); return; }              // SHOOT — kicking out of the real finish
+    pinKickout(false);                                                   // a stray/unplanned pin — routine kick-out
   }
 
   function pinKickout(isShoot) {
     const atk = G.pin.attacker, def = G.pin.defender;
     G.pin = null;
-    def.downTime = 40; def.setState(S.DOWN); atk.setState(S.WHIFF);
+    atk.setState(S.WHIFF); goDown(def, null, PCW.SELL.LIGHT);
     if (isShoot) {
       G.match.shootOn = true;   // the steal is now armed
       offScript(def, "kicked out of the REAL FINISH",
@@ -586,7 +645,7 @@
   function stealEscape() {
     const pin = G.pin, def = pin.defender;
     G.pin = null; G.match.shootOn = false;
-    def.downTime = 30; def.setState(S.DOWN); pin.attacker.setState(S.WHIFF);
+    pin.attacker.setState(S.WHIFF); goDown(def, null, PCW.SELL.LIGHT);
     popShake(G.crowd.react({ picture: "kickout", role: def.role, base: 14, quality: 1.0, arcSlot: "finish", big: true, actor: def }));
     say("pbp", def.short + " kicks out! He is fighting to save this match!");
     PCW.log(def.short + " fights out of the stolen pin — back to the finish.");
@@ -672,6 +731,14 @@
       }
       return null;
     }
+    if (w.state === S.DOWN) {
+      const sp0 = spot();
+      if (sp0 && sp0.move === "PIN" && defenderOf(sp0) === w) return "STAY DOWN — HE'S COVERING";
+      const expect = w.sellExpect || 0;
+      if (expect >= PCW.SELL.MED && w.stateFrame < expect * PCW.SELL.EARLY)
+        return "SELL IT — STAY DOWN  ·  move = pop up (cheap)";
+      return "GET UP — MOVE or PRESS " + padKey(w, "work");
+    }
     const sp = spot(); if (!sp) return "MATCH'S OVER — GO HOME";
     const kind = performKind(sp), caller = wrestlerById(sp.caller), def = defenderOf(sp);
     const isCaller = w === caller, isDef = w === def;
@@ -729,7 +796,17 @@
     /* live cooperative reactions, independent of whose spot it is */
     if (G.sellWin && G.sellWin.defender === me) { cmd.Y = true; return cmd; }        // sell on cue
     if (G.pin && G.pin.defender === me) {
-      if (G.pin.steal) cmd.Y = true;   // fight out of a stolen pin; win = stay down; booked kick-out auto-resolves at two
+      // win pin = booked to lose, stay down. Otherwise kick out near the two-count
+      // (must be manual now — nothing auto-resolves).
+      if (G.pin.outcome !== "win" && G.pin.frame >= F.PIN_COUNT * 2 + 4) cmd.Y = true;
+      return cmd;
+    }
+    if (me.state === S.DOWN) {
+      // stay down if the sheet wants me pinned here; otherwise sell the full
+      // beat (no sandbag) then struggle up.
+      const sp = spot();
+      if (sp && sp.move === "PIN" && defenderOf(sp) === me) return cmd;   // wait to be covered
+      if (me.stateFrame >= (me.sellExpect || PCW.SELL.MED) * 0.95) cmd.Y = true;
       return cmd;
     }
     if (G.superplex) {
@@ -858,8 +935,8 @@
         case S.SLAM: if (w.stateFrame >= F.SLAM) w.setState(S.IDLE); break;
         case S.LIFTED: if (w.stateFrame > F.SLAM_LIFT + 30) w.setState(S.IDLE); break;  // safety; normally slamTick drops him
         case S.ARM_DRAG: if (w.stateFrame >= F.ARM_DRAG) w.setState(S.IDLE); break;
-        case S.BUMP: if (w.stateFrame >= F.BUMP) { w.downTime = F.DOWN; w.setState(S.DOWN); } break;
-        case S.DOWN: if (w.stateFrame >= w.downTime) w.setState(S.GETUP); break;
+        case S.BUMP: if (w.stateFrame >= F.BUMP) goDown(w, w.bumpFrom, w.sellExpect || PCW.SELL.MED); break;
+        case S.DOWN: handleDown(w, pad); break;   // no auto get-up — the sell/get-up is a CHOICE
         case S.GETUP: if (w.stateFrame >= F.GETUP) w.setState(S.IDLE); break;
         case S.HITSTUN: if (w.stateFrame >= F.HITSTUN) w.setState(S.IDLE); break;
         case S.SELL: if (w.stateFrame >= F.SELL) w.setState(S.IDLE); break;
@@ -890,19 +967,26 @@
     if (!tie(w, foe)) { w.setState(S.WHIFF); PCW.log(w.short + " reaches — nobody home."); }
   }
 
+  /* Boot straight into the match (Jordan: "focus solely on the match for now").
+     The booking screen still exists — press B to open it — but the default
+     entry is a ready-made card so you're in the ring in one keypress. */
+  function bootMatch() { PCW.startMatch(PCW.assembleScript(PCW.PRESETS[0].body)); }
+
   /* ---------------- meta keys + main loop ---------------- */
   addEventListener("keydown", e => {
     if (e.code === "Space" && !e.repeat) G.slowmo = !G.slowmo;
     if (e.code === "Digit1" && !e.repeat) AI.toggle("p1");   // hand STOVE to the CPU
     if (e.code === "Digit2" && !e.repeat) AI.toggle("p2");   // hand THE BOULDER to the CPU
     if (e.code === "KeyR" && !e.repeat) {
-      if (G.appPhase === "MATCH" && G.match && G.match.phase === "ENDED") PCW.Planning.reset();
-      else if (G.appPhase === "PLANNING") PCW.Planning.reset();
+      if (G.appPhase === "PLANNING") PCW.Planning.reset();
+      else bootMatch();                                       // run it back into a fresh match
     }
+    // B opens the booking screen (only when not mid-match, so it can't abort a live one)
+    if (e.code === "KeyB" && !e.repeat && !(G.appPhase === "MATCH" && G.match && G.match.phase !== "ENDED")) PCW.Planning.reset();
   });
 
   G.slowmo = false;
-  PCW.Planning.reset();
+  bootMatch();
 
   let acc = 0, last = performance.now();
   function loop(now) {

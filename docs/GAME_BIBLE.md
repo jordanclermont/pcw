@@ -7,6 +7,14 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.6 revisions (Build 0.10): the receiver's game — selling and get-up are now
+a real choice, popping up early is a priced sandbag, and pins are manual (kick
+out or lose), §5.13. The match now boots straight into the ring (the booking
+screen is bypassed — press B to open it) to focus on the match. Movement
+slowed again. Attacker-side stakes (stiff/receipts), real per-move animations,
+heel heat, and the WWF.com-era visual/font redesign are the sequenced next
+passes.*
+
 *v1.5 revisions (Build 0.09, feel pass): grapple weight — the lift-and-drive
 slam (§5.3); heavier/grippier locomotion; plus non-bible UI work (the top
 heat/resentment/trust meters consolidated into one legible panel, wrestlers
@@ -158,6 +166,14 @@ Outside-the-ring brawling is the next extension of the same boundary logic and i
 ### 5.11 The taunt (built, v0.06)
 
 Each performer has a taunt (its own button, distinct from Work). A taunt is always legitimate crowd work — never a shoot — and it is the verb for *playing to the room* between spots. A face taunt pops the crowd; a heel taunt draws heat and banks resentment toward the comeback (the same engine that pays off a long heel-control segment). Either can answer a live hijack chant, which is where a taunt earns Respect. It is deliberately cheap in heat and rate-limited by its own animation, so it flavours the pacing without becoming a heat farm — the crowd's decay and finite belief keep it honest. It fills the gap the playtest notes flagged between "throw a move" and "hit a finisher," and gives the crowd something to request.
+
+### 5.13 Selling & get-up — the receiver's game (built v0.10)
+
+The single biggest fix to "it's just one guy presses a button, the other presses another": the person TAKING a move is no longer a ragdoll on a timer. After a bump you go DOWN and **do not get up on your own** — staying down IS the sell, getting up is a choice, and the move's weight sets how long a good sell should last (a strike bump is quick; a finisher or the superplex wants you down a long time). Popping up too soon after a real bump is a **sandbag**: it makes the attacker's move look like it did nothing (flat to the crowd), costs trust, and marks you as owing that worker a receipt. Lying there forever isn't free either — the show stalls and the crowd gets restless (dead-air negativity, distinct from heat on the heel). The cue shows the safe play *and* the temptation ("SELL IT — STAY DOWN · move = pop up (cheap)").
+
+**Pins are manual, always (v0.10).** Nothing auto-kicks-out anymore. When you're pinned you MUST Work to kick out before three, or you eat the fall — and failing to kick out of the champion's near-fall means you *lose the match*. That's the stake: every pin is a live "kick out or it's over" decision. On the finish you're booked to lose, the cue says STAY DOWN and pressing Work is the shoot (as before).
+
+This is the first delivery of §2's promise that "the person taking the move is performing just as much as the one delivering it." The attacker-side stakes (a *stiff* you can choose to lay in, receipts, cooperation visibly breaking down) are the next pass.
 
 ### 5.12 The CPU performer (solo play & testing, built v0.08)
 

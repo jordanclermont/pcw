@@ -441,4 +441,54 @@ To feel for:
 - Does the slam finally feel like a grapple? Lift too long/short?
 - Are the top meters + cues clearly legible now? Anything still cramped?
 
+## 2026-07-03 / v0.10 — the receiver's game (stakes, selling, manual pins)
+
+Jordan's 0.09 verdict: still too fast; it's one-button-each with no real
+decisions; you're told the safe button but not the one that sandbags/goes off
+script; no stakes — "a silly wrestling experiment." Also: pins auto-kicked-out
+(should be manual), wrestlers pop up on their own before you can pin them, and
+he wants selling depth (get up fast/slow/stay down), more taunting, real
+heel-heat crowd interaction, real per-move animations, the booking screen
+optional, and a WWF.com early-2000s visual/font redesign (he's a graphic
+designer — Impact is cliché). Big list; I set a roadmap and built the
+foundation this session.
+
+Built this session (the performance core):
+- BOOTS STRAIGHT INTO THE MATCH now (planning bypassed; press B to open it).
+- SELLING IS A CHOICE. After a bump you go DOWN and DON'T get up on a timer.
+  Staying down = the sell; move/Work = get up. Pop up too soon after a real
+  bump = a SANDBAG: reads flat to the crowd, costs trust, and the wronged
+  worker is owed a receipt. Lie there too long = the crowd gets restless (dead
+  air). Move weight sets the expected sell (strike=quick, finisher=long). The
+  cue shows the temptation: "SELL IT — STAY DOWN · move = pop up (cheap)".
+  → This also fixes the "they got up before I could pin them" bug: they stay
+    down until they choose, so you have time to walk over and cover.
+- PINS ARE MANUAL, ALWAYS. Nothing auto-kicks-out. You must Work to kick out
+  before three or you eat the fall — and failing to kick out of the champ's
+  near-fall LOSES you the match. Real stakes on every pin.
+- SLOWER pace again (config PCW.MOVE: run .15→.12, accel .015→.012); slower
+  ref count for more near-fall suspense.
+
+Verified: launched + drove the real app (boots to match, sell/get-up cue with
+the sandbag temptation shows, manual kick-out cue shows, no console errors);
+CPU-vs-CPU still auto-plays both preset cards to clean finishes with the new
+manual kick-out + get-up logic.
+
+Roadmap for the NEXT passes (nothing dropped):
+- Attacker-side stakes: a STIFF you choose to lay in (reads as intensity to the
+  crowd, hurts the body + trust), RECEIPTS (get stiffed/sandbagged → your next
+  shot is a free stiff), and cooperation visibly breaking down as trust drops.
+- REAL per-move animations (right now moves share poses — a proper procedural
+  animation pass; the big one).
+- HEEL HEAT: the heel fuelled by drawn heat, distinct from boredom.
+- More taunting depth.
+- The early-2000s WWF.com visual + font redesign — its own focused pass, wants
+  Jordan's designer eye.
+
+To feel for next play (solo is fine now — press 1 or 2 for a CPU partner):
+- Does controlling your own sell/get-up make the match feel like YOU'RE
+  performing, not just pressing? Is the get-up timing readable at this pace?
+- Do the manual kick-outs create real "am I going to make it" tension?
+- Is it still too fast, or getting closer?
+
 ## (next entry goes here)

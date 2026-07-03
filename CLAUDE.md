@@ -71,8 +71,16 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   grapple now lifts-and-drives with a heavy impact (bible §5.3); the top
   heat/resentment/trust meters consolidated into one legible panel; wrestlers
   scaled up; bigger cue chips + a clean pin-count number; results screen calmed.
-- NEXT — Jordan's 0.09 playtest (movement weight dialled right? slam lift feel?
-  meters/cues legible?); tuning knobs in config.js (PCW.MOVE, FRAMES.SLAM_*).
+- v0.10 "sell it" (the receiver's game) — DONE: boots straight into the match
+  (planning bypassed, press B to open it); selling & get-up are a real choice
+  (stay down = sell, pop up early = a priced sandbag, cue shows the temptation);
+  pins are MANUAL always (kick out or lose); slower pace. Bible §5.13.
+- NEXT (sequenced, nothing dropped): attacker-side stakes (stiff/receipts/
+  cooperation breakdown); real per-move animations (the big art pass); heel
+  heat (heel fuelled by drawn heat vs boredom); deeper taunting; and the
+  early-2000s WWF.com visual + font redesign (wants Jordan's designer eye —
+  a great dedicated session). Publishing: `origin` is set + Pages tracks main,
+  so any push auto-redeploys https://jordanclermont.github.io/pcw/ (~1 min).
   Then the sprite/asset pass (individual PNGs from assets/sprites/, naming:
   stovehot_idle.png; anchor at feet centreline; ~480 px source for ~240 px
   display; keep the procedural skeletons as the fallback), and the
