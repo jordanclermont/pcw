@@ -28,11 +28,12 @@
       const d = document.createElement("div");
       d.className = "spot " + (
         sp.status === "botched" ? "botched" :
+        sp.status === "cut" ? "cut" :
         sp.status === "done" ? "done" :
         i === match.spot ? "now" : "");
       const who = sp.caller === "p1" ? "STOVE" : "BOULDER";
       d.textContent = (i + 1) + ". " + sp.name + (sp.count ? " ×" + sp.count : "") +
-        "  ·  " + who;
+        "  ·  " + (sp.status === "cut" ? "CUT — WENT HOME" : who);
       $cs.appendChild(d);
     });
   };

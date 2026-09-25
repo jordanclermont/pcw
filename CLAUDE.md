@@ -98,14 +98,18 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   right after your own move) pays; game opens on the booking screen again with
   a one-key skip (H/L = The Classic); R = same card back, B = rebook.
   Harness: by-the-sheet 3.75/2.75★, played-to-the-room 4.5/4.5★.
+- v0.15 "the third man" — DONE: the referee (src/referee.js). In the ring,
+  stays clear; slides in to count (count starts when he's down; faster on a man
+  who's shot); checks on downed men and relays Gorilla: time / crowd / injury
+  notes and GO HOME — stay down = agree (middle cut, straight to the finish,
+  +Respect), get up = wave it off (−Respect). Bible §5.7.
 - NEXT: refine the actual gameplay (Jordan, after 0.14 — scope to be defined
   with him at the start of that session). Then, in order (1v1 only, no tag):
   1. Calls in rest holds — headlock opens the whispered audible radial; the
      crowd cools while you talk; "go home" is a call (bible §5.5).
-  2. The referee as the office's messenger — relays time cues / changes /
-     warnings when he checks on a downed man; put the ref physically in the
-     ring (bible §5.7).
-  3. Blank "call it in the ring" slots on the call sheet (legal-pad plan).
+  2. Blank "call it in the ring" slots on the call sheet (legal-pad plan).
+  3. Referee depth: his trust ledger (slow counts for trusted workers, looking
+     away), the ref bump.
 - THEN (older queue, nothing dropped): attacker-side stakes (stiff/receipts/
   breakdown); real per-move animations (the big art pass); heel heat (fuelled
   by drawn heat vs boredom); deeper taunting; sandbag on the superplex.

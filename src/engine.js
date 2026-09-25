@@ -48,6 +48,7 @@
     G.tieup = null; G.sellWin = null; G.pin = null; G.superplex = null; G.slam = null; G.splatters = [];
     G.ropeShake = { t: 0, side: 0 };
     if (!G.crowd) G.crowd = new PCW.CrowdModel(); else G.crowd.reset();
+    G.ref = new PCW.Referee(); G.downSeq = 0;
     if (PCW.Commentary) PCW.Commentary.reset();
     G.match = {
       phase: "MATCH", script: script || PCW.makeMatchPlan(), spot: 0,
@@ -87,6 +88,19 @@
     const nx = spot(); if (nx) PCW.log("Cover it, move on. Next — " + nx.name + ".");
   }
 
+  /* GO HOME — Gorilla's call, accepted through the referee: cut whatever is
+     left of the middle of the match and go straight to the protected finish. */
+  function goHome() {
+    const m = G.match, tailStart = m.script.length - PCW.SPOT_TAIL.length;
+    if (m.spot >= tailStart) return;
+    for (let i = m.spot; i < tailStart; i++) if (!m.script[i].status) m.script[i].status = "cut";
+    m.spot = tailStart;
+    G.tieup = null; G.sellWin = null;
+    PCW.renderCallsheet();
+    PCW.log("GOING HOME — the rest of the middle is cut. Next — " + spot().name + ".", "ok");
+  }
+  PCW.goHome = goHome;
+
   const SANCTIONABLE = new Set(["strike", "weakstrike", "slam", "reversal"]);
 
   function offScript(who, label, picture, severity) {
@@ -96,6 +110,7 @@
       return;
     }
     G.match.shoots++;
+    who.shoots = (who.shoots || 0) + 1;   // the referee remembers who went off the sheet
     G.match.shootCost = (G.match.shootCost || 0) + severity * PCW.RATING.PER_SHOOT_TRUST;   // stray strike ≈ −0.1, kicking out of the finish ≈ −0.5
     adjustTrust(-severity, "SHOOT — " + who.short + " " + label);
     popShake(G.crowd.react(picture));
@@ -271,6 +286,7 @@
     w.bumpFrom = attacker || null;
     w.sellExpect = sellFrames || PCW.SELL.MED;
     w.downTime = F.DOWN;                 // legacy field; kept harmless
+    w.downId = ++G.downSeq;              // each trip to the mat can be checked on once
     w.setState(S.DOWN);
   }
 
@@ -376,6 +392,7 @@
     }
   }
   function getUp(w, forced) {
+    if (G.ref) G.ref.onGetUp(w);         // getting up during Gorilla's go-home call = waving it off
     const expect = w.sellExpect || PCW.SELL.MED;
     // popping up well before a real bump is done selling makes the attacker's
     // move look like nothing (flat to the crowd) and is a liberty backstage.
@@ -582,8 +599,10 @@
   }
 
   function pinTick() {
-    const pin = G.pin; pin.frame++;
-    if (pin.frame % F.PIN_COUNT !== 0) return;
+    const pin = G.pin;
+    if (!G.ref.atPin()) return;          // no count until the ref is down there
+    pin.frame++;
+    if (pin.frame % G.ref.countFrames(pin.defender) !== 0) return;   // faster on a man who's been off the sheet
     pin.count++;
     popShake(G.crowd.react({ picture: "nearfall", role: pin.attacker.role, count: pin.count, quality: 1.0, actor: pin.attacker }));
     PCW.log("REF: ..." + pin.count + "!");
@@ -755,6 +774,8 @@
       }
       return null;
     }
+    if (G.ref && G.ref.offerFor(w)) return "GO HOME? STAY DOWN = YES  ·  MOVE = WAVE IT OFF";
+    if (G.ref && G.ref.offer && G.ref.offer.to === other(w)) return "THE REF'S TALKING TO HIM — WAIT";
     if (w.state === S.DOWN) {
       const sp0 = spot();
       if (sp0 && sp0.move === "PIN" && defenderOf(sp0) === w) return "STAY DOWN — HE'S COVERING";
@@ -820,7 +841,7 @@
     if (G.pin && G.pin.defender === me) {
       // win pin = booked to lose, stay down. Otherwise kick out near the two-count
       // (must be manual now — nothing auto-resolves).
-      if (G.pin.outcome !== "win" && G.pin.frame >= F.PIN_COUNT * 2 + 4) cmd.Y = true;
+      if (G.pin.outcome !== "win" && G.pin.frame >= G.ref.countFrames(me) * 2 + 4) cmd.Y = true;
       return cmd;
     }
     if (me.state === S.DOWN) {
@@ -828,6 +849,7 @@
       // beat (no sandbag) then struggle up.
       const sp = spot();
       if (sp && sp.move === "PIN" && defenderOf(sp) === me) return cmd;   // wait to be covered
+      if (G.ref.offerFor(me)) return cmd;                                // the CPU always listens to Gorilla
       if (me.stateFrame >= (me.sellExpect || PCW.SELL.MED) * 0.95) cmd.Y = true;
       return cmd;
     }
@@ -848,6 +870,9 @@
       }
       return cmd;   // receiver in a plain tie-up just takes the bump
     }
+
+    /* while the ref is passing Gorilla's call to the other man, give them room */
+    if (G.ref.offer && G.ref.offer.to === foe) return cmd;
 
     /* spot-driven behaviour when free */
     const sp = spot(); if (!sp) return cmd;
@@ -980,6 +1005,7 @@
       }
     }
 
+    G.ref.update();
     if (G.tieup) tieupTick();
     if (G.sellWin) { G.sellWin.age++; if (G.sellWin.age > G.sellWin.frames) sellWindowExpire(); }
     if (G.pin) pinTick();

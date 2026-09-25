@@ -655,4 +655,37 @@ To feel for:
 
 Next per Jordan: refine the actual gameplay (define scope together first).
 
+## 2026-09-25 / v0.15 "the third man" — the referee
+
+Jordan: "let's add the referee now." Built to the bible's §5.7 design (his
+messenger idea from the v0.13 conversation).
+
+Done:
+- A referee figure (striped shirt) in the ring. Stays clear of the action on
+  the far side, walks around the wrestlers. The crowd ignores him.
+- He counts the pins: slides in, gets down, and the count starts only once he's
+  there — each count is his hand hitting the mat.
+- Bias rule: faster counts on a man who's gone off the sheet (62 → 50 frames a
+  count after two shoots).
+- He checks on a man who's down and selling, and that's when Gorilla's messages
+  come through (dashed "earpiece" box, top-left): injury warnings, "Gorilla
+  loves it", "they're sitting on their hands", "you're fine on time" — and
+  GO HOME (when you're running long, or the front row has been sat back 5 s+).
+- GO HOME is answered with your body: STAY DOWN = agree (rest of the middle is
+  cut, straight to the finish, +4 Respect); GET UP = wave it off (−4 Respect).
+  My design call — the bible said the ref gives a "reason to stay down"; this
+  uses the sell decision you already make instead of a new button.
+
+Verified: CPU matches run clean on both cards (scores unchanged — the ref never
+touches the crowd); a slow match gets Gorilla's go-home, the CPU stays down, 3
+middle spots cut, finish runs; a real key press during the call waves it off
+(−4 Respect); the ref's count, check, and message box rendered and screenshotted;
+no console errors.
+
+To feel for:
+- Does the ref get in the way, or feel like part of the scenery?
+- Is "stay down = agree / get up = wave it off" readable in the moment?
+- Are Gorilla's messages useful, or noise? Too frequent / too rare?
+- Is the count's wait-for-the-ref beat good suspense or a drag?
+
 ## (next entry goes here)

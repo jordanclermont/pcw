@@ -104,6 +104,7 @@ canvas#game{width:100%;display:block;background:#000;border:2px solid #000}
   border-left:3px solid var(--red);padding-left:8px}
 #callsheet .done{text-decoration:line-through;opacity:.4}
 #callsheet .botched{text-decoration:line-through;color:var(--red-br);opacity:.85}
+#callsheet .cut{text-decoration:line-through;color:#e8b923;opacity:.55}
 
 #log{font-size:12px;line-height:1.5;height:150px;overflow-y:auto;white-space:pre-wrap;
   font-family:'Courier New',monospace;color:#aeb0b6;background:#0b0b0c;padding:8px;border:1px solid #000}
@@ -175,6 +176,7 @@ canvas#game{width:100%;display:block;background:#000;border:2px solid #000}
             &bull; Hold a direction to build to a <b>run</b>; <b>Strike</b> a charging man to <b>clothesline</b> him.<br>
             &bull; Taking a bump, <b>stay down</b> to sell it; get up too soon and you <b>no-sell</b>. On a heavy move, <b>Work</b> to <b>sandbag</b> (fight the lift). Pinned? <b>Work</b> to kick out.<br>
             &bull; <b>Taunt</b> plays to the crowd — heat for the heel, a pop for the face. Taunt right after <b>your own</b> move to play it up — worth far more than a taunt out of nowhere, and they tire of it if you repeat it.<br>
+            &bull; The <b>referee</b> counts your pins (faster on anyone who's gone off the sheet) and checks on a man who's down — that's when he passes on messages from Gorilla. If Gorilla says <b>GO HOME</b>: stay down to agree (the rest of the middle is cut, straight to the finish), or get up to wave it off.<br>
             &bull; Watch the <b>front row</b>: leaning in and lit up means you've got them; sunk back with folded arms means change something.<br><br>
             <b>Testing solo?</b> Press <kbd>1</kbd>/<kbd>2</kbd> to hand STOVE/THE BOULDER to a CPU performer.
             <kbd>SPACE</kbd> Slow-mo · <kbd>R</kbd> Run the same card back · <kbd>B</kbd> Book a new match (after the bell)
@@ -198,7 +200,7 @@ canvas#game{width:100%;display:block;background:#000;border:2px solid #000}
   <footer id="sitefooter">
     <span class="corp">PCW CORPORATE</span> &nbsp;·&nbsp;
     <a href="#">Investor Relations</a> · <a href="#">Privacy Policy</a> · <a href="#">Terms of Use</a>
-    <span class="cp">&copy; 2000 PERSONA CHAMPIONSHIP WRESTLING ENTERTAINMENT, INC. ALL RIGHTS RESERVED. PARODY — NOT AFFILIATED WITH ANY REAL PROMOTION. &nbsp;·&nbsp; BUILD 0.14 "THE OBSERVER"</span>
+    <span class="cp">&copy; 2000 PERSONA CHAMPIONSHIP WRESTLING ENTERTAINMENT, INC. ALL RIGHTS RESERVED. PARODY — NOT AFFILIATED WITH ANY REAL PROMOTION. &nbsp;·&nbsp; BUILD 0.15 "THE THIRD MAN"</span>
   </footer>
 
 </div>
@@ -212,6 +214,7 @@ canvas#game{width:100%;display:block;background:#000;border:2px solid #000}
 <script src="src/input.js"></script>
 <script src="src/wrestler.js"></script>
 <script src="src/crowd.js"></script>
+<script src="src/referee.js"></script>
 <script src="src/render.js"></script>
 <script src="src/commentary.js"></script>
 <script src="src/planning.js"></script>

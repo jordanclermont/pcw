@@ -7,6 +7,12 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.11 revisions (Build 0.15, "the third man"): the referee is built (§5.7) — a
+figure in the ring who counts (count starts when he's down there; faster on a
+man who's gone off the sheet), checks on downed men, and relays Gorilla's
+messages: time, crowd, injury, and GO HOME, answered with the body (stay down =
+agree, cut to the finish; get up = wave it off), priced in Respect.*
+
 *v1.10 revisions (Build 0.14, "the Observer"): the star rating re-balanced and
 itemized on the results card (§5.1) — 0.13 had left the old heavy penalties in
 place, capping human matches around 2½★; posing (a taunt right after your own
@@ -185,9 +191,27 @@ Body condition is real and per-region (head, back, arms, legs), not a health bar
 
 ### 5.7 The referee
 
-The ref is a character with a trust ledger of their own, and their behaviour is a consequence system: count speed, strictness, and attention all flex with standing. The ref also anchors kayfabe: they can be knocked down (opening a window where anything goes, a classic device the crowd loves in the right dose), and they sell the drama of counts. In the demo the ref is visually present and implements count timing plus one bias rule; the full ledger comes later. *(Status, v0.13: not built yet. The build has no referee figure, only the on-screen count. Jordan's call: the bible stands, and the ref gets built later.)*
+The ref is a character with a trust ledger of their own, and their behaviour is a consequence system: count speed, strictness, and attention all flex with standing. The ref also anchors kayfabe: they can be knocked down (opening a window where anything goes, a classic device the crowd loves in the right dose), and they sell the drama of counts. In the demo the ref is visually present and implements count timing plus one bias rule; the full ledger comes later. *(Built in v0.15 — see below. Until then the build had no referee figure, only the on-screen count.)*
 
-**The referee is the office's messenger (design, not yet built — Jordan, after v0.13).** Backstage talks to the match through the ref: at Gorilla position the office watches the show and relays time cues and changes, and the ref passes them on when he "checks on" a hurt wrestler. This fits the two-audience model exactly — the crowd sees an ordinary picture (a ref checking on a man who's selling), and only the performers hear the message. Messages the ref can carry: time ("five minutes", "you're long — go home"), a change from the office (cut a spot, go home early, protect a hurt man), and warnings (ease up, he's really hurt). The ref only gets to a man who is down, so taking a message means someone selling — a natural beat, and a reason to stay down. How far you follow the office's message is a choice, priced through Respect with the office rather than heat. The ref's own trust ledger decides how faithfully he relays things and how he counts.
+**The referee is the office's messenger (Jordan's idea after v0.13; BUILT in v0.15).** Backstage talks to the match through the ref: at Gorilla position the office watches the show and relays time cues and changes, and the ref passes them on when he "checks on" a hurt wrestler. This fits the two-audience model exactly — the crowd sees an ordinary picture (a ref checking on a man who's selling), and only the performers hear the message. Messages the ref can carry: time ("five minutes", "you're long — go home"), a change from the office (cut a spot, go home early, protect a hurt man), and warnings (ease up, he's really hurt). The ref only gets to a man who is down, so taking a message means someone selling — a natural beat, and a reason to stay down. How far you follow the office's message is a choice, priced through Respect with the office rather than heat. The ref's own trust ledger decides how faithfully he relays things and how he counts.
+
+**As built (v0.15, `src/referee.js`).**
+- *In the ring:* a jointed figure in a striped shirt. He stays about 2½ units from the action on the side further back on screen, so he never blocks the view, and walks around the wrestlers, not through them. The crowd never reacts to him.
+- *The count:* on a cover he slides in and gets down on the mat. **The count doesn't start until he's there**, and each count is his hand slapping the mat.
+- *The one bias rule:* he counts about 10% faster per off-sheet move the pinned man has made (up to three): 62 frames a count normally, 50 after two shoots. A worker who shoots gets no favours.
+- *Checking on a downed man:* when someone goes down selling, the ref heads over and kneels beside him, one hand on him (once per trip to the mat, at most every 7 seconds). If Gorilla has something to say, it's passed on then. Most urgent first:
+  - GO HOME, when the office's time budget (about 9 s per spot before the finish) has run out, or the front row has been sitting back for 5+ s with at least two middle spots left. At most twice a night.
+  - Injury warnings, when either man's body is below 35.
+  - "Gorilla loves it" (front row leaning in) or "they're sitting on their hands — change something up" (front row sitting back).
+  - "You're fine on time — let it breathe."
+- *Answering GO HOME with the body:* the downed man's cue reads "GO HOME? STAY DOWN = YES · MOVE = WAVE IT OFF", and a 2½-second countdown runs.
+  - *Staying down* agrees. Every remaining spot before the protected finish is cut (shown on the call sheet in gold as "CUT — WENT HOME") and the sheet jumps to the first Front Burner. He earns +4 Respect.
+  - *Getting up* waves it off: −4 Respect, and the plan stands.
+  - The other man's cue says "THE REF'S TALKING TO HIM — WAIT". A cover interrupts the call.
+- *The CPU performer* always listens to Gorilla.
+- *Display:* the message appears in a dashed "earpiece" box, top-left of the broadcast, labelled "REF · FROM GORILLA (the crowd can't hear this)", with a dashed line to the ref.
+
+Not yet built: the ref's per-worker trust ledger beyond the shoot count (slow counts for trusted workers, strictness, looking away), the ref bump, and office messages that change things other than going home.
 
 ### 5.9 Commentary (built, v0.06)
 

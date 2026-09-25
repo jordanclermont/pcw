@@ -597,6 +597,7 @@
     }
 
     drawCueLabels();
+    if (G.ref) G.ref.drawWhisper(CTX);
     drawCrowdSignals();
     if (PCW.Commentary) PCW.Commentary.draw(CTX);
 
@@ -634,8 +635,8 @@
     G.crowd.draw(CTX, G.renderFrame);
     const ring = drawRing();
     drawCornerHints();
-    const order = [G.P1, G.P2].sort((a, b) => isoY(a.gx, a.gy) - isoY(b.gx, b.gy));
-    for (const w of order) drawWrestler(w);
+    const order = [G.P1, G.P2, G.ref].sort((a, b) => isoY(a.gx, a.gy) - isoY(b.gx, b.gy));
+    for (const w of order) { if (w === G.ref) G.ref.draw(CTX); else drawWrestler(w); }
     for (const sp of G.splatters) drawSplatter(sp);
     ring.frontRopes();
     CTX.restore();
