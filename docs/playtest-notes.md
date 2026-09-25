@@ -568,4 +568,54 @@ boredom); deeper taunting; sandbag extended to the superplex.
 To feel for: does the WWF.com skin land? Is the heavy-move lift now slow enough
 to react to the sandbag window? Any canvas text hard to read in the new font?
 
+## 2026-09-24 / v0.13 "row twelve" — the crowd stops reading the script
+
+Jordan's direction (after a research note on how real matches are called): the
+crowd shouldn't get excited because the match is going to script — they don't
+know the script. Like Flair said, you can't memorize, because if the crowd
+isn't buying it you have to adjust. Keep it 1v1 (no tag ideas). Also: the
+referee matters — he carries backstage's influence into the match.
+
+What I found: the code broke rule 2 quietly. The crowd's sense of "where the
+story is" was literally how far the call sheet had got, and each move's value
+came from its booking card. Proof: two CPUs playing either preset card
+flawlessly scored 5★ every time, heat pinned at 100.
+
+Done:
+- The crowd reads the PICTURE. It works out the story from what it has seen
+  (time since the bell, who's been on offence, banked resentment, whether the
+  comeback happened) and values each move by what it looks like.
+- They get used to things. The same move again soon is worth less each time;
+  the memory fades over ~10 s. Floater: "...seen it".
+- Surprise pays: kicking out right after a finisher they watched land; hope
+  spots (Stove fighting back out of a beat-down) — and if The Boulder cuts one
+  off, the grudge builds twice as fast.
+- Hold the comeback too long and they give up on it (Dutch says so).
+- THE FRONT ROW. A second crowd axis — are they INTO it — shown with no meter:
+  leaning in, they come forward into the ring light, warm-lit; sitting back,
+  they sink into shadow and fold their arms. Dutch calls it when it shifts.
+  A leaning crowd pops harder.
+- Stars now weigh the front row (60% loudness, 40% lean). Results line shows
+  "front row N". Flawless CPU runs: Classic 5★→3¾★, War 5★→2¾★ (The War
+  throws big moves early and runs out of belief).
+
+Verified: headless CPU-vs-CPU on both cards to clean finishes, no console
+errors; direct checks of repeat-fatigue, hope-spot cut-off, and give-up; posture
+rendered and screenshotted at sitting-back / neutral / leaning-in.
+NOT verified (needs your hands): whether the front row reads out of the corner
+of your eye mid-match, and whether a human who plays to the room can beat the
+CPU's 3¾★ (that's the whole point — if you can't, the tuning is off).
+
+Designed, not built (bible §5.5, §5.7): calls in rest holds (next), the referee
+as the office's messenger, blank "call it in the ring" slots.
+
+Bible/code disagreement to settle: the bible says the ref is "visually present"
+in the demo; the build has no referee figure at all, just the count number.
+
+To feel for:
+- Can you see the front row lean in / sit back without looking for it?
+- Try the Classic by hand and vary it — taunt, mix moves, don't repeat. Does
+  it beat 3¾★? Try repeating the same strike: do you feel the room go flat?
+- Is the score now too stingy?
+
 ## (next entry goes here)

@@ -9,7 +9,7 @@
   "use strict";
   const PCW = (window.PCW = window.PCW || {});
 
-  PCW.VERSION = "0.12";
+  PCW.VERSION = "0.13";
   PCW.CANVAS = { W: 960, H: 640 };
 
   /* frame windows (60 Hz logic) */

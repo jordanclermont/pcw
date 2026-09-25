@@ -86,7 +86,21 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   footer) with embedded Anton/Oswald fonts (offline base64, off Impact); the
   canvas HUD moved to Oswald; sandbag restricted to HEAVY moves which now lift
   slowly (config FRAMES.SLAM_LIFT_HEAVY). References in references/. Bible §9.
-- NEXT (sequenced, nothing dropped): attacker-side stakes (stiff/receipts/
+- v0.13 "row twelve" — DONE: the crowd stopped reading the script. Its story
+  sense comes from what it has seen (not call-sheet progress); moves are valued
+  by the picture (not the booking card); repeats wear out; visible surprise
+  pays; hope spots + "held the comeback too long" are live; the FRONT ROW's
+  posture (leaning in vs sitting back) is a second crowd axis, drawn not
+  metered; stars weigh the front row. Flawless CPU runs: 5★/5★ → 3¾★/2¾★.
+  Bible §5.1.
+- NEXT (Jordan's current focus, in order; 1v1 only, no tag ideas):
+  1. Calls in rest holds — headlock opens the whispered audible radial; the
+     crowd cools while you talk; "go home" is a call (bible §5.5).
+  2. The referee as the office's messenger — relays time cues / changes /
+     warnings when he checks on a downed man; put the ref physically in the
+     ring (bible §5.7).
+  3. Blank "call it in the ring" slots on the call sheet (legal-pad plan).
+- THEN (older queue, nothing dropped): attacker-side stakes (stiff/receipts/
   breakdown); real per-move animations (the big art pass); heel heat (fuelled
   by drawn heat vs boredom); deeper taunting; sandbag on the superplex.
   Publishing: `origin` is set + Pages tracks main,

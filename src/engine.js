@@ -55,7 +55,6 @@
       shootOn: false   // set when someone kicks out of the real finish (steal armed)
     };
     G.appPhase = "MATCH";
-    G.crowd.setProgress(0, G.match.script.length);
     PCW.render.clearStain();
     PCW.clearLog();
     PCW.log("Gorilla position: 'Stick to the sheet you just booked. Have a good one.'");
@@ -80,13 +79,11 @@
     sp.status = "done"; G.match.spot++;
     adjustTrust(TRUST.REGAIN);
     PCW.renderCallsheet();
-    G.crowd.setProgress(G.match.spot, G.match.script.length);
     const nx = spot(); if (nx) PCW.log("Next — " + nx.name + ": " + nx.promo);
   }
   function markBotched(sp) {
     sp.status = "botched"; G.match.botches++; G.match.spot++;
     PCW.renderCallsheet();
-    G.crowd.setProgress(G.match.spot, G.match.script.length);
     const nx = spot(); if (nx) PCW.log("Cover it, move on. Next — " + nx.name + ".");
   }
 
@@ -248,18 +245,18 @@
         // spot. Reads to the crowd as a slam; costs a real bump + trust.
         def.hurt(BODY.BOTCH_SLAM);
         adjustTrust(-TRUST.STIFF, w.short + " planted him instead of giving the arm drag");
-        G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: 0.7 * q, arcSlot: sp.arcSlot, actor: w });
+        G.crowd.react({ picture: "slam", role: w.role, quality: 0.7 * q, actor: w });
         markBotched(sp);
       } else if (workedPlant) {
         def.hurt(BODY.WORKED_SLAM);
-        popShake(G.crowd.react({ picture: "slam", role: w.role, base: sp.pop, quality: q, arcSlot: sp.arcSlot, big: !!sp.big, actor: w }));
+        popShake(G.crowd.react({ picture: "slam", role: w.role, quality: q, big: !!sp.big, actor: w }));
         PCW.log((sloppy ? "Sloppy — " : (sp.big ? sp.name + " — " : "")) + "planted" + (sloppy ? "." : " flush."), sloppy ? "bad" : "ok");
         say("pbp", sloppy ? "He got him over but it was UGLY!" : (sp.big ? sp.name + "! He got all of it!" : "Scoop and a slam, " + w.short + " in control."));
         markDone(sp);
       } else {
         def.hurt(BODY.SHOOT_SLAM);
         offScript(w, "dropped " + def.short + " off-script",
-          { picture: "slam", role: w.role, base: 8, quality: 0.9 * q, arcSlot: "transition", actor: w }, TRUST.SLAM);
+          { picture: "slam", role: w.role, quality: 0.9 * q, actor: w }, TRUST.SLAM);
       }
     }, (sp && sp.big) ? PCW.SELL.BIG : PCW.SELL.MED,      // a finisher demands a long sell
       !!(sp && (sp.big || sp.risk >= 2)));                // heavy = finisher/spinebuster/landslide: slow lift + sandbaggable
@@ -326,7 +323,7 @@
     if (t.reversalSpot && inWin) {
       controller.hurt(BODY.ARM_DRAG); goDown(controller, w, PCW.SELL.LIGHT);
       PCW.render.spawnSplatter(w); G.hitstop = F.HITSTOP; G.shake = 6;
-      popShake(G.crowd.react({ picture: "reversal", role: w.role, base: sp.pop, quality: perfect ? 1.25 : 1.0, arcSlot: sp.arcSlot, actor: w }));
+      popShake(G.crowd.react({ picture: "reversal", role: w.role, quality: perfect ? 1.25 : 1.0, actor: w }));
       PCW.log(w.short + (perfect ? " — PICTURE-PERFECT arm drag (f" + f + ")" : " — clean arm drag (f" + f + ")"), "ok");
       say("pbp", "Arm drag! " + w.short + " slips it and takes him over — listen to this crowd!");
       markDone(sp);
@@ -336,7 +333,7 @@
       controller.setState(S.WHIFF);
       w.hurt(BODY.BOTCH_SLAM); goDown(w, controller, PCW.SELL.MED);
       adjustTrust(-TRUST.STIFF, w.short + " blew the arm-drag timing (f" + f + ", window 4–9)");
-      G.crowd.react({ picture: "slam", role: controller.role, base: sp.pop, quality: 0.6, arcSlot: sp.arcSlot, actor: controller });
+      G.crowd.react({ picture: "slam", role: controller.role, quality: 0.6, actor: controller });
       markBotched(sp);
     } else {
       // reversing a tie-up that wasn't the booked spot: a clean counter to the
@@ -344,7 +341,7 @@
       controller.hurt(BODY.ARM_DRAG); goDown(controller, w, PCW.SELL.LIGHT);
       PCW.render.spawnSplatter(w); G.hitstop = F.HITSTOP; G.shake = 6;
       offScript(w, "reversed a spot that wasn't called",
-        { picture: "reversal", role: w.role, base: 6, quality: 1.0, arcSlot: "transition", actor: w }, TRUST.REVERSAL);
+        { picture: "reversal", role: w.role, quality: 1.0, actor: w }, TRUST.REVERSAL);
     }
   }
 
@@ -385,7 +382,7 @@
       const atk = w.bumpFrom;
       adjustTrust(-TRUST.STIFF, w.short + " popped straight up — under-sold the bump");
       if (atk) {
-        G.crowd.react({ picture: "weakstrike", role: atk.role, base: 2, quality: 0.35, arcSlot: "transition", actor: atk });
+        G.crowd.react({ picture: "weakstrike", role: atk.role, quality: 0.35, actor: atk });
         atk.wronged = true;   // the man whose spot got cheaped is owed a receipt (wired next pass)
       }
       PCW.awardRespect(w.id, PCW.RESPECT.SHOOT_FLOPPED);   // no-selling doesn't impress the room
@@ -416,7 +413,7 @@
     // a big collision nobody called — priced as a liberty, but sanctioned if
     // the crowd is chanting for action/a big one.
     offScript(a, "turned " + foe.short + " inside out with a clothesline",
-      { picture: "slam", role: a.role, base: 9, quality: 1.0, arcSlot: "transition", actor: a }, TRUST.STIFF);
+      { picture: "slam", role: a.role, quality: 1.0, actor: a }, TRUST.STIFF);
     say("pbp", "CLOTHESLINE! He nearly took his head off!");
   }
 
@@ -439,7 +436,7 @@
     } else {
       def.hurt(BODY.SHOOT_STRIKE);
       offScript(atk, "threw a potato at " + def.short,
-        { picture: "strike", role: atk.role, base: 3, quality: 0.6, arcSlot: "transition", actor: atk }, TRUST.STRIKE);
+        { picture: "strike", role: atk.role, quality: 0.6, actor: atk }, TRUST.STRIKE);
     }
   }
 
@@ -448,7 +445,7 @@
     G.sellWin = null; def.setState(S.SELL);
     const sp = sw.spotRef; if (!sp || sp.move !== "STRIKE") return;
     sp._count = (sp._count || 0) + 1;
-    popShake(G.crowd.react({ picture: "strike", role: atk.role, base: sp.pop, quality: crisp ? 1.0 : 0.7, arcSlot: sp.arcSlot, actor: atk }));
+    popShake(G.crowd.react({ picture: "strike", role: atk.role, quality: crisp ? 1.0 : 0.7, actor: atk }));
     PCW.log((crisp ? def.short + " sells it to the cheap seats" : "a beat late, but it reads") + " (" + sp._count + "/" + sp.count + ")");
     if (sp._count >= sp.count) markDone(sp);
   }
@@ -457,7 +454,7 @@
     G.sellWin = null;
     if (!sp || sp.move !== "STRIKE") return;
     sp._count = (sp._count || 0) + 1;
-    G.crowd.react({ picture: "weakstrike", role: atk.role, base: 2, quality: 0.4, arcSlot: sp.arcSlot, actor: atk });
+    G.crowd.react({ picture: "weakstrike", role: atk.role, quality: 0.4, actor: atk });
     PCW.log("No-sold it. Flat crowd. (" + sp._count + "/" + sp.count + ")", "bad");
     if (sp._count >= sp.count) markDone(sp);
   }
@@ -472,7 +469,7 @@
     const face = w.role === "face";
     popShake(G.crowd.react({
       picture: face ? "reversal" : "strike",   // a cheer-picture for the face, a heat-picture for the heel
-      role: w.role, base: 4, quality: 1.0, arcSlot: "transition", actor: w, taunt: true
+      role: w.role, quality: 1.0, actor: w, taunt: true
     }));
     PCW.log(w.short + " plays to the crowd.");
     say("color", face ? w.short + " soaking it in — the people are with him!" : w.short + " running his mouth, and they are letting him hear it.");
@@ -514,7 +511,7 @@
     const sx = G.superplex; G.superplex = null;
     sx.attacker.setState(S.WHIFF); sx.defender.setState(S.IDLE);
     PCW.log("The superplex fell apart — " + reason + ". Reset it.", "bad");
-    G.crowd.react({ picture: "weakstrike", role: sx.attacker.role, base: 1, quality: 0.3, arcSlot: "transition", actor: sx.attacker });
+    G.crowd.react({ picture: "weakstrike", role: sx.attacker.role, quality: 0.3, actor: sx.attacker });
   }
   function superplexTick() {
     const sx = G.superplex; if (!sx) return;
@@ -545,13 +542,13 @@
     PCW.render.inkBurst(D); G.hitstop = F.HITSTOP; G.shake = 12;
     goDown(D, A, PCW.SELL.BIG);   // off the top — stay down, this one hurt
     if (sp && sp.sequence === "superplex" && sp.caller === A.id) {
-      popShake(G.crowd.react({ picture: "slam", role: A.role, base: sp.pop, quality, arcSlot: sp.arcSlot, big: true, actor: A }));
+      popShake(G.crowd.react({ picture: "slam", role: A.role, quality, big: true, actor: A }));
       PCW.log("TOP-ROPE SUPERPLEX" + (misses ? " — sloppy, " + misses + " missed beat" + (misses > 1 ? "s" : "") : " — PICTURE PERFECT!"), misses ? "bad" : "ok");
       say("pbp", misses ? "He got him over — but it was ugly!" : "SUPERPLEX OFF THE TOP! Oh my! Both men are down!");
       markDone(sp);
     } else {
       offScript(A, "hit an uncalled superplex",
-        { picture: "slam", role: A.role, base: 12, quality, arcSlot: "transition", big: true, actor: A }, TRUST.SLAM);
+        { picture: "slam", role: A.role, quality, big: true, actor: A }, TRUST.SLAM);
     }
   }
 
@@ -578,7 +575,7 @@
     atk.setState(S.PINNING); def.setState(S.PINNED);
     G.pin = { attacker: atk, defender: def, count: 0, frame: 0, finish: isFinishPin, outcome, steal, pop: sp ? sp.pop : 22 };
     if (!isFinishPin && !steal) offScript(atk, "went for a pin that wasn't the finish",
-      { picture: "nearfall", role: atk.role, base: 6, quality: 1.0, arcSlot: "transition", actor: atk }, TRUST.PIN);
+      { picture: "nearfall", role: atk.role, quality: 1.0, actor: atk }, TRUST.PIN);
     PCW.log(atk.short + " hooks the leg...");
     say("pbp", steal ? "The champion is covering him — for REAL this time!" : "He hooks the leg! The referee slides in!");
   }
@@ -587,7 +584,7 @@
     const pin = G.pin; pin.frame++;
     if (pin.frame % F.PIN_COUNT !== 0) return;
     pin.count++;
-    popShake(G.crowd.react({ picture: "nearfall", role: pin.attacker.role, base: 5, quality: 1.0, arcSlot: pin.finish ? "finish" : "transition", actor: pin.attacker }));
+    popShake(G.crowd.react({ picture: "nearfall", role: pin.attacker.role, count: pin.count, quality: 1.0, actor: pin.attacker }));
     PCW.log("REF: ..." + pin.count + "!");
     say("pbp", pin.count === 1 ? "ONE!" : pin.count === 2 ? "TWO!—" : "THREE!");
     // NOTHING auto-kicks out anymore — the pinned man must Work to kick out
@@ -604,14 +601,14 @@
     def.setState(S.PINNED);
     if (pin.steal) { say("pbp", "He STOLE it! Three on the challenger — bedlam!"); matchEnd("SCREWJOB", atk); return; }
     if (pin.outcome === "win") {
-      popShake(G.crowd.react({ picture: "pin", role: atk.role, base: pin.pop, quality: 1.0, arcSlot: "finish", big: true, actor: atk }));
+      popShake(G.crowd.react({ picture: "pin", role: atk.role, quality: 1.0, big: true, actor: atk }));
       if (spot()) spot().status = "done";
       say("pbp", "THREE! It's over! We have a NEW CHAMPION!");
       matchEnd("CLEAN", atk); return;
     }
     // a booked near-fall (or a stray pin) the defender failed to escape:
     if (atk.role === "face") {
-      popShake(G.crowd.react({ picture: "pin", role: atk.role, base: pin.pop, quality: 0.8, arcSlot: "finish", big: true, actor: atk }));
+      popShake(G.crowd.react({ picture: "pin", role: atk.role, quality: 0.8, big: true, actor: atk }));
       if (spot()) spot().status = "done";
       say("pbp", "Three?! It's over — but that came out of nowhere!");
       matchEnd("CLEAN", atk); return;
@@ -627,7 +624,7 @@
     G.pin = null;
     atk.setState(S.WHIFF); goDown(def, null, PCW.SELL.LIGHT);
     const crisp = via === "work";
-    popShake(G.crowd.react({ picture: "kickout", role: def.role, base: 12, quality: crisp ? 1.15 : 1.0, arcSlot: "finish", big: true, actor: def }));
+    popShake(G.crowd.react({ picture: "kickout", role: def.role, quality: crisp ? 1.15 : 1.0, actor: def }));
     say("pbp", def.short + " KICKS OUT AT TWO! I do not believe it!");
     markDone(sp);
   }
@@ -648,10 +645,10 @@
     if (isShoot) {
       G.match.shootOn = true;   // the steal is now armed
       offScript(def, "kicked out of the REAL FINISH",
-        { picture: "kickout", role: def.role, base: 14, quality: 1.0, arcSlot: "finish", big: true, actor: def }, TRUST.KICKOUT);
+        { picture: "kickout", role: def.role, quality: 1.0, actor: def }, TRUST.KICKOUT);
       say("pbp", "HE KICKED OUT?! He was NOT supposed to! What is he DOING?!");
     } else {
-      popShake(G.crowd.react({ picture: "kickout", role: def.role, base: 8, quality: 1.0, arcSlot: "transition", actor: def }));
+      popShake(G.crowd.react({ picture: "kickout", role: def.role, quality: 1.0, actor: def }));
       PCW.log(def.short + " kicks out at two — scripted survival.");
     }
   }
@@ -662,7 +659,7 @@
     const pin = G.pin, def = pin.defender;
     G.pin = null; G.match.shootOn = false;
     pin.attacker.setState(S.WHIFF); goDown(def, null, PCW.SELL.LIGHT);
-    popShake(G.crowd.react({ picture: "kickout", role: def.role, base: 14, quality: 1.0, arcSlot: "finish", big: true, actor: def }));
+    popShake(G.crowd.react({ picture: "kickout", role: def.role, quality: 1.0, actor: def }));
     say("pbp", def.short + " kicks out! He is fighting to save this match!");
     PCW.log(def.short + " fights out of the stolen pin — back to the finish.");
   }
@@ -677,10 +674,12 @@
     // offender). Calm them all here so the rating card sits still.
     G.shake = 0;
     crowd.strobe = 0; crowd.popTimer = 0; crowd.booTimer = 0; crowd.flashes = []; crowd.floaters = []; crowd.stamp = null;
-    const avg = crowd.avgHeat();
-    let stars = avg / 18 - match.botches * 0.6 - match.shoots * 0.4;
-    if (match.trust >= 80) stars += 0.5;
-    if (type === "CLEAN") stars += 0.5;
+    // the rating is the crowd: how loud they got AND whether you had them
+    // leaning in. A by-the-book match that bores the front row can't be a classic.
+    const avg = crowd.avgHeat(), lean = crowd.avgLean();
+    let stars = (avg * 0.6 + lean * 0.4) / 20 - match.botches * 0.6 - match.shoots * 0.4;
+    if (match.trust >= 80) stars += 0.25;
+    if (type === "CLEAN") stars += 0.25;
     if ((PCW.G.respect.p1 + PCW.G.respect.p2) / 2 >= 65) stars += 0.25;
     if (type === "BREAKDOWN") stars = Math.min(stars, 1.25);
     if (type === "INJURY") stars = Math.min(stars, 0.75);
@@ -693,7 +692,7 @@
               stars >= 3.5 ? "A hell of a night's work. The crowd went home happy." :
                 stars >= 2.5 ? "Solid house-show stuff. Nothing to be ashamed of." :
                   "Rough one. Watch the tape, tighten it up, go again tomorrow.";
-    match.endInfo = { type, stars, blurb, avg: Math.round(avg) };
+    match.endInfo = { type, stars, blurb, avg: Math.round(avg), lean: Math.round(lean) };
     say("pbp", type === "CLEAN" ? "What a match! What a NIGHT!" : type === "SCREWJOB" ? "The office is going to have something to say about THAT." : "That's all she wrote, folks.");
     PCW.log("MATCH OVER (" + type + ") — " + PCW.starText(stars) + " — " + blurb, type === "CLEAN" ? "ok" : "bad");
   }
@@ -986,6 +985,7 @@
     G.splatters = G.splatters.filter(sp => sp.age <= F.SPLATTER);
     if (G.shake > 0) G.shake *= 0.82;
   }
+  PCW.logicTick = logicTick;   // exposed so the headless harness can fast-forward a match
 
   /* Grab (B): pin a downed man, go up top from a corner, or tie up */
   function tryGrab(w, foe) {

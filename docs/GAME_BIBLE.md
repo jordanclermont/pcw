@@ -7,6 +7,20 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.9 revisions (Build 0.13, "row twelve"): the crowd no longer reads the
+script. Before this build, the crowd's sense of story came from how far the
+call sheet had advanced, and each move's value came from its booking card — so
+a match that followed the sheet perfectly scored 5 stars every time. Now the
+crowd works out the story from what it has SEEN, values moves by what they look
+like, gets tired of what it has already watched, pays for visible surprise, and
+shows whether it's INTO the match through the front row's posture (leaning in
+vs. sitting back). Hope spots and "held the comeback too long" are live. The
+star rating now weighs the front row, not just volume (§5.1). Designed but not
+built: calls in rest holds (§5.5) and the referee as the office's messenger
+(§5.7). Source for much of this: a research note on how real matches are called
+(shine / heat / comeback / finish; Flair's "you can't memorize"; Michaels
+reading the front row) — quotes unverified, used for design direction only.*
+
 *v1.8 revisions (Build 0.12): the page chrome rebuilt as an early-2000s WWF.com
 throwback with embedded Anton/Oswald fonts (§9, Jordan's design reference);
 sandbag restricted to HEAVY moves, which now lift slowly for reaction time
@@ -105,9 +119,14 @@ The design consequence: a botch you cover smoothly costs almost nothing publicly
 
 The crowd is an engine with desires, not a meter that dispenses points. Its state includes:
 
-- **Heat** (0 to 100): current engagement. Decays slowly when nothing lands. The public score.
-- **An expectation arc**: crowds want matches shaped like stories. Early feeling-out, escalating action, a heat segment where the heel controls, a comeback, near-falls, a finish. Spots that land where the arc wants them earn full value; a finisher in minute one earns a fraction and burns future pop (the crowd has a limited supply of belief, and big moves spend it).
-- **Storyline allegiance**: the crowd arrives caring. In the demo it is firmly behind Stove Hot and hostile to the champion. Face offence pops harder; heel control builds resentment that makes the comeback pay more. Playing to allegiance is playing the crowd.
+- **Heat** (0 to 100): how loud they are. Decays when nothing lands, and a hot crowd cools faster than a mild one, so heat has to be kept, not banked. The public score.
+- **Lean — the front row (Build 0.13)**: how much they're *into* it, separate from how loud they are. A crowd can be loud but drifting, or quiet and hanging on every move. Lean rises on fresh moves, moves that land at the right moment in the story, and visible surprises; it falls on repeats, sloppy work, dead air, and a heel dragging out his control. A leaning crowd pops harder for everything. It is shown with no meter: the front row either comes forward into the ring light, rim-lit warm, or sinks back into shadow and folds its arms, and the colour commentator calls it out when it shifts. This is the signal that tells the performers the plan isn't working — the reason you can't just memorize the sheet.
+- **An expectation arc, read off the picture**: crowds want matches shaped like stories: shine (the face looks good early), heat (the heel controls), comeback, finish. **The crowd works out where the story is from what it has seen** — time since the bell, who has been on offence and for how long, how much resentment is banked, whether the comeback has happened — never from how far the call sheet has advanced. A move's story stage is likewise what it *looks* like (heel offence reads as heat; face offence with resentment banked reads as the comeback; big moves and near-falls read as the finish), and a move's worth comes from the picture itself, never from its booking card. Moves that land where the arc wants them earn full value; a finisher in minute one earns a fraction and burns future pop (the crowd has a limited supply of belief, and big moves spend it).
+- **They get used to things (Build 0.13)**: the crowd remembers what it has watched. The same move again soon after is worth less each time (roughly 6 → 4 → 3 → 2 → 1 for a strike repeated five times), and the memory fades over about ten seconds, so a move can be fresh again later. Each rung of a pin count is tracked separately, so a count still *builds*, but a night full of two-counts wears the two-count out.
+- **Surprise pays (Build 0.13)**: only what row twelve could see. Kicking out right after a big move they just watched land is a big bonus ("he kicked out of THAT?"). The face fighting back out of a long beat-down is a **hope spot** — a small pop that also pulls the front row forward; if the heel cuts it off, the resentment it banks doubles.
+- **Storyline allegiance**: the crowd arrives caring. In the demo it is firmly behind Stove Hot and hostile to the champion. Face offence pops harder; heel control builds resentment that makes the comeback pay more. Playing to allegiance is playing the crowd. **But the comeback can be held too long (Build 0.13)**: once the crowd is primed for Stove to fight back, every extra heel move sits the front row back, and after about eleven seconds primed with no comeback they start giving up — the banked resentment drains away.
+- **The rating is the crowd (Build 0.13)**: star rating = a blend of average heat (60%) and average front-row lean (40%), less botches and shoots, with smaller bonuses for trust and a clean finish. A by-the-book match that bores the front row can't be a classic. Measured: both preset cards played flawlessly by two CPUs scored 5★ under the old model; under this one, The Classic scores 3¾★ and The War 2¾★ (it throws big moves before the crowd is ready and runs out of belief).
+- **Note on the planning screen**: the Pitch screen's projected crowd-arc sparkline still uses each spot's booking-card pop and arc tag. That's correct in spirit — it's the performers' *forecast* — but it is no longer what the live crowd uses, so the real match will diverge from it.
 - **Restlessness and hijack**: if heat stalls too long, the crowd starts asking for things: a chant appears on screen requesting a spot type or a performer. Serving the chant pays a bonus; ignoring it drains heat faster. This is the crowd overriding the match plan, and it forces audibles. The crowd never requests specific scripted spots (it cannot know them); it requests categories: more action, the face, a big one, take it outside.
 - **Visible reactions only**: pops, boos, chants, silence, flashbulbs. The crowd reacts to what it sees. A missed reversal reads as a slam. A shoot pin reads as a shocking finish. The crowd's information is the picture, never the plan.
 
@@ -150,6 +169,8 @@ Signature moments are multi-input sequences shared across both players. Every in
 
 Matches go wrong: a spot gets botched, a limb gets hurt, the crowd hijacks, someone is blown up. Workers adjust by calling audibles, and the call has to be covert because the crowd is watching. Mechanically: a call input opens a small radial of proposals (skip ahead, repeat a segment, swap a planned spot for a safer one, go home early). The proposal appears only on the partner's screen, styled as a whispered call in the clinch. The partner accepts or declines with their own input. Agreed audibles rewrite the live call sheet. An injured leg greys out every spot that needs it, forcing exactly the adaptation you described: the plan must reroute through what the bodies can still do.
 
+**Calls live in rest holds (design, not yet built — agreed after v0.13).** Real workers call the match in headlocks and chinlocks because the hold hides their mouths from the crowd. So the rest hold is where the audible radial opens: lock on a headlock, and while it's held the two performers can propose and accept changes. The price is honest: nothing is happening, so the crowd's heat cools and the front row drifts back while you talk — talk too long and you've lost them. "Go home" (skip to the finish now) is one of the calls. The call sheet can also allow blank slots at planning time, marked "call it in the ring," so the middle of a match is genuinely improvised around a fixed finish. The live crowd (§5.1) is the reason to use any of this: when the front row sits back, the sheet is wrong.
+
 ### 5.6 Bodies and injury
 
 Body condition is real and per-region (head, back, arms, legs), not a health bar. Worked moves cost a little; botches and shoots cost a lot; big bumps cost according to execution quality. Damaged regions degrade the relevant actions (a bad leg slows movement and disables leg-dependent spots) and force audibles. A region hitting zero is an injury stoppage: the worst ending, bad for the rating, worse for the story. Bodies are the reason the trust economy has teeth: when you agree to take someone's move, you are wagering your body on their hands.
@@ -157,6 +178,8 @@ Body condition is real and per-region (head, back, arms, legs), not a health bar
 ### 5.7 The referee
 
 The ref is a character with a trust ledger of their own, and their behaviour is a consequence system: count speed, strictness, and attention all flex with standing. The ref also anchors kayfabe: they can be knocked down (opening a window where anything goes, a classic device the crowd loves in the right dose), and they sell the drama of counts. In the demo the ref is visually present and implements count timing plus one bias rule; the full ledger comes later.
+
+**The referee is the office's messenger (design, not yet built — Jordan, after v0.13).** Backstage talks to the match through the ref: at Gorilla position the office watches the show and relays time cues and changes, and the ref passes them on when he "checks on" a hurt wrestler. This fits the two-audience model exactly — the crowd sees an ordinary picture (a ref checking on a man who's selling), and only the performers hear the message. Messages the ref can carry: time ("five minutes", "you're long — go home"), a change from the office (cut a spot, go home early, protect a hurt man), and warnings (ease up, he's really hurt). The ref only gets to a man who is down, so taking a message means someone selling — a natural beat, and a reason to stay down. How far you follow the office's message is a choice, priced through Respect with the office rather than heat. The ref's own trust ledger decides how faithfully he relays things and how he counts.
 
 ### 5.9 Commentary (built, v0.06)
 

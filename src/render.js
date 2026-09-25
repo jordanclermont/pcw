@@ -609,7 +609,7 @@
       CTX.font = "bold 20px Oswald, Impact"; CTX.fillText("THE PCW OBSERVER — MATCH RATING", W / 2, H / 2 - 84);
       CTX.font = "bold 52px Oswald, Impact"; CTX.fillText(starText(e.stars), W / 2, H / 2 - 24);
       CTX.font = "12px 'Courier New'";
-      CTX.fillText("finish: " + e.type + "  ·  avg heat " + e.avg + "  ·  botches " + match.botches + "  ·  shoots " + match.shoots, W / 2, H / 2 + 8);
+      CTX.fillText("finish: " + e.type + "  ·  avg heat " + e.avg + "  ·  front row " + e.lean + "  ·  botches " + match.botches + "  ·  shoots " + match.shoots, W / 2, H / 2 + 8);
       CTX.font = "13px 'Courier New'";
       wrapText(e.blurb, W / 2, H / 2 + 36, 500, 18);
       CTX.font = "bold 13px Oswald, Impact"; CTX.fillText("PRESS R TO RUN IT BACK", W / 2, H / 2 + 78);
