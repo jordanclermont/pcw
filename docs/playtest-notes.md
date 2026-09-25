@@ -618,4 +618,41 @@ To feel for:
   it beat 3¾★? Try repeating the same strike: do you feel the room go flat?
 - Is the score now too stingy?
 
+## 2026-09-25 / v0.14 "the Observer" — the score, explained and re-balanced
+
+Jordan's 0.13 notes: played several matches, couldn't get above 2.5★; asked
+what the dynamic is. Also never got to book the match beforehand.
+
+Cause (my tuning miss in 0.13): I lowered the crowd side of the rating but kept
+the old penalties (−0.6 per botch, −0.4 per shoot). Pre-0.13 those hid under a
+crowd score that overflowed the 5★ cap. So one missed arm drag + one stray
+strike + trust dipping under 80 took a flawless 3¾ down to exactly 2½. And I'd
+only checked that the CPU scored lower, never that a human could score HIGHER.
+Booking: B only worked with no live match, and the game booted into one.
+
+Done:
+- Penalties resized: botch −0.3; off-sheet moves cost by severity (stray strike
+  ≈ −0.1, off-script slam ≈ −0.25, kicking out of the finish −0.5).
+- The results card now itemizes the rating ("crowd +3.27 · trust held +0.25 ·
+  clean finish +0.25 · 1 botch −0.30 …") so you can see what cost you.
+- POSING: taunt right after your own move = selling the moment. ~2.5× a random
+  taunt, pulls the front row in; the heel posing banks extra resentment. Tires
+  if you do it after every move.
+- Opens on the booking screen again. H/L = skip, ring the bell on The Classic.
+  After a match: R = same card again, B = book a new one.
+- How-to-Play card updated (posing, the front row, R/B).
+
+Harness (two CPUs): Classic by-the-sheet 3¾★ / played to the room 4½★ / with
+one botch 3★. War by-the-sheet 2¾★ / played to the room 4½★.
+Verified in the real app with real key presses: loads on booking, H starts the
+match, results card renders the breakdown, R reruns, B rebooks, booking The War
+through the menu works; no console errors.
+
+To feel for:
+- Play the Classic and pose (taunt) right after your moves. Does that get you
+  past 3¾? Does it feel like playing to the room, or like a button to farm?
+- Read the breakdown line after each match — does it explain your score?
+
+Next per Jordan: refine the actual gameplay (define scope together first).
+
 ## (next entry goes here)

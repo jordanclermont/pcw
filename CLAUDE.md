@@ -93,7 +93,13 @@ six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
   posture (leaning in vs sitting back) is a second crowd axis, drawn not
   metered; stars weigh the front row. Flawless CPU runs: 5★/5★ → 3¾★/2¾★.
   Bible §5.1.
-- NEXT (Jordan's current focus, in order; 1v1 only, no tag ideas):
+- v0.14 "the Observer" — DONE: rating re-balanced + itemized on the results
+  card (0.13 left old heavy penalties in, capping humans ~2.5★); posing (taunt
+  right after your own move) pays; game opens on the booking screen again with
+  a one-key skip (H/L = The Classic); R = same card back, B = rebook.
+  Harness: by-the-sheet 3.75/2.75★, played-to-the-room 4.5/4.5★.
+- NEXT: refine the actual gameplay (Jordan, after 0.14 — scope to be defined
+  with him at the start of that session). Then, in order (1v1 only, no tag):
   1. Calls in rest holds — headlock opens the whispered audible radial; the
      crowd cools while you talk; "go home" is a call (bible §5.5).
   2. The referee as the office's messenger — relays time cues / changes /

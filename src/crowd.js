@@ -66,6 +66,7 @@
       this.faceMoves = 0; this.heelMoves = 0;
       this.heelStreak = 0;         // heel offence in a row, uninterrupted
       this.lastBigAt = -9999;      // when they last saw a big move land
+      this.lastMove = null;        // { id, at } — who landed the last move, and when
       this.hopeAt = -9999;         // when the face last flashed a hope spot
       this.primedFor = 0;          // frames spent primed with no comeback
       this.gaveUp = false;
@@ -158,6 +159,11 @@
       let surprise = 1;
       if (ev.picture === "kickout" && this.clock - this.lastBigAt < 240) surprise = 1.5;
       const hope = face && !ev.taunt && this.heelStreak >= 3 && !this.primed;
+      // a taunt right after YOUR OWN move is selling the moment (the pose over
+      // the fallen man) — worth far more than a taunt out of nowhere. Once per move.
+      const posed = !!(ev.taunt && ev.actor && this.lastMove && this.lastMove.id === ev.actor.id &&
+        !this.lastMove.posed && this.clock - this.lastMove.at < 150);
+      if (posed) this.lastMove.posed = true;
       if (hope) { surprise *= 1.2; this.hopeAt = this.clock; }
 
       let delta;
@@ -185,7 +191,7 @@
 
       // freshness, surprise, and whether they're leaning in all scale it.
       const leanMult = 0.6 + 0.8 * this.lean / 100;
-      delta *= fresh * surprise * leanMult;
+      delta *= fresh * surprise * leanMult * (posed ? 2.5 : 1);
 
       // the front row moves on what's fresh and surprising, and sits back
       // for what's stale, sloppy, or the heel dragging it past the point.
@@ -194,6 +200,7 @@
       let dl = (fresh - 0.85) * 16 + (surprise - 1) * 30 + (q < 0.6 ? -6 : 0) +
         (arcMult > 1 ? 2 : arcMult < 0.7 ? -4 : 0);
       if (ev.picture === "weakstrike") dl -= 5;
+      if (posed) dl += 6;
       if (!face && this.primed && !ev.taunt) dl -= 6;   // "come ON, let him fight back"
       this.moveLean(dl);
 
@@ -202,6 +209,8 @@
         this.comebackDone = true;
       }
       if (ev.big) this.lastBigAt = this.clock;
+      if (!ev.taunt && ev.actor && ev.picture !== "weakstrike" && ev.picture !== "nearfall") this.lastMove = { id: ev.actor.id, at: this.clock, posed: false };
+      if (posed && !face) this.resentment = clamp(this.resentment + 6, 0, 100);   // gloating over his work
       if (!ev.taunt) {
         if (face) { this.faceMoves++; this.heelStreak = 0; }
         else { this.heelMoves++; this.heelStreak++; }

@@ -602,17 +602,24 @@
 
     if (match.phase === "ENDED" && match.endInfo) {
       const e = match.endInfo;
-      CTX.save(); CTX.fillStyle = "rgba(236,231,217,.94)"; CTX.fillRect(W / 2 - 280, H / 2 - 120, 560, 220);
-      CTX.strokeStyle = "#16130e"; CTX.lineWidth = 3; CTX.strokeRect(W / 2 - 280, H / 2 - 120, 560, 220);
-      CTX.strokeRect(W / 2 - 274, H / 2 - 114, 548, 208);
+      CTX.save(); CTX.fillStyle = "rgba(236,231,217,.94)"; CTX.fillRect(W / 2 - 280, H / 2 - 120, 560, 244);
+      CTX.strokeStyle = "#16130e"; CTX.lineWidth = 3; CTX.strokeRect(W / 2 - 280, H / 2 - 120, 560, 244);
+      CTX.strokeRect(W / 2 - 274, H / 2 - 114, 548, 232);
       CTX.textAlign = "center"; CTX.fillStyle = "#16130e";
       CTX.font = "bold 20px Oswald, Impact"; CTX.fillText("THE PCW OBSERVER — MATCH RATING", W / 2, H / 2 - 84);
       CTX.font = "bold 52px Oswald, Impact"; CTX.fillText(starText(e.stars), W / 2, H / 2 - 24);
       CTX.font = "12px 'Courier New'";
-      CTX.fillText("finish: " + e.type + "  ·  avg heat " + e.avg + "  ·  front row " + e.lean + "  ·  botches " + match.botches + "  ·  shoots " + match.shoots, W / 2, H / 2 + 8);
+      CTX.fillText("finish: " + e.type + "  ·  avg heat " + e.avg + "  ·  front row " + e.lean, W / 2, H / 2 + 4);
+      // the itemized rating — so you can see what earned and what cost you
+      CTX.font = "bold 12px 'Courier New'";
+      const items = (e.parts || []).map(p => p[0] + " " + (p[1] >= 0 ? "+" : "−") + Math.abs(p[1]).toFixed(2));
+      let line1 = items.join("   "), line2 = "";
+      if (CTX.measureText(line1).width > 520) { const k = Math.ceil(items.length / 2); line1 = items.slice(0, k).join("   "); line2 = items.slice(k).join("   "); }
+      CTX.fillText(line1, W / 2, H / 2 + 24);
+      if (line2) CTX.fillText(line2, W / 2, H / 2 + 40);
       CTX.font = "13px 'Courier New'";
-      wrapText(e.blurb, W / 2, H / 2 + 36, 500, 18);
-      CTX.font = "bold 13px Oswald, Impact"; CTX.fillText("PRESS R TO RUN IT BACK", W / 2, H / 2 + 78);
+      wrapText(e.blurb, W / 2, H / 2 + 66, 500, 18);
+      CTX.font = "bold 13px Oswald, Impact"; CTX.fillText("R — RUN IT BACK      ·      B — BOOK A NEW MATCH", W / 2, H / 2 + 104);
       CTX.restore();
     }
   }

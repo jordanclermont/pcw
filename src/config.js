@@ -9,7 +9,7 @@
   "use strict";
   const PCW = (window.PCW = window.PCW || {});
 
-  PCW.VERSION = "0.13";
+  PCW.VERSION = "0.14";
   PCW.CANVAS = { W: 960, H: 640 };
 
   /* frame windows (60 Hz logic) */
@@ -151,6 +151,14 @@
   PCW.awardRespect = function (id, amt) {
     const r = PCW.G.respect;
     r[id] = Math.max(0, Math.min(100, r[id] + amt));
+  };
+  /* the star rating (the PCW Observer). Mostly the crowd — loudness blended
+     with the front row's lean — then itemized bonuses and penalties. Off-sheet
+     moves cost in proportion to how serious the liberty was (its trust cost). */
+  PCW.RATING = {
+    PER_STAR: 20, HEAT_W: 0.6,
+    TRUST_BONUS: 0.25, CLEAN_BONUS: 0.25, RESPECT_BONUS: 0.25,
+    PER_BOTCH: 0.3, PER_SHOOT_TRUST: 1 / 60
   };
   PCW.RESPECT = { SERVE_CHANT: 8, SHOOT_POPPED: 3, SHOOT_FLOPPED: -5, BIG_POP: 1 };
 

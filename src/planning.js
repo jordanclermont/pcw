@@ -140,8 +140,13 @@
   }
 
   function lockIn() {
-    const script = PCW.assembleScript(st.slots.slice());
-    PCW.startMatch(script);
+    G.lastBody = st.slots.slice();            // R after the match runs this card back
+    PCW.startMatch(PCW.assembleScript(st.slots.slice()));
+  }
+  /* the one-key skip: book the recommended preset as-is and ring the bell */
+  function quickStart() {
+    G.lastBody = PCW.PRESETS[0].body.slice();
+    PCW.startMatch(PCW.assembleScript(G.lastBody.slice()));
   }
 
   /* ---------------- tick ---------------- */
@@ -160,6 +165,7 @@
         if (anyUp) st.cursor = (st.cursor - 1 + opts.length) % opts.length;
         if (anyDown) st.cursor = (st.cursor + 1) % opts.length;
         if (anyConfirm) chooseMode(opts[st.cursor]);
+        else if (anyRun) quickStart();   // one key: straight to the ring on the recommended card
         break;
       }
       case "EDIT": {
@@ -383,7 +389,8 @@
       y += 104;
     });
     const blink = st.frame % 60 < 42;
-    if (blink) txt("[W/S] or [↑/↓] CHOOSE     ·     [F] / [J] CONFIRM", W / 2, 606, 16, "#fff", "head", "center");
+    if (blink) txt("[W/S] or [↑/↓] CHOOSE     ·     [F] / [J] CONFIRM", W / 2, 592, 16, "#fff", "head", "center");
+    txt("[H] / [L]   SKIP BOOKING — RING THE BELL ON " + PCW.PRESETS[0].name, W / 2, 620, 15, GO, "head", "center");
   }
 
   function renderEdit() {

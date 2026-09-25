@@ -96,6 +96,7 @@
       return;
     }
     G.match.shoots++;
+    G.match.shootCost = (G.match.shootCost || 0) + severity * PCW.RATING.PER_SHOOT_TRUST;   // stray strike ≈ −0.1, kicking out of the finish ≈ −0.5
     adjustTrust(-severity, "SHOOT — " + who.short + " " + label);
     popShake(G.crowd.react(picture));
     if (G.crowd.lastTone === "pop") PCW.awardRespect(who.id, PCW.RESPECT.SHOOT_POPPED);
@@ -676,11 +677,15 @@
     crowd.strobe = 0; crowd.popTimer = 0; crowd.booTimer = 0; crowd.flashes = []; crowd.floaters = []; crowd.stamp = null;
     // the rating is the crowd: how loud they got AND whether you had them
     // leaning in. A by-the-book match that bores the front row can't be a classic.
-    const avg = crowd.avgHeat(), lean = crowd.avgLean();
-    let stars = (avg * 0.6 + lean * 0.4) / 20 - match.botches * 0.6 - match.shoots * 0.4;
-    if (match.trust >= 80) stars += 0.25;
-    if (type === "CLEAN") stars += 0.25;
-    if ((PCW.G.respect.p1 + PCW.G.respect.p2) / 2 >= 65) stars += 0.25;
+    const avg = crowd.avgHeat(), lean = crowd.avgLean(), R = PCW.RATING;
+    // every line of the rating is itemized so the results card can SHOW why
+    const parts = [["crowd", (avg * R.HEAT_W + lean * (1 - R.HEAT_W)) / R.PER_STAR]];
+    if (match.trust >= 80) parts.push(["trust held", R.TRUST_BONUS]);
+    if (type === "CLEAN") parts.push(["clean finish", R.CLEAN_BONUS]);
+    if ((PCW.G.respect.p1 + PCW.G.respect.p2) / 2 >= 65) parts.push(["respected", R.RESPECT_BONUS]);
+    if (match.botches) parts.push([match.botches + (match.botches > 1 ? " botches" : " botch"), -match.botches * R.PER_BOTCH]);
+    if (match.shoots) parts.push([match.shoots + " off-sheet", -(match.shootCost || 0)]);
+    let stars = parts.reduce((t, p) => t + p[1], 0);
     if (type === "BREAKDOWN") stars = Math.min(stars, 1.25);
     if (type === "INJURY") stars = Math.min(stars, 0.75);
     stars = Math.max(0.25, Math.min(5, Math.round(stars * 4) / 4));
@@ -692,7 +697,7 @@
               stars >= 3.5 ? "A hell of a night's work. The crowd went home happy." :
                 stars >= 2.5 ? "Solid house-show stuff. Nothing to be ashamed of." :
                   "Rough one. Watch the tape, tighten it up, go again tomorrow.";
-    match.endInfo = { type, stars, blurb, avg: Math.round(avg), lean: Math.round(lean) };
+    match.endInfo = { type, stars, blurb, avg: Math.round(avg), lean: Math.round(lean), parts };
     say("pbp", type === "CLEAN" ? "What a match! What a NIGHT!" : type === "SCREWJOB" ? "The office is going to have something to say about THAT." : "That's all she wrote, folks.");
     PCW.log("MATCH OVER (" + type + ") — " + PCW.starText(stars) + " — " + blurb, type === "CLEAN" ? "ok" : "bad");
   }
@@ -994,10 +999,10 @@
     if (!tie(w, foe)) { w.setState(S.WHIFF); PCW.log(w.short + " reaches — nobody home."); }
   }
 
-  /* Boot straight into the match (Jordan: "focus solely on the match for now").
-     The booking screen still exists — press B to open it — but the default
-     entry is a ready-made card so you're in the ring in one keypress. */
-  function bootMatch() { PCW.startMatch(PCW.assembleScript(PCW.PRESETS[0].body)); }
+  /* v0.14: the game opens on the booking screen again (planning the match is
+     part of the game), with a one-key skip — H/L rings the bell on The Classic.
+     R after a match runs the SAME card back; B goes back to booking. */
+  function bootMatch() { PCW.startMatch(PCW.assembleScript((G.lastBody || PCW.PRESETS[0].body).slice())); }
 
   /* ---------------- meta keys + main loop ---------------- */
   addEventListener("keydown", e => {
@@ -1013,7 +1018,7 @@
   });
 
   G.slowmo = false;
-  bootMatch();
+  PCW.Planning.reset();
 
   let acc = 0, last = performance.now();
   function loop(now) {
