@@ -10,3 +10,6 @@ Thumbs.db
 
 # WWF.com reference screenshots — local design refs, not shipped (third-party imagery)
 references/
+
+# Dev log / content notebook — kept local, not published with the game
+pcw-devlog/

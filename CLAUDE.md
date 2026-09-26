@@ -151,6 +151,11 @@ docs/playtest-notes.md — read it at the start of each session.
   docs/GAME_BIBLE.md to reflect it before the session ends — the same
   cadence docs/playtest-notes.md already follows. The bible is the design
   source of truth and must not drift from what the code actually does.
+- **Keep the devlog.** `pcw-devlog/worklog.md` (git-ignored, never
+  published) is the content notebook, Thumpagotchi-style: one
+  reverse-chronological entry per session, favouring the decision and the
+  why over the diff, with Jordan's own words quoted and mistakes told
+  honestly. Add the entry at the end of any session that changes the game.
 - **On disagreement, surface it — don't silently reconcile.** If the
   bible and the actual code ever contradict each other, tell Jordan and
   let him decide which is right; never quietly pick one and move on.
