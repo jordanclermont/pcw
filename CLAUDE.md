@@ -62,6 +62,16 @@ steps: 1 the room (done), 2 the moves, 3 calls in rest holds, 4 the verdict
 card. The Anton/Oswald fonts embedded in `index.html` cover almost no letters
 (found 2026-11-18, not fixed).
 
+**Prototype 3 (2026-11-18).** `v3/` (open `v3/index.html`) is the newest
+direction, built after Jordan found the v2 draft "rudimentary and rough": WALK
+(WASD) to a position, CHOOSE (Space, then a number or a click) from a card of
+what you can do there, WATCH the move play as set choreography. The other man
+chooses how to take it (sell, sell big, fire back, shrug off). No reflex
+tests except kicking out of a pin. The match is one generator script in
+`v3/src/match.js`; moves are key-pose timelines in `v3/src/moves.js`. Bible
+§14 describes it and lists the open questions. Start here for new work unless
+Jordan says otherwise; `v2/` and build 0.15 are kept as they are.
+
 ## Build order for the demo
 
 - v0.03–v0.05 — DONE: src/ refactor, character fix, crowd model v1, the

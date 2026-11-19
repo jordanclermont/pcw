@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCW — prototype 3 (walk, choose, watch)</title>
+<style>
+  :root { --ink:#f3ecd8; --dim:#8f93a0; --red:#b3121a; --gold:#ffd24a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #060608; color: var(--ink); font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; font-weight: 500; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 12px 16px; border-bottom: 3px solid var(--red); }
+  header h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; }
+  header span { color: var(--dim); font-size: 14px; }
+  header nav { margin-left: auto; display: flex; gap: 14px; }
+  header a { color: var(--dim); font-size: 14px; }
+  main { max-width: 1312px; margin: 0 auto; padding: 16px; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border: 2px solid #2c2c36; touch-action: manipulation; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { background: #0e0e13; border: 1px solid #2c2c36; padding: 12px 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 17px; font-weight: 800; letter-spacing: 1px; color: var(--gold); }
+  .card p, .card li { margin: 0 0 6px; font-size: 14.5px; line-height: 1.45; color: #c9ccd6; }
+  .card ul { margin: 0; padding-left: 18px; }
+  kbd { display: inline-block; min-width: 22px; padding: 0 5px; text-align: center; background: var(--gold); color: #141006; border-radius: 3px; font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PCW GRANDSTAND</h1>
+  <span>Prototype 3: walk, choose, watch</span>
+  <nav><a href="../v2/index.html">Draft 2</a><a href="../index.html">Build 0.15</a></nav>
+</header>
+<main>
+  <canvas id="stage" width="1280" height="720"></canvas>
+  <div class="cards">
+    <div class="card">
+      <h2>THE WHOLE CONTROL SCHEME</h2>
+      <ul>
+        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrow keys: walk.</li>
+        <li><kbd>Space</kbd>: do something. What you can do depends on where you are standing.</li>
+        <li>When a choice comes up: press its number, or click it.</li>
+        <li>That is all of it. Nothing needs fast fingers except one thing: kicking out of a pin before three.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>WHERE YOU STAND MATTERS</h2>
+      <ul>
+        <li>In the middle: chops, slam, the ropes, send him to a corner, a headlock.</li>
+        <li>By the ropes nearest the camera: you can throw him out to the floor.</li>
+        <li>In a corner: chops he can't get away from, or a running charge.</li>
+        <li>He's down near a corner: you can climb to the top rope.</li>
+        <li>He's on the floor: dive onto him, go out after him, or pose in the ring.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>WHEN IT IS DONE TO YOU</h2>
+      <ul>
+        <li>Sell it: the job. Sell it big: his move looks huge and you stay down longer.</li>
+        <li>Fire back: you try to take over. He decides whether to let you, or cut you off.</li>
+        <li>Shrug it off: you look strong, he looks weak, and it costs trust.</li>
+        <li>Pinned: <kbd>Space</kbd> kicks out. Later is louder. For the booked finish, stay down.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>WHAT THE CROWD WANTS</h2>
+      <ul>
+        <li>Shirts turn orange for Stove and gold for The Boulder. Grey means that person has picked nobody.</li>
+        <li>They get behind a man who takes a beating, and boo the man who gives it.</li>
+        <li>The same move again wears out. A choice marked "they have seen this" will land flat.</li>
+        <li>A comeback after a long beating is the loudest thing in the building. Cutting one off makes them hate you.</li>
+        <li>Before the bell, <kbd>1</kbd> and <kbd>2</kbd> swap who the CPU plays.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<!-- plain script tags so this opens straight from disk -->
+<script src="data/personas.js"></script>
+<script src="data/room.js"></script>
+<script src="src/core.js"></script>
+<script src="src/crowd.js"></script>
+<script src="src/rig.js"></script>
+<script src="src/moves.js"></script>
+<script src="src/match.js"></script>
+<script src="src/cpu.js"></script>
+<script src="src/render.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>

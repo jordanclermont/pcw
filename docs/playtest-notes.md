@@ -775,3 +775,25 @@ Known rough spots:
 - The CPU throws a lot of chops (30 to 60 a match).
 
 One thing to change next: Jordan plays it again and says whether the whips and chops are now answerable.
+
+## 2026-11-18 / prototype 3 (`v3/`) — walk, choose, watch
+
+Jordan played the second v2 draft. In his words: "its still feeling very rudemantary and rough and I'm not sure how this will turn into the game I want." He restated the game: storytelling in the ring, fans reacting to it, smooth and fun, not a fighting game, intuitive controls, "more like you are making decisions". He suggested free movement for position, then quick time events or RPG style on contact. Then: "prototype the game as if you were the developer from day 1 and the version we have now never existed."
+
+What was built: a new folder, `v3/`. Walk with WASD, Space to do something, pick a choice with a number or a click, then the move plays by itself. The other man chooses how to take it. Bible §14 has the full description.
+
+What was checked:
+- Six CPU-vs-CPU matches: all finish as booked at about 2:45, 2½ to 3¼ stars, with a shine, a heat, cut-offs, a comeback and a finish.
+- 60 matches with choices picked at random: no crashes, no stuck matches.
+- In the browser, by key presses: lock-up card, body slam, the down card, top-rope elbow, letting the CPU take over, the answer card, firing back, throwing him to the floor, the referee's count, the dive, a late kick-out at two, the finisher, the cover, and the results card. No console errors.
+
+What was NOT checked: how it feels at full speed (the test browser runs about one frame a second), and whether choosing then watching is fun. That is Jordan's call.
+
+Known rough spots:
+- Bodies are still code-drawn stand-ins, and some moves overlap the two men.
+- The choice card covers the bottom of the ring while it is up.
+- The crowd arrives almost entirely behind Stove, so the first minute has little to win.
+- Two people on one keyboard works in principle (Stove WASD + Space, The Boulder arrows + Enter) but was not tested.
+
+One thing to change next: Jordan plays one match and answers the first open question in §14.
+

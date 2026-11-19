@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.14 revisions (2026-11-18): added §14, prototype 3 in `v3/`. After playing the v2 draft twice Jordan said it still felt "rudimentary and rough" and restated the game as decisions and storytelling, not button skill. Prototype 3 is built from that statement alone: walk to a position, choose what happens, watch it play out. §14 lists what it changes and what it leaves open.*
+
 *v1.13 revisions (2026-11-18): §13 updated after Jordan played the draft. The side-on ring became a ring with depth (four posts, corners, whips in any direction), the controls were rebuilt (WASD, three action keys, hold Space to go with it), and chops and whips no longer need split-second timing. Contradiction 1 in §13 is mostly resolved.*
 
 *v1.12 revisions (2026-11-18): added §13, the rebuild draft in `v2/` (step 1, "the room"): a side-on hard-camera view where the crowd is half the picture and its loyalty to each wrestler moves during the match. It is a draft beside build 0.15, and §13 lists where it contradicts the rest of this document for Jordan to rule on. Sections 1–12 unchanged.*
@@ -422,3 +424,57 @@ Carried over from §5.1 unchanged in spirit: the crowd only learns things throug
 5. The WWF.com page chrome (§9) is not on the draft page.
 
 **Found along the way.** The Anton and Oswald fonts embedded in `index.html` since 0.12 cover almost no letters (only the capital A in Oswald renders), so 0.15 has been falling back to Impact and system fonts. The draft uses a system condensed face until that is fixed properly.
+
+## 14. Prototype 3 (`v3/`) — walk, choose, watch
+
+*Status: a PROTOTYPE, built 2026-11-18, the third build that day. Build 0.15 and the `v2/` draft are untouched. Nothing here is canon until Jordan says so.*
+
+**Why it exists.** Jordan, after the second version of the v2 draft: "its still feeling very rudemantary and rough and I'm not sure how this will turn into the game I want. This game should be focused on the story telling in the ring and making the fans react to that. The wrestling needs to feel smooth and fun. It doesn't need to be a fighting game. Maybe it's more like you can move around the ring and get into positions but once you get in to grapples or start striking, the gameplay changes to either quick time event style or rpg style. The controls need to be intuitive. It should be more like you are making decisions." He then asked for the game to be prototyped from day one, as if nothing had been built.
+
+**The idea in one line.** You perform a match; you do not win a fight. The crowd's reaction is the score.
+
+**The loop.**
+1. **Walk.** WASD or the arrows. Where you stand decides what you can do.
+2. **Choose.** Space lays hands on him. The action holds and a card shows what you can do from here, in plain words, with a line on what each choice is for. Pick with a number key or a click.
+3. **He answers.** The other man chooses how to take it.
+4. **Watch.** The move plays out as set choreography for both men. Nobody presses anything.
+5. **The room reacts** to what it saw, and that changes what is worth doing next.
+
+Of Jordan's two options for the contact mode, this is the RPG-style one. Quick time events were not used: they are a reflex test, and reflex tests were the thing that beat him in v2.
+
+**The whole control scheme.** Walk, one "do something" key, and picking a choice. The only timed input in the game is kicking out of a pin before three, and later is louder.
+
+**Position decides the choices.**
+- The middle: chops, body slam, off the ropes (clothesline), send him into a corner, headlock, finisher.
+- By the ropes nearest the camera: the same, plus throw him outside.
+- A corner: chops in the corner, a running charge, or haul him out for a slam.
+- He is down: cover, pick him up, stomp, pose; and if he fell within reach of a corner, the top rope.
+- He is on the floor and you are in the ring: dive onto him, go out after him, or pose.
+- Both on the floor: chops, drive him into the ring edge, roll him back in.
+- Every standing menu also has "let him take over", which hands the match to the other man.
+
+**How the other man takes it.**
+- Sell it. The job.
+- Sell it big. His move looks huge; you stay down longer.
+- Fire back. You block it and hit him. The man who was in control then chooses: let him come back (control changes hands) or cut him off (he goes down, and the room hates the man who did it). A fire-back that is cut off is the hope spot; one that is fed is the comeback. Those two choices are the centre of the game.
+- Shrug it off. You look strong, he looks weak, and it costs trust. If the room loves you and you have taken a long beating, they come unglued instead.
+- For a top-rope move or a dive: stay there, or move and let him crash.
+
+**Going in and out.** The floor on the camera side is playable. A man can be thrown out, followed out, dived onto, driven into the ring edge and rolled back in. The referee counts whenever anyone is outside; ten is a count-out, which is a bad ending. Standing around outside while he counts gets booed.
+
+**The pin.** Space kicks out, any time before three. The later the kick-out, the bigger the reaction. Nothing kicks out for you. Kicking out of the booked finish is still always possible and still costs 30 trust.
+
+**The CPU partner** knows the shape of a match: he lets the challenger look good early, takes over, cuts off the first comeback and feeds a later one, kicks out at two, and lies down for the booked finish. He fills dead air if you do nothing for ten seconds. Burn his trust and he stops selling big for you; burn it badly and he starts shrugging off your moves.
+
+**The crowd** is the v2 crowd, carried over on purpose because it already was the judge: individual people, loyalty to each man that moves, sympathy for the man taking a beating, boredom with repeats. New reactions: a late kick-out, a crash when a man moves, a "hulk-up", stalling on the floor, the referee's count. A choice the room has seen too often is marked on the card ("they have seen this"): a wrestler can feel that.
+
+**Smoothness.** Every move is key poses on a timeline for both men, eased from one to the next, with an impact frame, a hit-stop and a camera shake. That replaces v2's bodies reacting to key presses mid-move.
+
+**What is carried over, and what is not.** Carried: the two personas, the booked finish, trust, the referee, Gorilla in your ear, the results card. Not built: Respect, body damage, the sandbag, the booking screen and call sheet, calls in rest holds, the superplex, a second finisher, the WWF.com page chrome.
+
+**Open questions for Jordan.**
+1. Is choosing, then watching, the game? Or does watching feel too passive?
+2. Are there too many choices on a card (up to eight), or too few?
+3. Should the receiver choose on every move, or only on the big ones?
+4. The look is still drawn-in-code stand-ins. Choreography can now be made good one move at a time, but real art is a separate job.
+5. The title.
