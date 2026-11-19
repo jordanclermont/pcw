@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.12 revisions (2026-11-18): added §13, the rebuild draft in `v2/` (step 1, "the room"): a side-on hard-camera view where the crowd is half the picture and its loyalty to each wrestler moves during the match. It is a draft beside build 0.15, and §13 lists where it contradicts the rest of this document for Jordan to rule on. Sections 1–12 unchanged.*
+
 *v1.11 revisions (Build 0.15, "the third man"): the referee is built (§5.7) — a
 figure in the ring who counts (count starts when he's down there; faster on a
 man who's gone off the sheet), checks on downed men, and relays Gorilla's
@@ -365,3 +367,46 @@ Written down so future sessions can be held to them.
 - **Betrayal is priced, never prevented.** The temptation must stay in the player's hands; removing it removes the game.
 - **One match until it sings.** No roster, no modes, no career until the demo match is something you would show a stranger.
 - **Parody, not plagiarism.** The era is the reference; the assets are ours.
+
+---
+
+## 13. The rebuild draft (`v2/`) — step 1, "the room"
+
+*Status: a DRAFT, built 2026-11-18. It is not canon yet. Build 0.15 (`index.html`) is untouched and still the live game. Jordan decides after playing which of the differences below become the design.*
+
+**Why it exists.** A review of 0.15 found that the crowd, which is the judge, was a strip of dark heads and a meter; that its loyalty was fixed before the bell; that every grapple drew the same picture; and that play was a 13-step checklist of prompts. Jordan's direction: characters are made or broken by audience reactions, and the audience is the final judge. He approved a fresh build beside the old one instead of another patch.
+
+**What it is.** A second, self-contained build in `v2/` (open `v2/index.html`). One match, same two personas, same booked finish.
+
+**The hard camera.** The ring is seen side-on, like the main TV camera. The crowd fills the top half of the picture, about 130 individual people in six rows, and the wrestlers are drawn about three times larger than in 0.15.
+
+**The crowd is people.** Each person has their own taste and their own threshold. What you can read without a meter:
+- Shirt colour is who that person is behind right now: orange for Stove, gold for The Boulder, grey for nobody. The room changes colour as loyalty moves.
+- Arms folded and sunk into the dark means bored. Forward into the light means leaning in.
+- They stand, throw their arms up, cup their hands to boo, and point and shout along with the referee's count.
+- Signs go up for a man being cheered, or against a man being booed. Chants come from the state of the room.
+
+**Loyalty is live (the new idea).** For each wrestler the crowd tracks two things: *like* (−100 booed to +100 cheered) and *over* (0 to 100, whether they react to him at all). Nothing in the crowd code says who the good guy is.
+- Whoever the room likes more gets the cheer in an exchange.
+- A man who keeps taking a beating, and sells it, earns sympathy. The man dishing out a long one-sided beating gets booed.
+- Hitting a man who is down gets booed, more so the longer it has been one-sided.
+- Repeats wear out, and a bored room stops judging at all: *over* falls for both.
+- Popping straight up from a real bump makes the other man's move look weak (his *over* drops).
+- So Stove can lose the room and The Boulder can win it. The results card reports what the room made of each man ("They turned on him", "Made as a villain", "They stopped caring about him").
+
+Carried over from §5.1 unchanged in spirit: the crowd only learns things through what it could see; repeats wear out; a finisher in the first minute means little; kicking out right after a big move pays; dead air cools the room.
+
+**No call sheet.** The office fixes one thing, the finish (Stove wins with the Front Burner). Everything before it is called in the ring. Cues list what you can do right now, with the key.
+
+**Moves in this step.** Chop, stomp, lock-up, body slam, arm-drag reversal, send to the ropes, clothesline, shoulder tackle, taunt and pose, cover and kick-out, and each man's finisher. Each has its own picture.
+
+**Kept from 0.15:** the receiver's game (sell a chop, stay down, kick out by hand), posing after your own move, trust as the private meter, the referee who has to get there before he counts, Gorilla in your ear, the cooperative CPU partner who never shoots, and kicking out of the booked finish as an always-available, priced betrayal (−30 trust each time; it ends in a breakdown).
+
+**Where the draft contradicts the rest of this bible (Jordan to rule on each):**
+1. §5.10 says the ring is a real two-dimensional space. The draft is side-on: one line, ropes at each end. Corners, corner whips and the superplex are not in it.
+2. §5.1 says the crowd arrives firmly behind Stove. In the draft that is only a starting point.
+3. §4 and §8 put the booking screen and the call sheet at the centre. The draft has neither, only the fixed finish.
+4. Not carried over yet: Respect, body damage and injury, the sandbag, hijack chants that ask for things, the referee's messages and GO HOME, the hype package.
+5. The WWF.com page chrome (§9) is not on the draft page.
+
+**Found along the way.** The Anton and Oswald fonts embedded in `index.html` since 0.12 cover almost no letters (only the capital A in Oswald renders), so 0.15 has been falling back to Impact and system fonts. The draft uses a system condensed face until that is fixed properly.

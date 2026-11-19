@@ -49,6 +49,16 @@ planning screen, and star-rated endings. New in 0.06: the **taunt** verb
 (§5.11), diegetic **commentary bubbles** (§5.9), and the fully **orchestrated
 six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
 
+**The rebuild draft (2026-11-18).** `v2/` is a second, self-contained build
+(open `v2/index.html`), started after a review of 0.15: side-on hard-camera
+view, the crowd as half the picture, and crowd loyalty to each wrestler that
+moves during the match. No call sheet; only the finish is booked. It is a
+DRAFT beside 0.15, not a replacement yet. Bible §13 describes it and lists
+where it contradicts the rest of the bible; those are Jordan's calls. Planned
+steps: 1 the room (done), 2 the moves, 3 calls in rest holds, 4 the verdict
+card. The Anton/Oswald fonts embedded in `index.html` cover almost no letters
+(found 2026-11-18, not fixed).
+
 ## Build order for the demo
 
 - v0.03–v0.05 — DONE: src/ refactor, character fix, crowd model v1, the

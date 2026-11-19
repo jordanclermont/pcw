@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCW — rebuild draft (the room)</title>
+<style>
+  :root { --ink:#f3ecd8; --dim:#8f93a0; --red:#b3121a; --gold:#ffd24a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #060608; color: var(--ink); font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; font-weight: 500; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 12px 16px; border-bottom: 3px solid var(--red); }
+  header h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; }
+  header span { color: var(--dim); font-size: 14px; }
+  header a { margin-left: auto; color: var(--dim); font-size: 14px; }
+  main { max-width: 1312px; margin: 0 auto; padding: 16px; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border: 2px solid #2c2c36; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { background: #0e0e13; border: 1px solid #2c2c36; padding: 12px 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 17px; font-weight: 800; letter-spacing: 1px; color: var(--gold); }
+  .card p, .card li { margin: 0 0 6px; font-size: 14.5px; line-height: 1.45; color: #c9ccd6; }
+  .card ul { margin: 0; padding-left: 18px; }
+  kbd { display: inline-block; min-width: 22px; padding: 0 5px; text-align: center; background: var(--gold); color: #141006; border-radius: 3px; font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PCW GRANDSTAND</h1>
+  <span>Rebuild draft, step 1: the room</span>
+  <a href="../index.html">Back to build 0.15</a>
+</header>
+<main>
+  <canvas id="stage" width="1280" height="720"></canvas>
+  <div class="cards">
+    <div class="card">
+      <h2>STOVE HOT (you)</h2>
+      <ul>
+        <li><kbd>A</kbd> <kbd>D</kbd> move</li>
+        <li><kbd>F</kbd> chop. On a man who is down, stomp.</li>
+        <li><kbd>G</kbd> lock up. On a man who is down, cover him.</li>
+        <li><kbd>T</kbd> do your part: sell a chop, reverse a lock-up, kick out, get up.</li>
+        <li><kbd>H</kbd> taunt. Right after your own move, it is a pose.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>THE BOULDER (CPU unless you take him)</h2>
+      <ul>
+        <li><kbd>&larr;</kbd> <kbd>&rarr;</kbd> move</li>
+        <li><kbd>J</kbd> chop or stomp, <kbd>K</kbd> lock up or cover</li>
+        <li><kbd>I</kbd> do your part, <kbd>L</kbd> taunt</li>
+        <li><kbd>1</kbd> and <kbd>2</kbd> hand Stove or The Boulder to the CPU, or take him back.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>IN A LOCK-UP</h2>
+      <ul>
+        <li>The man who grabbed is in control: work key slams, a direction sends him to the ropes, taunt key is the finisher.</li>
+        <li>The other man gets a short moment first to reverse it with his work key.</li>
+        <li>Sent to the ropes: take the clothesline, or press chop on the way back to tackle him.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>WHAT TO WATCH</h2>
+      <ul>
+        <li>Shirts turn orange for Stove and gold for The Boulder. Grey means that person has picked nobody.</li>
+        <li>Arms folded and sunk in the dark means they are bored. Forward in the light means you have them.</li>
+        <li>The same move again and again wears out. Stomping a man who is down gets you booed.</li>
+        <li>When you go down, stay down. Getting up at once makes his move look weak.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<!-- plain script tags so this opens straight from disk -->
+<script src="data/personas.js"></script>
+<script src="data/room.js"></script>
+<script src="src/core.js"></script>
+<script src="src/crowd.js"></script>
+<script src="src/match.js"></script>
+<script src="src/poses.js"></script>
+<script src="src/cpu.js"></script>
+<script src="src/render.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>

@@ -688,4 +688,61 @@ To feel for:
 - Are Gorilla's messages useful, or noise? Too frequent / too rare?
 - Is the count's wait-for-the-ref beat good suspense or a drag?
 
+## 2026-11-18 / v2 draft, step 1 "the room" — a fresh build beside 0.15
+
+Jordan asked for a review and a plan to jump-start development, with a new
+idea: characters are made or broken by audience reactions; the audience is the
+final judge. Possible new title: "The Art of Wrestling" (not decided; it is
+also the name of Colt Cabana's wrestling podcast, trademark not checked).
+
+Review of 0.15 (watched a CPU match): the crowd is a strip of dark heads and a
+meter; its loyalty is fixed; every grapple draws the same picture (the
+Landslide and the Spinebuster were both called "scoop and a slam"); play is a
+13-step checklist; the whole match happened in one corner. Jordan approved a
+rebuild in a new folder instead of patching 0.16.
+
+Built: `v2/` (open `v2/index.html`). Build 0.15 is untouched.
+- Side-on hard-camera view. The crowd is the top half of the screen, about 130
+  people. Wrestlers are about three times bigger and look different from each
+  other.
+- Each person in the crowd picks a side. Shirts turn orange (Stove), gold
+  (Boulder) or grey (nobody). They fold their arms when bored, come forward
+  when they're into it, stand, cheer, boo, hold signs, chant, and count along
+  with the ref.
+- The crowd's opinion of each wrestler moves during the match. A long
+  one-sided beating, or stomping a man who's down, gets the attacker booed and
+  the victim cheered. Repeats bore them. The results card says what the room
+  made of each man.
+- No call sheet. Only the finish is booked (Stove wins with the Front Burner).
+- You are Stove by default; The Boulder is the CPU. 1 and 2 swap who the CPU
+  plays.
+
+Checked: 2,000 lines, no build step. Headless: CPU-vs-CPU matches finish as
+booked at about 2:30 and score 2¾ to 3½ stars; kicking out of the finish costs
+30 trust each time and ends in a breakdown; a Stove who never sells breaks
+trust. In the browser: it draws with no console errors; real key presses did a
+lock-up, a slam, a pose, a cover (the CPU kicked out at two), sells, and a
+no-sell (−10 trust).
+NOT checked: how it feels at full speed. The browser pane I test in runs the
+animation at about one frame a second, so I stepped it by hand. Speed, timing
+windows and whether the crowd reads out of the corner of your eye are all
+yours to judge.
+
+Known rough spots: the finisher and pin pictures are approximate; a chop has
+to be sold with T every time, which may be too much pressing; the turn on a
+bullying Stove takes about a minute of steady stomping, which may be too slow.
+
+Also found: the Anton/Oswald fonts embedded in 0.15 cover almost no letters,
+so that page has been showing fallback fonts since 0.12. Not fixed.
+
+Bible §13 lists where this draft contradicts the bible (side-on ring, no call
+sheet, no booking screen, live loyalty). Those are Jordan's calls.
+
+To feel for:
+- Can you tell what the room thinks of you without looking at the bars?
+- Try to lose them on purpose: stomp him when he's down, over and over. Then
+  try to win them back. Does it feel like the crowd is judging you?
+- Is the side-on view right, or do you miss the ring you could walk around?
+- Is free-form better than the checklist, or do you feel lost?
+
 ## (next entry goes here)
