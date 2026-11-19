@@ -13,7 +13,8 @@
     PCW.bindKeys(code => {
       if (code === "Digit1" || code === "Digit2") {
         const pad = PCW.pads[code === "Digit1" ? "stove" : "boulder"];
-        pad.cpu = !pad.cpu; pad.held = {}; pad.just = {}; pad.aiAx = 0;
+        pad.cpu = !pad.cpu;
+        for (const id in PCW.pads) { const q = PCW.pads[id]; q.held = {}; q.just = {}; q.aiAx = 0; q.aiAz = 0; q.aiWhip = null; }
         return true;
       }
       if ((code === "Space" || code === "Enter") && G.phase === "PRE") { PCW.startMatch(); return true; }

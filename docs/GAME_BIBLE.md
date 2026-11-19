@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.13 revisions (2026-11-18): §13 updated after Jordan played the draft. The side-on ring became a ring with depth (four posts, corners, whips in any direction), the controls were rebuilt (WASD, three action keys, hold Space to go with it), and chops and whips no longer need split-second timing. Contradiction 1 in §13 is mostly resolved.*
+
 *v1.12 revisions (2026-11-18): added §13, the rebuild draft in `v2/` (step 1, "the room"): a side-on hard-camera view where the crowd is half the picture and its loyalty to each wrestler moves during the match. It is a draft beside build 0.15, and §13 lists where it contradicts the rest of this document for Jordan to rule on. Sections 1–12 unchanged.*
 
 *v1.11 revisions (Build 0.15, "the third man"): the referee is built (§5.7) — a
@@ -378,7 +380,9 @@ Written down so future sessions can be held to them.
 
 **What it is.** A second, self-contained build in `v2/` (open `v2/index.html`). One match, same two personas, same booked finish.
 
-**The hard camera.** The ring is seen side-on, like the main TV camera. The crowd fills the top half of the picture, about 130 individual people in six rows, and the wrestlers are drawn about three times larger than in 0.15.
+**The hard camera.** The ring is seen from the main TV camera: side-on and slightly above. The crowd fills the top half of the picture, about 130 individual people in six rows.
+
+**The ring has depth (changed the same day, after Jordan played it).** Jordan's note on the first version, which was one flat line with ropes at each end: "the 2D angle will not work for the final game because a huge part of what makes wrestling interesting is the ring the turnbuckles, going in and out." The ring is now a square drawn in perspective: four posts, turnbuckles, ropes on all four sides. Wrestlers move left and right and also toward and away from the camera, and are drawn smaller the further back they are. Two men who lock up or trade moves are pulled onto the same line, so every move still reads side-on. A man can be sent to any of the four ropes or into any of the four corners. Going outside the ring and climbing the ropes are NOT built yet; the space for them is there.
 
 **The crowd is people.** Each person has their own taste and their own threshold. What you can read without a meter:
 - Shirt colour is who that person is behind right now: orange for Stove, gold for The Boulder, grey for nobody. The room changes colour as loyalty moves.
@@ -398,12 +402,20 @@ Carried over from §5.1 unchanged in spirit: the crowd only learns things throug
 
 **No call sheet.** The office fixes one thing, the finish (Stove wins with the Front Burner). Everything before it is called in the ring. Cues list what you can do right now, with the key.
 
-**Moves in this step.** Chop, stomp, lock-up, body slam, arm-drag reversal, send to the ropes, clothesline, shoulder tackle, taunt and pose, cover and kick-out, and each man's finisher. Each has its own picture.
+**Moves in this step.** Chop, stomp, lock-up, body slam, arm-drag reversal, send to the ropes, send into the corner (he hits the buckles and hangs there; chop him or pull him out), clothesline, shoulder tackle, taunt and pose, cover and kick-out, and each man's finisher. Each has its own picture.
+
+**Controls (rebuilt after Jordan's first play: "the control layout is not intuitive at all. And you cannot react in time to certain things").**
+- One player gets the whole keyboard: WASD (or the arrows) to move, J chop, K grab, L pose, and Space to "go with it". Two players split it: Stove is WASD, F G H and Space; The Boulder is the arrows, J K L and Enter.
+- **Hold Space to go with it.** You plant your feet and open up; anything he hits you with is sold cleanly, at once. You cannot move or attack while you hold it. That is the receiver's choice in this build: give him your body, or let go and act. Tapping it after a chop lands still works, and the window is 0.8 seconds (it was 0.43).
+- **In a lock-up** the man who grabbed chooses: K slam, L finisher, a direction to send him to the ropes, two directions together for a corner. A choice made early is remembered and happens when the hold settles. The other man has about 0.6 seconds to reverse with K (it was 0.27).
+- **The Irish whip needs no timing.** After sending him, press J once at any point; the arm comes up by itself when he gets back. He comes off the ropes at you, wherever you are standing. The man running can press J at any point to drop his shoulder and run through you instead.
+- Chops and grabs step in on their own, so they do not miss by a few pixels.
+- On your back, staying down is the default. Moving gets you up. K kicks out of a pin.
 
 **Kept from 0.15:** the receiver's game (sell a chop, stay down, kick out by hand), posing after your own move, trust as the private meter, the referee who has to get there before he counts, Gorilla in your ear, the cooperative CPU partner who never shoots, and kicking out of the booked finish as an always-available, priced betrayal (−30 trust each time; it ends in a breakdown).
 
 **Where the draft contradicts the rest of this bible (Jordan to rule on each):**
-1. §5.10 says the ring is a real two-dimensional space. The draft is side-on: one line, ropes at each end. Corners, corner whips and the superplex are not in it.
+1. §5.10 says the ring is a real two-dimensional space. Mostly resolved the same day: the draft ring now has depth, four ropes and four corners, and whips go to any of them. Still missing against §5.10: the top rope and the superplex, and going outside the ring.
 2. §5.1 says the crowd arrives firmly behind Stove. In the draft that is only a starting point.
 3. §4 and §8 put the booking screen and the call sheet at the centre. The draft has neither, only the fixed finish.
 4. Not carried over yet: Respect, body damage and injury, the sandbag, hijack chants that ask for things, the referee's messages and GO HOME, the hype package.

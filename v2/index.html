@@ -25,37 +25,38 @@
 <body>
 <header>
   <h1>PCW GRANDSTAND</h1>
-  <span>Rebuild draft, step 1: the room</span>
+  <span>Rebuild draft: the room, with a ring you can move around in</span>
   <a href="../index.html">Back to build 0.15</a>
 </header>
 <main>
   <canvas id="stage" width="1280" height="720"></canvas>
   <div class="cards">
     <div class="card">
-      <h2>STOVE HOT (you)</h2>
+      <h2>YOUR KEYS</h2>
       <ul>
-        <li><kbd>A</kbd> <kbd>D</kbd> move</li>
-        <li><kbd>F</kbd> chop. On a man who is down, stomp.</li>
-        <li><kbd>G</kbd> lock up. On a man who is down, cover him.</li>
-        <li><kbd>T</kbd> do your part: sell a chop, reverse a lock-up, kick out, get up.</li>
-        <li><kbd>H</kbd> taunt. Right after your own move, it is a pose.</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h2>THE BOULDER (CPU unless you take him)</h2>
-      <ul>
-        <li><kbd>&larr;</kbd> <kbd>&rarr;</kbd> move</li>
-        <li><kbd>J</kbd> chop or stomp, <kbd>K</kbd> lock up or cover</li>
-        <li><kbd>I</kbd> do your part, <kbd>L</kbd> taunt</li>
-        <li><kbd>1</kbd> and <kbd>2</kbd> hand Stove or The Boulder to the CPU, or take him back.</li>
+        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move. W is away from the camera, S is toward it.</li>
+        <li><kbd>J</kbd> chop. On a man who is down, stomp.</li>
+        <li><kbd>K</kbd> grab: lock up, or cover a man who is down.</li>
+        <li><kbd>L</kbd> pose.</li>
+        <li>Hold <kbd>Space</kbd> to go with it: you stand still and sell whatever he hits you with.</li>
       </ul>
     </div>
     <div class="card">
       <h2>IN A LOCK-UP</h2>
       <ul>
-        <li>The man who grabbed is in control: work key slams, a direction sends him to the ropes, taunt key is the finisher.</li>
-        <li>The other man gets a short moment first to reverse it with his work key.</li>
-        <li>Sent to the ropes: take the clothesline, or press chop on the way back to tackle him.</li>
+        <li>You grabbed him, so you choose: <kbd>K</kbd> slam, <kbd>L</kbd> finisher, or a direction to send him to the ropes.</li>
+        <li>Two directions together send him into that corner.</li>
+        <li>After you send him, press <kbd>J</kbd> once, any time. Your arm comes up by itself when he gets back.</li>
+        <li>He grabbed you: go with it, or press <kbd>K</kbd> early to reverse it.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>WHEN IT IS DONE TO YOU</h2>
+      <ul>
+        <li>Chops: hold <kbd>Space</kbd>. You have most of a second after each one lands.</li>
+        <li>On your back: stay there. Moving gets you up. Getting up at once makes his move look weak.</li>
+        <li>Pinned: <kbd>K</kbd> kicks out. For the booked finish, stay down.</li>
+        <li>Sent to the ropes: take the clothesline, or press <kbd>J</kbd> to run through him.</li>
       </ul>
     </div>
     <div class="card">
@@ -64,7 +65,7 @@
         <li>Shirts turn orange for Stove and gold for The Boulder. Grey means that person has picked nobody.</li>
         <li>Arms folded and sunk in the dark means they are bored. Forward in the light means you have them.</li>
         <li>The same move again and again wears out. Stomping a man who is down gets you booed.</li>
-        <li>When you go down, stay down. Getting up at once makes his move look weak.</li>
+        <li><kbd>1</kbd> and <kbd>2</kbd> hand Stove or The Boulder to the CPU, or take him back. With two people, Stove is WASD, F G H and Space; The Boulder is the arrows, J K L and Enter.</li>
       </ul>
     </div>
   </div>

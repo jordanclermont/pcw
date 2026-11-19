@@ -1,13 +1,15 @@
 /* ============================================================
    v2 — src/render.js
    The hard camera. The crowd fills the top half of the picture and
-   the ring sits in front of it, side-on, with the wrestlers big.
+   the ring sits in front of it: a square with depth, four posts, and
+   ropes on all four sides. Things further from the camera are drawn
+   smaller and higher (PCW.proj).
    Everything is drawn in code (no image files yet).
    ============================================================ */
 (function () {
   "use strict";
   const PCW = window.PCW;
-  const G = PCW.G, S = PCW.S, R = PCW.RING, W = PCW.W, H = PCW.H;
+  const G = PCW.G, S = PCW.S, R = PCW.RING, W = PCW.W, H = PCW.H, proj = PCW.proj;
   // System condensed faces for now (the fonts embedded in build 0.15 turned out
   // to cover almost no letters). DISPLAY is the same family, drawn heavy.
   const FONT = "'Avenir Next Condensed', 'Arial Narrow', 'Helvetica Neue', sans-serif";
@@ -48,14 +50,18 @@
     if (G.phase === "MATCH" && G.shake > 0.5) ctx.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
     arena();
     if (G.crowd) crowd();
-    ring();
+    floor();
+    ringBack();
     if (G.phase !== "PRE") {
-      referee();
-      const order = G.ws.slice().sort((a, b) => layer(a) - layer(b));
-      for (const w of order) shadow(w);
-      for (const w of order) wrestler(w);
-      sparks();
+      // far men first, so a man nearer the camera is drawn over one further back
+      const cast = G.ws.map(w => ({ w, key: -w.z + layer(w) * 6 }));
+      cast.push({ ref: true, key: -G.ref.z + 12 });
+      cast.sort((a, b) => a.key - b.key);
+      for (const c of cast) shadow(c.ref ? G.ref : c.w, c.ref);
+      for (const c of cast) { if (c.ref) referee(); else wrestler(c.w); }
     }
+    ringFront();
+    if (G.phase !== "PRE") sparks();
     apron();
     ctx.restore();
     if (G.phase !== "PRE") { hud(); cues(); talk(); }
@@ -82,7 +88,7 @@
     const cone = ctx.createLinearGradient(0, 110, 0, 620);
     cone.addColorStop(0, "rgba(255,246,222,.10)"); cone.addColorStop(1, "rgba(255,246,222,.02)");
     ctx.fillStyle = cone;
-    ctx.beginPath(); ctx.moveTo(560, 110); ctx.lineTo(720, 110); ctx.lineTo(1180, 620); ctx.lineTo(100, 620); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(560, 110); ctx.lineTo(720, 110); ctx.lineTo(1180, 640); ctx.lineTo(100, 640); ctx.closePath(); ctx.fill();
   }
 
   /* ---------------- the crowd: people, not a meter ---------------- */
@@ -116,13 +122,13 @@
       const k = C.chant.t / C.chant.dur, a = Math.min(1, k * 8, (1 - k) * 5);
       const beat = Math.abs(Math.sin(C.chant.t / 9));
       ctx.globalAlpha = a * (0.55 + beat * 0.45);
-      text(C.chant.text, 640, 178 - beat * 6, 50, C.chant.kind === "bored" ? "#b9bcc6" : "#f3ecd8", "center", DISPLAY, 6);
+      text(C.chant.text, 640, 150 - beat * 6, 50, C.chant.kind === "bored" ? "#b9bcc6" : "#f3ecd8", "center", DISPLAY, 6);
       ctx.globalAlpha = 1;
     }
     if (C.shout) {
       const k = C.shout.t / 46;
       ctx.globalAlpha = 1 - k * k;
-      text(C.shout.text, 640, 240 - k * 14, 84 + k * 18, "#fff", "center", DISPLAY, 8);
+      text(C.shout.text, 640, 232 - k * 14, 84 + k * 18, "#fff", "center", DISPLAY, 8);
       ctx.globalAlpha = 1;
     }
   }
@@ -187,64 +193,100 @@
   }
 
   /* ---------------- the ring ---------------- */
-  function ring() {
-    // mat
-    const g = ctx.createLinearGradient(0, 572, 0, 628);
-    g.addColorStop(0, "#9d9a92"); g.addColorStop(1, "#cfccc3");
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.moveTo(196, 572); ctx.lineTo(1084, 572); ctx.lineTo(1130, 628); ctx.lineTo(150, 628); ctx.closePath(); ctx.fill();
-    const sp = ctx.createRadialGradient(640, 600, 40, 640, 600, 520);
-    sp.addColorStop(0, "rgba(255,250,235,.35)"); sp.addColorStop(1, "rgba(0,0,0,.28)");
-    ctx.fillStyle = sp;
-    ctx.beginPath(); ctx.moveTo(196, 572); ctx.lineTo(1084, 572); ctx.lineTo(1130, 628); ctx.lineTo(150, 628); ctx.closePath(); ctx.fill();
-    // ropes (they bow when a man hits them)
-    const ys = [446, 493, 540], cols = ["#b3121a", "#e6e2d8", "#e6e2d8"];
-    for (let i = 0; i < 3; i++) {
-      const bow = G.ropeShake ? Math.sin(G.ropeShake * 0.9) * G.ropeShake * 0.9 : 0;
-      const cxp = G.ropeSide < 0 ? 300 : 980;
-      ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 6;
-      ctx.beginPath(); ctx.moveTo(R.POST_L, ys[i]); ctx.quadraticCurveTo(cxp, ys[i] + bow, R.POST_R, ys[i]); ctx.stroke();
-      ctx.strokeStyle = cols[i]; ctx.lineWidth = 3.5;
-      ctx.beginPath(); ctx.moveTo(R.POST_L, ys[i]); ctx.quadraticCurveTo(cxp, ys[i] + bow, R.POST_R, ys[i]); ctx.stroke();
+  const APRON = 34;                     // the mat runs a little way past the ropes
+  const POST_H = 168;
+  const quad = pts => { ctx.beginPath(); pts.forEach((p, i) => ctx[i ? "lineTo" : "moveTo"](p.x, p.y)); ctx.closePath(); };
+
+  function floor() {
+    // the barricade the front row leans on, and the arena floor in front of it
+    ctx.fillStyle = "#0a0a0d"; ctx.fillRect(0, 482, W, H - 482);
+    ctx.fillStyle = "#1b1b22"; ctx.fillRect(0, 482, W, 4);
+    const g = ctx.createLinearGradient(0, 500, 0, 700);
+    g.addColorStop(0, "rgba(40,40,52,.0)"); g.addColorStop(1, "rgba(40,40,52,.35)");
+    ctx.fillStyle = g; ctx.fillRect(0, 500, W, 200);
+  }
+
+  function rope(a, b, h, color, side) {
+    const p1 = proj(a[0], a[1], h), p2 = proj(b[0], b[1], h);
+    let mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    if (G.ropeShake && G.ropeSide === side) {
+      const bow = Math.sin(G.ropeShake * 0.9) * G.ropeShake * 1.1;
+      if (side === "L") mx -= bow; else if (side === "R") mx += bow; else if (side === "F") my -= bow * 0.6; else my += bow * 0.6;
     }
-    // posts + turnbuckle pads
-    for (const px of [R.POST_L, R.POST_R]) {
-      const pg = ctx.createLinearGradient(px - 9, 0, px + 9, 0);
-      pg.addColorStop(0, "#3c3f48"); pg.addColorStop(0.5, "#9aa0ad"); pg.addColorStop(1, "#2c2e36");
-      ctx.fillStyle = pg; ctx.fillRect(px - 9, 426, 18, 172);
-      ctx.fillStyle = "#b3121a";
-      for (const y of ys) { rrect(px - 14, y - 11, 28, 22, 6); ctx.fill(); }
-    }
+    const wdt = 3.6 * (p1.s + p2.s) / 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = wdt + 2.5;
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.quadraticCurveTo(mx, my, p2.x, p2.y); ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = wdt;
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.quadraticCurveTo(mx, my, p2.x, p2.y); ctx.stroke();
+  }
+  const ROPE_COL = ["#e6e2d8", "#e6e2d8", "#b3121a"];   // bottom, middle, top
+  function ropes(a, b, side, dim) {
+    R.ROPES.forEach((h, i) => rope(a, b, h, dim ? shadeHex(ROPE_COL[i], dim) : ROPE_COL[i], side));
+  }
+  function post(x, z) {
+    const b = proj(x, z, 0), t = proj(x, z, POST_H), w = 9 * b.s;
+    const pg = ctx.createLinearGradient(b.x - w, 0, b.x + w, 0);
+    pg.addColorStop(0, "#3c3f48"); pg.addColorStop(0.5, "#9aa0ad"); pg.addColorStop(1, "#2c2e36");
+    ctx.fillStyle = pg; ctx.fillRect(b.x - w, t.y, w * 2, b.y - t.y);
+    ctx.fillStyle = "#b3121a";
+    for (const h of R.ROPES) { const p = proj(x, z, h); rrect(p.x - 14 * p.s, p.y - 11 * p.s, 28 * p.s, 22 * p.s, 6 * p.s); ctx.fill(); }
+  }
+
+  /* everything behind the wrestlers: the mat, the far ropes, the side ropes, the far posts */
+  function ringBack() {
+    const A = APRON;
+    const m = [proj(R.LO - A, -A), proj(R.HI + A, -A), proj(R.HI + A, R.D + A), proj(R.LO - A, R.D + A)];
+    const g = ctx.createLinearGradient(0, m[2].y, 0, m[0].y);
+    g.addColorStop(0, "#8f8c85"); g.addColorStop(1, "#d2cfc6");
+    quad(m); ctx.fillStyle = g; ctx.fill();
+    const c = proj(R.CX, R.D / 2);
+    const sp = ctx.createRadialGradient(c.x, c.y, 30, c.x, c.y, 520);
+    sp.addColorStop(0, "rgba(255,250,235,.38)"); sp.addColorStop(1, "rgba(0,0,0,.30)");
+    quad(m); ctx.fillStyle = sp; ctx.fill();
+    // the far edge of the mat
+    ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(m[3].x, m[3].y); ctx.lineTo(m[2].x, m[2].y); ctx.stroke();
+    ropes([R.LO, R.D], [R.HI, R.D], "F", 0.78);
+    ropes([R.LO, 0], [R.LO, R.D], "L", 0.9);
+    ropes([R.HI, 0], [R.HI, R.D], "R", 0.9);
+    post(R.LO, R.D); post(R.HI, R.D);
+  }
+  /* in front of the wrestlers: the near ropes and the two near posts */
+  function ringFront() {
+    ropes([R.LO, 0], [R.HI, 0], "N");
+    post(R.LO, 0); post(R.HI, 0);
   }
   function apron() {
-    ctx.fillStyle = "#0b0b0e"; ctx.fillRect(150, 628, 980, 46);
-    ctx.fillStyle = "#b3121a"; ctx.fillRect(150, 628, 980, 5);
+    const l = proj(R.LO - APRON, -APRON), r = proj(R.HI + APRON, -APRON), top = l.y, hgt = 680 - top;
+    ctx.fillStyle = "#0b0b0e"; ctx.fillRect(l.x, top, r.x - l.x, hgt);
+    ctx.fillStyle = "#b3121a"; ctx.fillRect(l.x, top, r.x - l.x, 5);
     ctx.globalAlpha = 0.5;
-    text("PCW", 300, 653, 28, "#e6e2d8", "center", DISPLAY);
-    text("GRANDSTAND", 640, 653, 24, "#b3121a", "center", DISPLAY);
-    text("PCW", 980, 653, 28, "#e6e2d8", "center", DISPLAY);
+    const ty = top + hgt / 2 + 3;
+    text("PCW", 300, ty, 24, "#e6e2d8", "center", DISPLAY);
+    text("GRANDSTAND", 640, ty, 21, "#b3121a", "center", DISPLAY);
+    text("PCW", 980, ty, 24, "#e6e2d8", "center", DISPLAY);
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#050506"; ctx.fillRect(0, 674, W, 46);
     ctx.fillStyle = "#16161b"; ctx.fillRect(0, 674, W, 2);
   }
 
   /* ---------------- bodies ---------------- */
-  function shadow(w) {
-    const lying = Math.abs(Math.sin(w.rot * Math.PI / 180));
+  function shadow(w, isRef) {
+    const p = proj(w.x, w.z, 0);
+    const lying = isRef ? 0 : Math.abs(Math.sin(w.rot * Math.PI / 180)), sc = isRef ? 0.95 : w.p.scale, up = isRef ? 0 : w.y;
     ctx.fillStyle = "rgba(0,0,0,.32)";
-    ctx.beginPath(); ctx.ellipse(w.x, R.FLOOR + 4, (38 + lying * 60) * w.p.scale * (1 - Math.min(0.5, w.y / 300)), 9, 0, 0, 6.3); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + 3, (38 + lying * 60) * sc * p.s * (1 - Math.min(0.5, up / 300)), 9 * p.s, 0, 0, 6.3); ctx.fill();
   }
   function wrestler(w) {
     if (!w.pose) return;
-    const cover = w.state === S.COVER ? 15 : 0;
-    body({ x: w.x, y: w.y + cover, rot: w.rot, facing: w.facing, pose: w.pose, scale: w.p.scale }, w.p);
+    const p = proj(w.x, w.z, 0), cover = w.state === S.COVER ? 15 : 0;
+    body({ x: p.x, floor: p.y, y: (w.y + cover) * p.s, rot: w.rot, facing: w.facing, pose: w.pose, scale: w.p.scale * p.s }, w.p);
   }
   function referee() {
-    const r = G.ref;
+    const r = G.ref, p = proj(r.x, r.z, 0);
     refPose = PCW.refPose(r, refPose);
-    ctx.globalAlpha = 0.96;
-    body({ x: r.x, y: 0, rot: 0, facing: r.facing, pose: refPose, scale: PCW.REF_LOOK.scale, depth: -16 }, PCW.REF_LOOK);
-    ctx.globalAlpha = 1;
+    body({ x: p.x, floor: p.y, y: 0, rot: 0, facing: r.facing, pose: refPose, scale: PCW.REF_LOOK.scale * p.s }, PCW.REF_LOOK);
   }
 
   const OUT = "#08080b";
@@ -336,8 +378,8 @@
 
   function sparks() {
     ctx.save(); ctx.globalCompositeOperation = "lighter";
-    for (const sp of G.sparks) {
-      const k = sp.age / 14;
+    for (const sw of G.sparks) {
+      const k = sw.age / 14, sp = proj(sw.x, sw.z, sw.h);
       ctx.strokeStyle = "rgba(255,240,200," + (1 - k) + ")"; ctx.lineWidth = 4 * (1 - k) + 1;
       for (let i = 0; i < 8; i++) {
         const a = i * 0.785 + 0.3, r1 = 8 + k * 26, r2 = 20 + k * 52;
@@ -402,10 +444,10 @@
   function cues() {
     for (const w of G.ws) {
       const c = PCW.cueFor(w); if (!c) continue;
-      const lying = Math.abs(Math.sin(w.rot * Math.PI / 180)) > 0.6;
+      const lying = Math.abs(Math.sin(w.rot * Math.PI / 180)) > 0.6, p = proj(w.x, w.z, 0);
       // Stove's cue sits above the action, The Boulder's sits higher still, so they never collide
-      const base = R.FLOOR - (lying ? 120 : 250 * w.p.scale) - w.y * 0.5;
-      chip(c, w.x, base - (w.id === "boulder" ? 46 : 0), w.p.accent, w.p.short);
+      const base = p.y - (lying ? 120 : 250 * w.p.scale * p.s) - w.y * 0.5;
+      chip(c, p.x, base - (w.id === "boulder" ? 46 : 0), w.p.accent, w.p.short);
     }
   }
 
@@ -462,10 +504,10 @@
     text(B.note, x + 36, y + 170, 17, "#c9ccd6", "left");
     text("The crowd decides who it likes. Watch the room, not a checklist.", x + 36, y + 198, 17, "#c9ccd6", "left");
     const row = (id, yy) => {
-      const p = PCW.PERSONAS[id], cpu = PCW.pads[id].cpu, L = PCW.KEYLABEL[id];
+      const p = PCW.PERSONAS[id], cpu = PCW.pads[id].cpu, L = PCW.keyLabels(id);
       ctx.fillStyle = p.accent; ctx.fillRect(x + 36, yy - 14, 6, 28);
       text(p.name, x + 54, yy, 22, "#f3ecd8", "left", DISPLAY);
-      text(cpu ? "CPU partner" : "YOU   move " + L.dir + "   chop " + L.strike + "   grab " + L.grab + "   do your part " + L.work + "   taunt " + L.taunt,
+      text(cpu ? "CPU partner" : "YOU   move " + L.dir + "   chop " + L.strike + "   grab " + L.grab + "   pose " + L.taunt + "   go with it: hold " + L.give,
         x + 220, yy, 15, cpu ? "#8f93a0" : "#ffd24a", "left");
     };
     row("stove", y + 252); row("boulder", y + 292);

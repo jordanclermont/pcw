@@ -50,9 +50,12 @@ planning screen, and star-rated endings. New in 0.06: the **taunt** verb
 six-beat finish** (§8). `v1-demo/` remains as the reference prototype.
 
 **The rebuild draft (2026-11-18).** `v2/` is a second, self-contained build
-(open `v2/index.html`), started after a review of 0.15: side-on hard-camera
-view, the crowd as half the picture, and crowd loyalty to each wrestler that
-moves during the match. No call sheet; only the finish is booked. It is a
+(open `v2/index.html`), started after a review of 0.15: hard-camera view of a
+ring with depth (four posts, corners; x = left/right, z = toward/away from the
+camera, drawn through `PCW.proj`), the crowd as half the picture, and crowd
+loyalty to each wrestler that moves during the match. Controls: WASD, J chop,
+K grab, L pose, hold Space to "go with it" (sell). Outside the ring and the
+top rope are not built. No call sheet; only the finish is booked. It is a
 DRAFT beside 0.15, not a replacement yet. Bible §13 describes it and lists
 where it contradicts the rest of the bible; those are Jordan's calls. Planned
 steps: 1 the room (done), 2 the moves, 3 calls in rest holds, 4 the verdict

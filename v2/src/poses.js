@@ -52,6 +52,8 @@
     headlock: P(-4, 0, [172, -64], [160, -52], [10, 6], [-10, 6]),
     sit:      P(-8, 0, [168, -70], [158, -56], [86, 8], [80, 22]),
     snap:     P(-42, -40, [-104, 0], [-132, 0], [10, 0], [-6, 0]),
+    give:     P(-4, -4, [-18, 18], [-34, 14], [10, 4], [-12, 4]),
+    cornered: P(-14, 10, [118, -62], [128, -70], [22, 20], [-6, 14]),
     refstand: P(4, 0, [8, 14], [-6, 16], [6, 2], [-6, 2]),
     refcount: P(48, -6, [40, 30], [20, 60], [58, 96], [-6, 80]),
     refslap:  P(60, 0, [70, 0], [20, 60], [58, 96], [-6, 80])
@@ -67,8 +69,9 @@
   function target(w) {
     const t = G.tick, sl = G.slam;
     switch (w.state) {
-      case S.IDLE: { const p = Object.assign({}, POSE.idle); p.afs += Math.sin(t / 17 + w.x) * 4; p.abs += Math.cos(t / 19) * 4; return p; }
-      case S.WALK: return walkCycle(POSE.idle, w.x * 0.085, 22, 26);
+      case S.IDLE: { const p = Object.assign({}, w.give ? POSE.give : POSE.idle); p.afs += Math.sin(t / 17 + w.x) * 4; p.abs += Math.cos(t / 19) * 4; return p; }
+      case S.WALK: return walkCycle(POSE.idle, (w.x + w.z) * 0.085, 22, 26);
+      case S.CORNER: { const p = Object.assign({}, POSE.cornered); p.head += Math.sin(t / 13) * 6; return p; }
       case S.STRIKE: return w.sf < F.STRIKE_HIT - 2 ? POSE.windup : w.sf < F.STRIKE_HIT + 9 ? POSE.chop : POSE.idle;
       case S.HIT: return POSE.hit;
       case S.SELL: return w.sf < 26 ? POSE.sell : POSE.idle;
@@ -131,7 +134,7 @@
 
   PCW.refPose = function (ref, cur) {
     const tg = ref.state === "count" ? (ref.slap > 4 ? POSE.refslap : POSE.refcount)
-      : ref.state === "walk" ? walkCycle(POSE.refstand, ref.x * 0.09, 20, 22) : POSE.refstand;
+      : ref.state === "walk" ? walkCycle(POSE.refstand, (ref.x + ref.z) * 0.09, 20, 22) : POSE.refstand;
     if (!cur) return Object.assign({}, tg);
     for (const k in tg) cur[k] += (tg[k] - cur[k]) * 0.3;
     return cur;
@@ -142,12 +145,12 @@
   PCW.DIM = DIM;
   const rad = a => a * Math.PI / 180;
 
-  PCW.joints = function (b) {   // b: { x, y, rot, facing, pose, scale, depth }
+  PCW.joints = function (b) {   // b: { x, floor, y, rot, facing, pose, scale } — x/floor are SCREEN positions
     const p = b.pose, s = b.scale;
     const ext = h => DIM.thigh * Math.cos(rad(h[0])) + DIM.shin * Math.cos(rad(h[0] - h[1]));
     const legExt = Math.max(ext([p.lfh, p.lfk]), ext([p.lbh, p.lbk]), 12);
     const k = Math.abs(Math.sin(rad(b.rot)));
-    const px = b.x, py = PCW.RING.FLOOR + (b.depth || 0) - b.y - (legExt * (1 - k) + 13 * k) * s;
+    const px = b.x, py = b.floor - b.y - (legExt * (1 - k) + 13 * k) * s;
     const cr = Math.cos(rad(b.rot)), sr = Math.sin(rad(b.rot));
     const tf = (lx, ly) => [px + (lx * cr - ly * sr) * s * b.facing, py - (lx * sr + ly * cr) * s];
     const dir = a => [Math.sin(rad(a)), -Math.cos(rad(a))];

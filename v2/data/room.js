@@ -50,6 +50,7 @@
     slam: ["Scoop and a slam!", "Up and DOWN he goes!"],
     armdrag: ["Arm drag! He slipped right out of it!", "Reversed, and over he goes!"],
     clothesline: ["CLOTHESLINE! He nearly took his head off!"],
+    corner: ["Into the corner! He hit those buckles hard.", "Sent to the corner, and he's hung up there!"],
     tackle: ["Shoulder tackle off the ropes! He ran right through him!"],
     stomp: ["He's putting the boots to a man who's down.", "That's just mean."],
     nosell: ["He popped right back up! That made the other fella look like nothing."],

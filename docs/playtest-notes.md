@@ -746,3 +746,32 @@ To feel for:
 - Is free-form better than the checklist, or do you feel lost?
 
 ## (next entry goes here)
+
+## 2026-11-18 / v2 draft, step 1b — Jordan's first play, and the ring gets depth
+
+Jordan played the v2 draft once. His notes, in his words:
+- "biggest issue right now is the control layout is not intuitive at all. And you cannot react in time to certain things."
+- "the 2D angle will not work for the final game because a huge part of what makes wrestling interesting is the ring the turnbuckles, going in and out. Unless we find a very creative way of utilizing 2D so it feels like it's not 2D."
+- The moments that beat him: "the irish whips, and selling the chops."
+
+He picked option 1 of three for the view: keep the TV camera, give the ring depth.
+
+What changed:
+- The ring is a square in perspective with four posts and ropes on all four sides. Movement is WASD in two directions. Whips go to any rope; two directions together send a man into that corner, where he hangs on the buckles.
+- Keys: WASD move, J chop, K grab, L pose, hold Space to go with it. Bible §13 has the full list.
+- Selling a chop: hold Space and every chop is sold as it lands. Tapping after the hit still works and the window is nearly twice as long.
+- Irish whip: press J once any time after sending him; the arm comes up by itself. He comes back at you wherever you stand.
+- Lock-up: choices are remembered if pressed early; the reversal window is about twice as long.
+- Chops and grabs step in on their own.
+
+What was checked: six CPU-vs-CPU matches finish as booked (2¼ to 3¼ stars, about 2:30, two or three corner whips each). With real key events: walk in depth, chop, lock up, whip and clothesline with the J press made early, whip into a corner, chop a man in the corner, and 75 seconds of holding Space against the CPU (19 chops, all sold clean, trust stayed 100). No console errors.
+
+What was NOT checked: feel at full speed. The test browser still runs about one frame a second.
+
+Known rough spots:
+- A whip toward or away from the camera works, but the two men overlap in the picture when they meet.
+- Going outside the ring and the top rope are not built.
+- Holding Space makes selling chops easy. It may now be too easy; that is for Jordan to judge.
+- The CPU throws a lot of chops (30 to 60 a match).
+
+One thing to change next: Jordan plays it again and says whether the whips and chops are now answerable.
