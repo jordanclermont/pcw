@@ -477,11 +477,15 @@
     if (G.phase !== "MATCH") return;
     G.phase = "ENDED"; G.shake = 0; G.hitstop = 0; G.ask = null; G.pin = null; G.busy = false;
     const C = G.crowd, RT = PCW.RATING;
-    const parts = [["the room", (C.avgHeat() * RT.HEAT_W + C.avgAttn() * (1 - RT.HEAT_W)) / RT.PER_STAR]];
+    // the room: how loud it was on average, how loud it got at its loudest, and whether they stayed with it
+    const parts = [["the room", (C.avgHeat() * RT.HEAT_W + C.peak * RT.PEAK_W + C.avgAttn() * (1 - RT.HEAT_W - RT.PEAK_W)) / RT.PER_STAR]];
     if (type === "CLEAN") parts.push(["clean finish", RT.CLEAN]);
     if (type === "FLAT") parts.push(["no real finish", RT.FLAT]);
     if (type === "COUNTOUT") parts.push(["count-out", RT.COUNTOUT]);
     if (G.trust >= 80) parts.push(["trust held", RT.TRUST]);
+    // each man was booked in a role, and each role has a job
+    const jobs = { stove: job("stove"), boulder: job("boulder") };
+    for (const id of ["stove", "boulder"]) parts.push([PCW.PERSONAS[id].short + "'s job", Math.round(jobs[id].score * RT.JOB * 4) / 4]);
     const secs = G.tick / 60;
     if (secs < 100 && type !== "BREAKDOWN") parts.push(["over too soon", -Math.round((100 - secs) / 100 * 2 * 4) / 4]);
     let stars = parts.reduce((s, p) => s + p[1], 0);
@@ -492,7 +496,7 @@
       type, stars, parts, winner: winner ? winner.id : null,
       time: G.tick / 60, trust: G.trust,
       heat: Math.round(C.avgHeat()), attn: Math.round(C.avgAttn()), peak: Math.round(C.peak),
-      verdict: { stove: verdict("stove"), boulder: verdict("boulder") },
+      verdict: { stove: verdict("stove"), boulder: verdict("boulder") }, jobs,
       headline:
         type === "CLEAN" ? "NEW CHAMPION. As booked." :
           type === "FLAT" ? "Title change, but nobody saw a finish." :
@@ -502,6 +506,20 @@
     };
   }
   PCW.endMatch = endMatch;
+
+  /* THE JOB. The face's job is to be cheered; the heel's job is to be booed.
+     How well it was done = how strongly they feel that way x how much they react to him at all. */
+  PCW.ROLE = {
+    face: { tag: "FACE", job: "get cheered" },
+    heel: { tag: "HEEL", job: "get booed" }
+  };
+  function job(id) {
+    const w = G.crowd.W[id], role = PCW.PERSONAS[id].booked;
+    const dir = role === "face" ? w.like : -w.like;
+    const score = clamp(dir / 100, 0, 1) * clamp(w.over / 100, 0, 1);
+    const word = dir < -8 ? "BACKWARDS" : score >= 0.6 ? "DONE" : score >= 0.3 ? "HALF DONE" : "NOT DONE";
+    return { role, score, word };
+  }
 
   function verdict(id) {
     const w = G.crowd.W[id], l = w.like, o = w.over, l0 = w.like0;

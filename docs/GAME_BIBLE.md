@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.15 revisions (2026-11-19): §14 gained roles and jobs (face: get cheered; heel: get booed), a line on screen saying what the room wants right now, and a star rating that five stars can actually reach.*
+
 *v1.14 revisions (2026-11-18): added §14, prototype 3 in `v3/`. After playing the v2 draft twice Jordan said it still felt "rudimentary and rough" and restated the game as decisions and storytelling, not button skill. Prototype 3 is built from that statement alone: walk to a position, choose what happens, watch it play out. §14 lists what it changes and what it leaves open.*
 
 *v1.13 revisions (2026-11-18): §13 updated after Jordan played the draft. The side-on ring became a ring with depth (four posts, corners, whips in any direction), the controls were rebuilt (WASD, three action keys, hold Space to go with it), and chops and whips no longer need split-second timing. Contradiction 1 in §13 is mostly resolved.*
@@ -471,6 +473,14 @@ Of Jordan's two options for the contact mode, this is the RPG-style one. Quick t
 **Smoothness.** Every move is key poses on a timeline for both men, eased from one to the next, with an impact frame, a hit-stop and a camera shake. That replaces v2's bodies reacting to key presses mid-move.
 
 **What is carried over, and what is not.** Carried: the two personas, the booked finish, trust, the referee, Gorilla in your ear, the results card. Not built: Respect, body damage, the sandbag, the booking screen and call sheet, calls in rest holds, the superplex, a second finisher, the WWF.com page chrome.
+
+**Roles and jobs (added 2026-11-19).** Jordan, after his first match: "There is work to do but this has potential. I just had a match where I threw him out of the ring. That felt good. I think we still need more of a story element to it. Right now I'm not sure how to get 5 stars... it might be better giving people roles in the game like the face vs the heel."
+- Each man is booked in a role and each role has a job. The face's job is to get cheered. The heel's job is to get booed. The role shows on his nameplate and on the card before the bell.
+- Each man is marked on his job at the end: how strongly the room feels the right way about him, times how much it reacts to him at all. DONE, HALF DONE, NOT DONE, or BACKWARDS (a face who got booed, a heel who got cheered). Each job adds up to 0.4 of a star.
+- The crowd can still disagree with the booking. A heel the room starts cheering has done his job backwards, and the results card says so.
+- **What the room wants.** A gold line at the top of the screen says, in a sentence, what the crowd wants right now: "They want to see STOVE fight back", "They are happy, but nothing is at stake", "They have seen that move too often", "They are ready. Give them the finish". It is read off the same things the crowd has seen, so it is not a script; it is what a wrestler hears from the seats. Giving them what they want at the right time is how the rating climbs.
+- **Stars** now count how loud the room got at its loudest as well as its average, so five stars is reachable. A CPU-vs-CPU match scores 3¼ to 3¾.
+- Still to build (Jordan's list): the heel's own tricks (breaks outside, cheap shots, feet on the ropes), and the referee knockout with a weapon. Right now both roles pick from the same choices.
 
 **Open questions for Jordan.**
 1. Is choosing, then watching, the game? Or does watching feel too passive?

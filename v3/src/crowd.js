@@ -322,6 +322,25 @@
       this.peak = Math.max(this.peak, this.heat);
     }
 
+    /* WHAT THE ROOM WANTS RIGHT NOW. Not a script: this is what a wrestler
+       hears from the seats, read off the same things the crowd has seen. */
+    want() {
+      const S = this.W.stove, B = this.W.boulder, sec = this.t / 60;
+      const fav = S.like >= B.like ? "stove" : "boulder", oth = fav === "stove" ? "boulder" : "stove";
+      const F = this.W[fav], O = this.W[oth], name = id => PCW.PERSONAS[id].short;
+      if (this.quiet > 450) return "They are getting restless. Do something.";
+      if (F.like - O.like < 25) return "They have not picked a side. Give them a reason to.";
+      if (F.taken >= 20) return "They have seen enough of this beating. Let " + name(fav) + " fight back NOW.";
+      if (F.taken >= 8) return "They want to see " + name(fav) + " fight back.";
+      if (this.attn < 35) return "They are sitting on their hands. Change something.";
+      let worn = 0; for (const k in this.mem) worn = Math.max(worn, this.mem[k]);
+      if (worn >= 2.4) return "They have seen that move too often. Show them something else.";
+      if (sec > 130 && O.taken >= 5) return "They are ready. Give them the finish.";
+      if (O.taken >= 10 && F.taken < 4 && sec < 120) return "They are happy, but nothing is at stake. " + name(fav) + " needs to be in trouble.";
+      if (F.taken >= 3) return "They are worried about " + name(fav) + ". Let it build.";
+      return "They are behind " + name(fav) + ". Let him look good.";
+    }
+
     avgHeat() { return this.n ? this.sumHeat / this.n : this.heat; }
     avgAttn() { return this.n ? this.sumAttn / this.n : this.attn; }
 

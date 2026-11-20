@@ -66,7 +66,7 @@
       sparks();
     } else { ringFront(); apron(); }
     ctx.restore();
-    if (live) { hud(); talk(); banner(); hints(); askCard(); }
+    if (live) { hud(); talk(); wants(); banner(); hints(); askCard(); }
     if (G.phase === "PRE") preCard();
     if (G.phase === "ENDED") resultCard();
   };
@@ -123,14 +123,14 @@
       const k = C.chant.t / C.chant.dur, a = Math.min(1, k * 8, (1 - k) * 5);
       const beat = Math.abs(Math.sin(C.chant.t / 9));
       ctx.globalAlpha = a * (0.55 + beat * 0.45);
-      text(C.chant.text, 640, 150 - beat * 6, 46, C.chant.kind === "bored" ? "#b9bcc6" : "#f3ecd8", "center", DISPLAY, 6);
+      text(C.chant.text, 640, 204 - beat * 6, 46, C.chant.kind === "bored" ? "#b9bcc6" : "#f3ecd8", "center", DISPLAY, 6);
       ctx.globalAlpha = 1;
     }
     if (C.shout) {
       const k = C.shout.t / 46;
       ctx.globalAlpha = 1 - k * k;
-      if (C.shout.small) text(C.shout.text, 640, 226 - k * 10, 50 + k * 8, "#d9dbe2", "center", DISPLAY, 6);
-      else text(C.shout.text, 640, 226 - k * 14, 84 + k * 18, "#fff", "center", DISPLAY, 8);
+      if (C.shout.small) text(C.shout.text, 640, 262 - k * 10, 50 + k * 8, "#d9dbe2", "center", DISPLAY, 6);
+      else text(C.shout.text, 640, 262 - k * 14, 84 + k * 18, "#fff", "center", DISPLAY, 8);
       ctx.globalAlpha = 1;
     }
   }
@@ -421,7 +421,10 @@
     ctx.fillStyle = w.p.accent; ctx.fillRect(right ? x + 294 : x, 18, 6, 62);
     const tx = right ? x + 284 : x + 16, al = right ? "right" : "left";
     text(w.p.name + (cpu ? "  (CPU)" : ""), tx, 36, 20, "#f3ecd8", al, DISPLAY);
-    if (G.ctrl === w.id && G.phase === "MATCH") text("IN CONTROL", right ? x + 16 : x + 284, 36, 11.5, w.p.accent, right ? "left" : "right");
+    ctx.font = face(20, DISPLAY); const nw = ctx.measureText(w.p.name + (cpu ? "  (CPU)" : "")).width;
+    const role = PCW.ROLE[w.p.booked].tag, rx = right ? tx - nw - 12 : tx + nw + 12;
+    text(role, rx, 37, 11.5, w.p.booked === "face" ? "#9fd4a0" : "#ff8a8a", al);
+    if (G.ctrl === w.id && G.phase === "MATCH") text("IN CONTROL", right ? x + 16 : x + 284, 27, 10.5, w.p.accent, right ? "left" : "right");
     // cheers <-> boos: one bar, centre is "they don't care either way"
     const bx = x + 16, bw = 268, mid = bx + bw / 2;
     ctx.fillStyle = "#23232b"; ctx.fillRect(bx, 54, bw, 8);
@@ -471,6 +474,19 @@
   }
 
   /* what just got called, for a second, so you always know what you are watching */
+  /* what the room wants right now: what a wrestler hears from the seats */
+  function wants() {
+    if (G.phase !== "MATCH") return;
+    const str = G.crowd.want();
+    ctx.font = face(14.5);
+    const lab = "THE ROOM", lw = 78, w = ctx.measureText(str).width + lw + 30, x = 640 - w / 2, y = 116;
+    rrect(x, y, w, 26, 5); ctx.fillStyle = "rgba(8,8,11,.88)"; ctx.fill();
+    ctx.strokeStyle = "#6a5a22"; ctx.lineWidth = 1.2; ctx.stroke();
+    rrect(x, y, lw, 26, 5); ctx.fillStyle = "#ffd24a"; ctx.fill();
+    text(lab, x + lw / 2, y + 14, 12, "#141006", "center", DISPLAY);
+    text(str, x + lw + 12, y + 14, 14.5, "#f3ecd8", "left");
+  }
+
   function banner() {
     const b = G.banner; if (!b || G.ask) return;
     const a = b.t < 8 ? b.t / 8 : b.t > 90 ? 1 - (b.t - 90) / 20 : 1;
@@ -478,8 +494,8 @@
     ctx.font = face(18, DISPLAY);
     const w = ctx.measureText(str).width + 36;
     ctx.globalAlpha = Math.max(0, a);
-    rrect(640 - w / 2, 114, w, 32, 6); ctx.fillStyle = "rgba(8,8,11,.9)"; ctx.fill();
-    text(str, 640, 131, 18, "#f3ecd8", "center", DISPLAY);
+    rrect(640 - w / 2, 148, w, 32, 6); ctx.fillStyle = "rgba(8,8,11,.9)"; ctx.fill();
+    text(str, 640, 165, 18, "#f3ecd8", "center", DISPLAY);
     ctx.globalAlpha = 1;
   }
 
@@ -491,7 +507,7 @@
     const ch = 96, ph = ch + 52;
     // keep the card off the wrestlers: bottom of the screen unless the action is down there
     let low = 0; for (const w of G.ws) low = Math.max(low, proj(w.x, w.z, -w.g).y);
-    const py = low > 566 ? 112 : H - ph - 10;
+    const py = low > 566 ? 148 : H - ph - 10;
     const px = (W - rowW) / 2 - 14, pw = rowW + 28;
     const fade = Math.min(1, A.t / 8);
     ctx.globalAlpha = fade;
@@ -584,11 +600,13 @@
       const p = PCW.PERSONAS[id], cpu = PCW.pads[id].cpu, L = PCW.keyName(id);
       ctx.fillStyle = p.accent; ctx.fillRect(x + 36, yy - 13, 6, 26);
       text(p.name, x + 54, yy, 21, "#f3ecd8", "left", DISPLAY);
+      const R2 = PCW.ROLE[p.booked];
+      text(R2.tag + ": his job is to " + R2.job + ".", x + 220, yy - 8, 14, p.booked === "face" ? "#9fd4a0" : "#ff8a8a", "left");
       text(cpu ? "CPU partner" : "YOU    move: " + L.move + "    act: " + L.act + "    choose: number keys or a click",
-        x + 220, yy, 14.5, cpu ? "#8f93a0" : "#ffd24a", "left");
+        x + 220, yy + 9, 13.5, cpu ? "#8f93a0" : "#ffd24a", "left");
     };
-    row("stove", y + 350); row("boulder", y + 386);
-    text("Press 1 or 2 to hand a wrestler to the CPU or take him back.", x + 36, y + 420, 13.5, "#8f93a0", "left");
+    row("stove", y + 346); row("boulder", y + 388);
+    text("Press 1 or 2 to hand a wrestler to the CPU or take him back. Watch the gold line: it says what the room wants.", x + 36, y + 422, 13.5, "#8f93a0", "left");
     const blink = Math.sin(frame / 16) > -0.3;
     if (blink) text("PRESS SPACE TO RING THE BELL", x + w / 2, y + 448, 21, "#ffd24a", "center", DISPLAY);
   }
@@ -622,6 +640,9 @@
       ctx.fillStyle = p.accent; ctx.fillRect(x + 36, yy - 20, 6, 78);
       text(p.name, x + 56, yy - 4, 24, "#f3ecd8", "left", DISPLAY);
       const word = n => n >= 0 ? "cheered " + n : "booed " + (-n);
+      const jb = E.jobs[id], R2 = PCW.ROLE[jb.role];
+      ctx.font = face(24, DISPLAY); const nw = ctx.measureText(p.name).width;
+      text(R2.tag + ".  Job: " + R2.job + ".  " + jb.word, x + 70 + nw, yy - 3, 14.5, jb.word === "DONE" ? "#9fd4a0" : jb.word === "HALF DONE" ? "#ffd24a" : "#ff8a8a", "left");
       text("Walked in: " + word(v.like0) + "     Walked out: " + word(v.like) + "     Reaction " + v.over0 + " to " + v.over, x + 56, yy + 24, 14, "#c9ccd6", "left");
       wrapLines(v.text, w - 110, 17).forEach((ln, i) => text(ln, x + 56, yy + 48 + i * 20, 17, "#f3ecd8", "left"));
     };

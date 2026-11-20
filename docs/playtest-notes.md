@@ -797,3 +797,21 @@ Known rough spots:
 
 One thing to change next: Jordan plays one match and answers the first open question in §14.
 
+## 2026-11-19 / prototype 3 — Jordan's first match, then roles and "what the room wants"
+
+Jordan played one match of prototype 3. His words: "There is work to do but this has potential. I just had a match where I threw him out of the ring. That felt good." And: "I think we still need more of a story element to it. Right now I'm not sure how to get 5 stars. A little back and forth seems to work. But it might be better giving people roles in the game like the face vs the heel. The heel could take more breaks outside the ring, or knock out the referee and use a weapon, etc."
+
+Agreed plan, three pieces: (1) roles, a job for each, and a line saying what the room wants; (2) the heel's everyday tricks; (3) the referee knockout and the weapon. This session built piece 1 only.
+
+What changed:
+- FACE / HEEL on the nameplates and the pre-match card, each with its job.
+- A gold "THE ROOM" line at the top of the screen that says what the crowd wants right now.
+- The results card marks each man on his job, and each job is worth up to 0.4 of a star.
+- Stars count the loudest moment as well as the average.
+
+What was checked: six CPU-vs-CPU matches (3¼ to 3¾ stars, both jobs DONE), 60 random-choice matches with no crashes, and the new line, tags and results card drawn in the browser with no console errors.
+
+What was NOT checked: whether a person following the gold line actually scores higher than one who ignores it, and how any of it feels at full speed.
+
+One thing to change next: piece 2, the heel's tricks, so the two roles stop sharing one card of choices.
+
