@@ -101,6 +101,9 @@
     if (canFly && r < 0.45) { ai.flown = true; return t > 70 && rnd() < 0.5 ? ["elbow", "cover"] : ["elbow"]; }
     if (landed && r < 0.5) q.push("pose");
     if (me.p.booked === "heel" && rnd() < 0.5) q.push("stomp");
+    // a hold on the part he has been working, once the room believes it
+    const part = PCW.worstPart(foe);
+    if (G.crowd.hurt[foe.id][part] >= 4 && t > 60 && (ai.subs || 0) < 2 && rnd() < 0.55) { ai.subs = (ai.subs || 0) + 1; return q.concat(["submit"]); }
     if (t > 55 && foe.sellT >= 150 && rnd() < 0.3) q.push("cover");
     else if (rnd() < 0.6) q.push("pickup");
     return q;
@@ -112,6 +115,28 @@
     const winner = me.id === BOOK().winner, myTurn = turnAt(t) === me.id;
     const humanFoe = !PCW.pads[foe.id].cpu;
     ai.pace = 34 + Math.floor(rnd() * 30);
+
+    /* count-along: he listens to the room. Stops when it has had its fill (now and then one too many). */
+    if (kind === "again") {
+      if (ctx.ten) return has(opts, "again");
+      const stop = ai.fill !== undefined && ai.fillFor === ctx.fill ? ai.fill : (ai.fillFor = ctx.fill, ai.fill = ctx.fill + (rnd() < 0.2 ? 1 : rnd() < 0.3 ? -1 : 0));
+      if (ctx.n >= stop) { ai.fill = undefined; return has(opts, "enough"); }
+      return has(opts, "again");
+    }
+    /* which part to work: he picks one for the night and stays on it */
+    if (kind === "limbpart") {
+      if (!ai.part) ai.part = PCW.pick(["arm", "leg", "back"]);
+      return (ai.limbs = (ai.limbs || 0) + 1) % 4 === 0 ? has(opts, "headlock") : has(opts, "p_" + ai.part);
+    }
+    /* in a hold */
+    if (kind === "submit") {
+      const loser = me.id === BOOK().loser;
+      // the booked loser can give up to a hold the room believes, late: that is a finish too
+      if (loser && ctx.believed && t > 120 && !PCW.pads[foe.id].cpu) return has(opts, "s_tap");
+      if (G.tick > ai.tryAt && myTurn && G.ctrl !== me.id && !(phase === "finish" && loser) && rnd() < 0.4) { ai.tryAt = G.tick + 240; return has(opts, "s_power"); }
+      if (G.trust >= 50 && ctx.believed && rnd() < 0.5) return has(opts, "s_fade");
+      return has(opts, "s_ropes");
+    }
 
     if (kind === "answer") {
       if (has(opts, "take")) return has(opts, "take");
@@ -168,7 +193,11 @@
     if (!winner && has(opts, "finisher") && !ai.usedFin && t > 84 && phase === "heat" && G.run[me.id] >= 3) { ai.usedFin = true; return has(opts, "finisher"); }
     // a thumb in the eye, but only behind the referee's back
     if (has(opts, "rake") && !PCW.refSees(me) && G.tick > (ai.rakeAt || 0) && rnd() < 0.6) { ai.rakeAt = G.tick + 1100; ai.last = "rake"; return has(opts, "rake"); }
-    const pool = opts.filter(o => !["finisher", "letgo", "back", "rake"].includes(o.id) && o.id !== ai.last);
+    // working a body part: mostly the heel's game, and mostly while he is on top
+    if (has(opts, "limb") && ai.last !== "limb" && rnd() < (me.p.booked === "heel" ? 0.3 : 0.12)) { ai.last = "limb"; return has(opts, "limb"); }
+    // ten punches: the crowd counts for a man it likes
+    if (has(opts, "tenpunch") && !ai.ten && G.crowd.W[me.id].like > G.crowd.W[foe.id].like && rnd() < 0.5) { ai.ten = true; ai.last = "tenpunch"; return has(opts, "tenpunch"); }
+    const pool = opts.filter(o => !["finisher", "letgo", "back", "rake", "limb", "tenpunch"].includes(o.id) && o.id !== ai.last);
     const ok = pool.filter(o => {
       if (o.id === "throwout") return ai.outs < 1 && t > 40 && rnd() < 0.5 && (ai.outs++, true);
       if (o.id === "headlock") return t > 30;

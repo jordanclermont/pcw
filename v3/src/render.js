@@ -130,7 +130,7 @@
       const k = C.shout.t / 46;
       ctx.globalAlpha = 1 - k * k;
       if (C.shout.small) text(C.shout.text, 640, 262 - k * 10, 50 + k * 8, "#d9dbe2", "center", DISPLAY, 6);
-      else text(C.shout.text, 640, 262 - k * 14, 84 + k * 18, "#fff", "center", DISPLAY, 8);
+      else text(C.shout.text, 640, 262 - k * 14, (84 + k * 18) * (C.shout.scale || 1), "#fff", "center", DISPLAY, 8);
       ctx.globalAlpha = 1;
     }
   }
@@ -503,15 +503,15 @@
   /* THE CHOICE. The action holds while a player picks. */
   function askCard() {
     const A = G.ask; if (!A) return;
-    const n = A.opts.length, gap = 8, x0 = 34, total = W - 68;
-    const cw = Math.min(210, (total - gap * (n - 1)) / n), rowW = cw * n + gap * (n - 1);
-    const ch = 96, ph = ch + 52;
+    const n = A.opts.length, gap = 8, total = W - 68, quick = A.kind === "again";
+    const rows = n > 6 ? 2 : 1, per = Math.ceil(n / rows);
+    const cw = Math.min(quick ? 250 : 210, (total - gap * (per - 1)) / per), rowW = cw * per + gap * (per - 1);
+    const ch = quick ? 58 : rows === 2 ? 66 : 96, ph = 40 + rows * ch + (rows - 1) * gap + 12;
     // keep the card off the wrestlers: bottom of the screen unless the action is down there
     let low = 0; for (const w of G.ws) low = Math.max(low, proj(w.x, w.z, -w.g).y);
-    const py = low > 566 ? 148 : H - ph - 10;
-    const px = (W - rowW) / 2 - 14, pw = rowW + 28;
-    const fade = Math.min(1, A.t / 8);
-    ctx.globalAlpha = fade;
+    const py = low > H - ph - 4 ? 148 : H - ph - 10;
+    const pw = Math.max(rowW + 28, 620), px = (W - pw) / 2;
+    ctx.globalAlpha = Math.min(1, A.t / 8);
     rrect(px, py, pw, ph, 8); ctx.fillStyle = "rgba(10,10,14,.94)"; ctx.fill();
     ctx.strokeStyle = A.who.p.accent; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = A.who.p.accent; ctx.fillRect(px, py, pw, 5);
@@ -519,10 +519,19 @@
     ctx.font = face(13, DISPLAY); const nameW = ctx.measureText(A.who.p.name).width;
     text(A.title, px + 26 + nameW, py + 24, 17, "#f3ecd8", "left", DISPLAY);
     const kn = PCW.keyName(A.who.id);
-    text("Press the number, or " + (kn.move === "WASD" ? "A / D" : "LEFT / RIGHT") + " then " + kn.act + ", or click", px + pw - 14, py + 24, 11.5, "#8f93a0", "right");
+    let hx = px + pw - 14;
+    A.backRect = null;
+    if (A.canBack) {
+      rrect(hx - 96, py + 12, 96, 22, 4); ctx.fillStyle = "rgba(40,40,52,.95)"; ctx.fill();
+      text("ESC  BACK OFF", hx - 48, py + 24, 11, "#c9ccd6", "center");
+      A.backRect = { x: hx - 96, y: py + 12, w: 96, h: 22 }; hx -= 108;
+    }
+    text(quick ? kn.act + " = again,  2 = enough" : "Press the number, or click", hx, py + 24, 11.5, "#8f93a0", "right");
     A.rects = [];
     A.opts.forEach((o, i) => {
-      const cx0 = (W - rowW) / 2 + i * (cw + gap), cy0 = py + 40, sel = i === A.sel, back = o.id === "back";
+      const r = Math.floor(i / per), c = i % per, inRow = r === rows - 1 ? n - per * (rows - 1) : per;
+      const rw = cw * inRow + gap * (inRow - 1);
+      const cx0 = (W - rw) / 2 + c * (cw + gap), cy0 = py + 40 + r * (ch + gap), sel = i === A.sel;
       A.rects.push({ x: cx0, y: cy0, w: cw, h: ch });
       rrect(cx0, cy0, cw, ch, 6);
       ctx.fillStyle = sel ? "rgba(255,210,74,.14)" : "rgba(28,28,36,.95)"; ctx.fill();
@@ -530,10 +539,10 @@
       rrect(cx0 + 8, cy0 + 8, 22, 22, 4); ctx.fillStyle = "#ffd24a"; ctx.fill();
       text(String(i + 1), cx0 + 19, cy0 + 20, 14, "#141006", "center", DISPLAY);
       const lines = wrapLines(o.label, cw - 46, 15, DISPLAY);
-      lines.slice(0, 2).forEach((ln, k) => text(ln, cx0 + 38, cy0 + (lines.length > 1 ? 14 : 20) + k * 16, 15, back ? "#a9adb8" : "#f3ecd8", "left", DISPLAY));
-      const hl = wrapLines(o.hint || "", cw - 18, 11.5);
-      hl.slice(0, 3).forEach((ln, k) => text(ln, cx0 + 9, cy0 + 50 + k * 14, 11.5, "#a9adb8", "left"));
-      if (o.stale) { text("THEY HAVE SEEN THIS", cx0 + cw - 8, cy0 + ch - 9, 9.5, "#ff8a8a", "right"); }
+      lines.slice(0, 2).forEach((ln, k) => text(ln, cx0 + 38, cy0 + (lines.length > 1 ? 13 : 20) + k * 15, 15, "#f3ecd8", "left", DISPLAY));
+      const hl = wrapLines(o.hint || "", cw - 18, 11.5), top = lines.length > 1 ? 46 : rows === 2 ? 38 : 42;
+      hl.slice(0, rows === 2 || quick ? 2 : 3).forEach((ln, k) => text(ln, cx0 + 9, cy0 + top + k * 13.5, 11.5, "#a9adb8", "left"));
+      if (o.stale) text("SEEN A LOT", cx0 + cw - 8, cy0 + 11, 9.5, "#ff8a8a", "right");
     });
     ctx.globalAlpha = 1;
   }

@@ -514,6 +514,252 @@
     return s;
   };
 
+  /* ============================================================
+     COUNT-ALONG CHOPS. One chop at a time: the man throwing them
+     decides after each whether the room wants another.
+     ============================================================ */
+  M.chop1 = function (a, b, o, n) {
+    const s = new Seq(), dir = a.facing, corner = b.st === "corner", cl = lim(b);
+    const push = corner ? 0 : (o.big ? 9 : 5);
+    s.k(a, 7, { pose: "windup" }).k(a, 11, { pose: "chop", ease: "snap" }).k(a, 24, { pose: "ready" });
+    s.k(b, 11, {}).k(b, 15, { x: cl(b.x + dir * push), pose: "sell", ease: "snap" }).k(b, 30, { pose: "hit" });
+    s.ev(11, () => hit(b.x - dir * 10, b.z, 150 * b.p.scale - b.g, 1));
+    return s;
+  };
+  M.chopEnd = function (a, b, o) {
+    const s = new Seq(), rest = b.st === "corner" ? "cornered" : "ready";
+    if (o.big) s.k(b, 18, { pose: "kneel" }).k(b, 60, { pose: "kneel" }).k(b, 80, { pose: rest });
+    else s.k(b, 14, { pose: "stagger" }).k(b, 40, { pose: rest });
+    s.k(a, 14, { pose: "ready" });
+    return s;
+  };
+
+  /* TEN PUNCHES. Up on the second rope over a man in the corner; the room counts. */
+  M.mount = function (a, b) {
+    const s = new Seq(), c = b.corner;
+    s.k(a, 0, { face: c.side }).k(a, 22, { x: c.x - c.side * 26, z: c.z, y: 66, pose: "punchup" });
+    s.k(b, 22, { pose: "cornered" });
+    return s;
+  };
+  M.punch1 = function (a, b) {
+    const s = new Seq(), duck = Object.assign({}, POSE.cornered, { head: 34, lean: -4 });
+    s.k(a, 6, { pose: "punchup" }).k(a, 10, { pose: "punchdn", ease: "snap" }).k(a, 22, { pose: "punchup" });
+    s.k(b, 10, {}).k(b, 13, { pose: duck, ease: "snap" }).k(b, 22, { pose: "cornered" });
+    s.ev(10, () => hit(b.x - b.corner.side * 6, b.z, 180 * b.p.scale, 0));
+    return s;
+  };
+  M.dismount = function (a, b, o) {
+    const s = new Seq(), c = b.corner, side = c.side;
+    if (o.shoved) {
+      // he shoves him off, and the man on the ropes lands flat on his back
+      s.k(b, 8, { pose: "reach", ease: "snap" }).k(b, 30, { pose: "ready" });
+      s.k(a, 8, {}).k(a, 30, { x: cx(c.x - side * 170), y: 0, rot: 90, arc: 40, pose: "air", ease: "lin" }).k(a, 36, { pose: "down" });
+      s.ev(8, () => { PCW.see({ type: "comeback", actor: b.id, target: a.id, size: 2, q: 1 }); PCW.landed(b); PCW.say("pbp", PCW.LINES.comeback, 1); });
+      s.ev(30, () => { hit(a.x, a.z, 16, 2); down(a, 120, b); b.st = "stand"; b.corner = null; });
+      return s;
+    }
+    s.k(a, 20, { x: cx(c.x - side * 90), y: 0, pose: o.all ? a.p.tauntKind : "ready" }).k(a, o.all ? 60 : 30, {}).k(a, o.all ? 74 : 40, { pose: "ready" });
+    s.k(b, 20, { pose: "cornered" });
+    if (o.all) { s.k(b, 60, { x: b.x - side * 22, pose: "sitdown", ease: "in" }); s.ev(60, () => down(b, 130 * mul(o), a, true)); }
+    return s;
+  };
+
+  /* ============================================================
+     POWER MOVES
+     ============================================================ */
+  M.suplex = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lx = cx(a.x - dir * 100);
+    s.k(a, 12, { pose: "hlA" }).k(a, 36, { pose: "hoist" }).k(a, 52, { pose: "hoist" })
+      .k(a, 64, { x: cx(a.x - dir * 16), rot: 90, pose: "down", ease: "in" }).k(a, 92, { rot: 0, pose: "kneel" }).k(a, 110, { pose: "ready" });
+    s.k(b, 12, { x: a.x + dir * 42, pose: "hlB" }).k(b, 36, { x: a.x + dir * 8, y: 150, rot: -180, pose: "carried" }).k(b, 52, { y: 150 })
+      .k(b, 64, { x: lx, y: 0, rot: -270, pose: "down", ease: "in" });
+    if (o.big) s.k(b, 78, { arc: 30 });
+    s.ev(44, () => G().crowd.flash(8));
+    s.ev(64, () => { b.rot = 90; hit(lx, b.z, 20, 3); down(b, 170 * mul(o), a); seen("suplex", a, b, 2.4, o); PCW.say("pbp", PCW.LINES.suplex, 1); });
+    return s;
+  };
+  M.backbreaker = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lx = cx(a.x + dir * 92);
+    s.k(a, 12, { pose: "scoop" }).k(a, 30, { pose: "hoist" }).k(a, 38, { pose: "kneel", ease: "snap" }).k(a, 62, { pose: "kneel" }).k(a, 92, { pose: "ready" });
+    s.k(b, 12, { x: a.x + dir * 30, pose: "hit" }).k(b, 30, { x: a.x + dir * 12, y: 96, rot: 90, pose: "carried" })
+      .k(b, 38, { y: 38, pose: "snap", ease: "snap" }).k(b, 60, { y: 38 }).k(b, 76, { x: lx, y: 0, pose: "down" });
+    s.ev(38, () => { hit(b.x, b.z, 60, 3); seen("backbreaker", a, b, 2.2, o); PCW.say("pbp", PCW.LINES.backbreaker, 1); });
+    s.ev(76, () => down(b, 150 * mul(o), a));
+    return s;
+  };
+  M.spinebuster = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, sd = cx(a.x + dir * 130) === a.x + dir * 130 ? dir : -dir, lx = a.x + sd * 124;
+    s.k(a, 10, { pose: "scoop" }).k(a, 28, { pose: "hoist" }).k(a, 40, { x: a.x + sd * 20, pose: "hoist" })
+      .k(a, 50, { x: a.x + sd * 54, pose: "slamdown", ease: "in" }).k(a, 84, { pose: "kneel" }).k(a, 100, { pose: "ready" });
+    s.k(b, 10, { x: a.x + dir * 30, pose: "hit" }).k(b, 28, { x: a.x + sd * 30, y: 84, rot: 30, pose: "carried" }).k(b, 40, { x: a.x + sd * 50, y: 90 })
+      .k(b, 50, { x: lx, y: 0, rot: 90, pose: "down", ease: "in" });
+    s.ev(50, () => { hit(lx, b.z, 20, 4); down(b, 190 * mul(o), a); seen("spinebuster", a, b, 2.8, o); PCW.say("pbp", PCW.LINES.spinebuster, 1); });
+    return s;
+  };
+
+  /* ============================================================
+     QUICK MOVES
+     ============================================================ */
+  M.armdrag = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lx = cx(a.x - dir * 96);
+    s.k(a, 8, { pose: "tie" }).k(a, 18, { pose: "throwing", ease: "snap" }).k(a, 46, { pose: "ready" }).k(a, 47, { face: -dir });
+    s.k(b, 8, { pose: "reach" }).k(b, 34, { x: lx, rot: -270, arc: o.big ? 130 : 104, pose: "air", ease: "lin" }).k(b, 40, { pose: "down" });
+    s.ev(34, () => { b.rot = 90; hit(lx, b.z, 16, 1); down(b, 85 * mul(o), a); seen("armdrag", a, b, 1.6, o); PCW.say("pbp", PCW.LINES.armdrag, 1); });
+    return s;
+  };
+  M.dropkick = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lx = cx(b.x + dir * 96);
+    s.k(a, 8, { x: a.x - dir * 14, pose: "windup" }).k(a, 20, { x: a.x + dir * 18, y: 78, rot: 80, pose: "highkick", ease: "out" })
+      .k(a, 36, { x: a.x, y: 0, rot: 90, pose: "down", ease: "in" }).k(a, 62, { rot: 0, pose: "kneel" }).k(a, 78, { pose: "ready" });
+    s.k(b, 20, {}).k(b, 24, { pose: "snap", ease: "snap" }).k(b, 46, { x: lx, rot: 90, arc: o.big ? 60 : 40, pose: "air", ease: "lin" }).k(b, 52, { pose: "down" });
+    s.ev(20, () => { hit(b.x - dir * 12, b.z, 150 * b.p.scale, 2); seen("dropkick", a, b, 1.9, o); PCW.say("pbp", PCW.LINES.dropkick, 1); });
+    s.ev(46, () => down(b, 110 * mul(o), a));
+    return s;
+  };
+  M.forearm = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lx = lim(b)(b.x + dir * 60);
+    s.k(a, 10, { pose: "windup" }).k(a, 15, { x: lim(a)(a.x + dir * 12), pose: "punch", ease: "snap" }).k(a, 40, { pose: "ready" });
+    s.k(b, 15, {}).k(b, 19, { pose: "snap", ease: "snap" }).k(b, 42, { x: lx, rot: 90, arc: 26, pose: "air", ease: "lin" }).k(b, 48, { pose: "down" });
+    s.ev(15, () => { hit(b.x - dir * 10, b.z, 165 * b.p.scale - b.g, 2); seen("forearm", a, b, 1.7, o); PCW.say("pbp", PCW.LINES.forearm, 1); });
+    s.ev(42, () => down(b, 95 * mul(o), a));
+    return s;
+  };
+
+  /* ============================================================
+     OFF THE ROPES: more things for him to run into
+     ============================================================ */
+  function ropeRun(a, b) {
+    const dir = a.facing, room = dir > 0 ? B.XHI - b.x : b.x - B.XLO, wd = room > 220 ? dir : -dir;
+    const rope = wd > 0 ? B.XHI : B.XLO, meet = a.x + wd * 74;
+    const t1 = 16 + Math.ceil(Math.abs(rope - b.x) / RUN_V), t2 = t1 + Math.ceil(Math.abs(rope - meet) / RUN_V);
+    const s = new Seq();
+    s.k(a, 0, { face: wd }).k(a, 12, { pose: "whip", ease: "snap" }).k(a, 34, { pose: "ready" }).k(a, t2 - 14, { pose: "ready" });
+    s.k(b, 10, { pose: "hit" }).k(b, 16, { face: wd }).k(b, t1, { x: rope, pose: "run", ease: "lin" }).k(b, t1 + 1, { face: -wd })
+      .k(b, t2, { x: meet, pose: "run", ease: "lin" });
+    s.ev(t1, () => { G().ropeShake = 16; G().ropeSide = wd > 0 ? "R" : "L"; });
+    return { s, wd, t2, meet };
+  }
+  M.backdrop = function (a, b, o) {
+    const { s, wd, t2, meet } = ropeRun(a, b), lx = cx(a.x - wd * 150);
+    s.k(a, t2 - 4, { pose: "doubled" }).k(a, t2 + 8, { pose: "hoist", ease: "snap" }).k(a, t2 + 40, { pose: "ready" }).k(a, t2 + 41, { face: -wd });
+    s.k(b, t2 + 32, { x: lx, rot: -270, arc: o.big ? 200 : 168, pose: "air", ease: "lin" }).k(b, t2 + 38, { pose: "down" });
+    s.ev(t2 + 4, () => G().crowd.flash(8));
+    s.ev(t2 + 32, () => { b.rot = 90; hit(lx, b.z, 16, 3); down(b, 140 * mul(o), a); seen("backdrop", a, b, 2.4, o); PCW.say("pbp", PCW.LINES.backdrop, 1); });
+    return s;
+  };
+  M.bigboot = function (a, b, o) {
+    const { s, wd, t2, meet } = ropeRun(a, b);
+    s.k(a, t2 - 6, { pose: "windup" }).k(a, t2, { pose: "highkick", ease: "snap" }).k(a, t2 + 20, { pose: "highkick" }).k(a, t2 + 40, { pose: "ready" });
+    s.k(b, t2 + 4, { pose: "snap", ease: "snap" }).k(b, t2 + 26, { x: cx(meet + wd * 60), rot: 90, arc: o.big ? 60 : 36, pose: "air", ease: "lin" }).k(b, t2 + 32, { pose: "down" });
+    s.ev(t2, () => { hit(a.x + wd * 50, a.z, 170 * a.p.scale, 3); seen("bigboot", a, b, 2.2, o); PCW.say("pbp", PCW.LINES.bigboot, 1); });
+    s.ev(t2 + 26, () => { hit(b.x, b.z, 16, 1); down(b, 130 * mul(o), a); });
+    return s;
+  };
+
+  /* corner to corner: out of this one and across into the other */
+  M.across = function (a, b, o) {
+    const s = new Seq(), c = b.corner, c2 = { x: c.side > 0 ? B.XLO : B.XHI, z: c.z, side: -c.side };
+    const t1 = 22 + Math.ceil(Math.abs(c2.x - c.x) / RUN_V);
+    s.k(a, 10, { pose: "reach" }).k(a, 22, { pose: "whip", ease: "snap" }).k(a, 23, { face: -c.side }).k(a, 44, { pose: "ready" });
+    s.k(b, 12, { pose: "hit" }).k(b, 22, { face: -c.side }).k(b, t1, { x: c2.x, pose: "run", ease: "lin" }).k(b, t1 + 1, { face: c.side })
+      .k(b, t1 + 7, { pose: "snap", ease: "snap" }).k(b, t1 + 30, { pose: "cornered" });
+    s.ev(t1, () => {
+      hit(c2.x, c2.z, 130, 3); G().ropeShake = 18; G().ropeSide = c2.side > 0 ? "R" : "L";
+      b.corner = c2; b.cornerT = o.big ? 600 : 460;
+      seen("across", a, b, 2, o); PCW.say("pbp", PCW.LINES.corner, 1);
+    });
+    return s;
+  };
+
+  /* on the floor: run him head-first into the ring post */
+  M.post = function (a, b, o) {
+    const s = new Seq(), px = Math.abs(b.x - R.LO) < Math.abs(b.x - R.HI) ? R.LO - 6 : R.HI + 6, side = Math.sign(px - b.x) || 1;
+    const t1 = 20 + Math.ceil(Math.abs(px - side * 30 - b.x) / RUN_V);
+    s.k(a, 0, { face: side }).k(a, 10, { pose: "reach" }).k(a, 20, { pose: "whip", ease: "snap" }).k(a, 44, { pose: "ready" });
+    s.k(b, 10, { pose: "hit" }).k(b, 20, { face: side }).k(b, t1, { x: ox(px - side * 30), z: -70, pose: "run", ease: "lin" })
+      .k(b, t1 + 6, { pose: "snap", ease: "snap" }).k(b, t1 + 40, { x: ox(px - side * 80), z: -90, rot: 90, arc: 20, pose: "down" });
+    s.ev(t1, () => { hit(px, -40, 110 - R.RH, 4); G().crowd.flash(10); seen("post", a, b, 2.8, o); PCW.say("pbp", PCW.LINES.post, 1); });
+    s.ev(t1 + 40, () => down(b, 190 * mul(o), a));
+    return s;
+  };
+
+  /* ============================================================
+     WORKING A BODY PART. Small moves that hurt one place.
+     ============================================================ */
+  M.limb = function (a, b, o, part) {
+    const s = new Seq(), dir = a.facing;
+    if (part === "leg") {
+      s.k(a, 10, { pose: "windup" }).k(a, 15, { pose: "lowkick", ease: "snap" }).k(a, 30, { pose: "stompup" }).k(a, 36, { pose: "stompdn", ease: "snap" }).k(a, 60, { pose: "ready" });
+      s.k(b, 15, {}).k(b, 20, { pose: "kneel", ease: "snap" }).k(b, 36, {}).k(b, 40, { pose: "beg", ease: "snap" }).k(b, o.big ? 110 : 76, { pose: "kneel" }).k(b, o.big ? 130 : 96, { pose: "ready" });
+      s.ev(15, () => hit(b.x - dir * 10, b.z, 50 - b.g, 1));
+      s.ev(36, () => { hit(b.x - dir * 10, b.z, 30 - b.g, 2); seen("limb_leg", a, b, 1.3, o); PCW.say("pbp", PCW.LINES.limb_leg, 1); });
+    } else if (part === "arm") {
+      const held = Object.assign({}, POSE.doubled, { afs: 150, afe: 0 });
+      s.k(a, 12, { pose: "tie" }).k(a, 22, { pose: "throwing", ease: "snap" }).k(a, 34, { pose: "hoist" }).k(a, 40, { pose: "drive", ease: "snap" }).k(a, 66, { pose: "ready" });
+      s.k(b, 22, { pose: held, ease: "snap" }).k(b, 40, {}).k(b, 44, { pose: "clubbed", ease: "snap" }).k(b, o.big ? 110 : 76, { pose: "stagger" }).k(b, o.big ? 130 : 96, { pose: "ready" });
+      s.ev(22, () => hit(b.x - dir * 20, b.z, 140 - b.g, 0));
+      s.ev(40, () => { hit(b.x - dir * 20, b.z, 120 - b.g, 2); seen("limb_arm", a, b, 1.3, o); PCW.say("pbp", PCW.LINES.limb_arm, 1); });
+    } else {
+      s.k(a, 12, { pose: "kick", ease: "snap" }).k(a, 28, { pose: "hoist" }).k(a, 34, { pose: "drive", ease: "snap" }).k(a, 60, { pose: "ready" });
+      s.k(b, 12, {}).k(b, 17, { pose: "doubled", ease: "snap" }).k(b, 34, {}).k(b, 38, { pose: "clubbed", ease: "snap" }).k(b, o.big ? 110 : 76, { pose: "stagger" }).k(b, o.big ? 130 : 96, { pose: "ready" });
+      s.ev(12, () => hit(b.x, b.z, 100 - b.g, 1));
+      s.ev(34, () => { hit(b.x, b.z, 110 - b.g, 2); seen("limb_back", a, b, 1.3, o); PCW.say("pbp", PCW.LINES.limb_back, 1); });
+    }
+    return s;
+  };
+
+  /* ============================================================
+     SUBMISSION HOLDS. Put on, wrenched beat by beat, and broken.
+     ============================================================ */
+  PCW.HOLDS = {
+    arm: { name: "AN ARM BAR", a: "subA", aw: "subAw", b: "armup", bw: "armupw" },
+    leg: { name: "A LEG LOCK", a: "subA", aw: "subAw", b: "legup", bw: "legupw" },
+    back: { name: "A CAMEL CLUTCH", a: "sit", aw: "sit", b: "clutched", bw: "clutchedw" }
+  };
+  /* where the man applying it sits, relative to the man on the mat */
+  function holdSpot(b, part) {
+    if (part === "back") return { dx: 0, y: 24 };
+    if (part === "leg") return { dx: b.facing * 78, y: 0 };
+    return { dx: -b.facing * 30, y: 0 };
+  }
+  M.subApply = function (a, b, part) {
+    const s = new Seq(), H = PCW.HOLDS[part], sp = holdSpot(b, part);
+    const flip = part === "back";
+    s.k(b, 16, { rot: flip ? -90 : 90, pose: flip ? "fly" : "down" }).k(b, 34, { pose: H.b });
+    s.k(a, 0, { face: part === "leg" ? -b.facing : b.facing }).k(a, 16, { x: cx(b.x + sp.dx), z: b.z, pose: "kneel" }).k(a, 34, { y: sp.y, pose: H.a });
+    s.ev(34, () => { b.st = "down"; b.downT = 9999; b.seated = false; b.downRot = flip ? -90 : 90; });
+    return s;
+  };
+  M.subBeat = function (a, b, part, mv) {
+    const s = new Seq(), H = PCW.HOLDS[part];
+    const bx = cx(b.x + mv.x), bz = cz(b.z + mv.z), dx = bx - b.x, dz = bz - b.z;
+    s.k(a, 10, { pose: H.aw, ease: "snap" }).k(a, 30, { pose: H.a }).k(a, 56, { x: a.x + dx, z: a.z + dz, pose: H.a });
+    s.k(b, 10, { pose: H.bw, ease: "snap" }).k(b, 30, { pose: mv.x || mv.z ? "crawl" : H.b }).k(b, 56, { x: bx, z: bz, pose: H.b });
+    s.ev(10, () => { G().shake = Math.max(G().shake, 3); });
+    return s;
+  };
+  M.subBreak = function (a, b, part, o) {
+    const s = new Seq(), back = cx(a.x + (a.x >= b.x ? 90 : -90));
+    if (o.reversed) {
+      // he powers out and throws the other man off
+      s.k(b, 14, { pose: "kickout", ease: "snap" }).k(b, 40, { rot: 0, pose: "kneel" }).k(b, 58, { pose: "ready" });
+      s.k(a, 14, {}).k(a, 40, { x: back, y: 0, rot: 90, arc: 50, pose: "air", ease: "lin" }).k(a, 46, { pose: "down" });
+      s.ev(14, () => { PCW.see({ type: "comeback", actor: b.id, target: a.id, size: 2, q: 1 }); PCW.landed(b); PCW.say("pbp", PCW.LINES.comeback, 1); });
+      s.ev(40, () => { hit(a.x, a.z, 16, 2); down(a, 110, b); b.st = "stand"; b.downT = 0; b.downRot = 90; });
+      return s;
+    }
+    s.k(a, 20, { x: back, y: 0, pose: "kneel" }).k(a, 40, { pose: "ready" });
+    s.k(b, 24, { rot: 90, pose: "down" });
+    s.ev(24, () => { b.rot = 90; down(b, o.big ? 170 : 100, a); });
+    return s;
+  };
+  M.subTap = function (a, b, part) {
+    const s = new Seq(), H = PCW.HOLDS[part], tap = Object.assign({}, POSE[H.bw], { afs: 100, afe: 60 });
+    for (let i = 0; i < 4; i++) s.k(b, 8 + i * 12, { pose: i % 2 ? H.bw : tap, ease: "snap" });
+    s.k(a, 30, { pose: H.aw }).k(a, 60, { pose: H.aw });
+    return s;
+  };
+
   /* getting up by himself (played per man while the other is free to move) */
   PCW.getupKeys = function (w) {
     if (w.seated) return [{ t: 30, pose: "kneel", rot: 0 }, { t: 46, pose: "ready" }];

@@ -73,7 +73,12 @@ Roles: FACE's job is to get cheered, HEEL's to get booed, each marked on the
 results card; a "THE ROOM" line says what the crowd wants now. The heel has
 his own tricks (thumb in the eye, bail out, a break outside, feet on the
 ropes) and the referee only calls what he is close enough to see (3 warnings =
-DQ). Not built: referee knockout, weapon, a face who cheats.
+DQ). Chops and corner punches are count-alongs (one at a time, again or
+enough, the room shouts along). The card offers KINDS of move (quick, power,
+off the ropes) and the move is picked for the moment. Body parts can be
+worked; the crowd keeps the tally and only believes a submission hold on a
+part it has seen hurt. Not built: referee knockout, weapon, a face who
+cheats, match planning, other wrestler types.
 §14 describes it and lists the open questions. Start here for new work unless
 Jordan says otherwise; `v2/` and build 0.15 are kept as they are.
 

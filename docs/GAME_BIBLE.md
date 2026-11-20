@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.17 revisions (2026-11-19): §14 gained count-along chops and ten punches, kinds of move picked for the moment (with eight new moves), body parts and submission holds with a new SUBMISSION ending, corner-to-corner and the ring post, and a list of what is parked.*
+
 *v1.16 revisions (2026-11-19): §14 gained the heel's tricks (thumb in the eye, bail out, a break outside, feet on the ropes), a referee who only calls what he is close enough to see, warnings, and the disqualification ending.*
 
 *v1.15 revisions (2026-11-19): §14 gained roles and jobs (face: get cheered; heel: get booed), a line on screen saying what the room wants right now, and a star rating that five stars can actually reach.*
@@ -491,6 +493,30 @@ Of Jordan's two options for the contact mode, this is the RPG-style one. Quick t
 - The CPU heel uses all four: the eye only behind the referee's back, a walk outside once or twice when the hero gets rolling, and feet on the ropes for a near-fall. He never gets himself disqualified.
 - The face has no cheating choices yet. Jordan's idea that the room turns on a face who cheats is not built.
 - Still to build (Jordan's list): the referee knockout and the weapon.
+
+**More actions (added 2026-11-19).** Jordan after playing the heel build: "this is shaping up now. Still a rough demo but the ideas are great. We just need more actions. Throwing them into the corners, off the ropes, and out of the ring are the most fun actions. The chops and the body slams are okay, but I think the chops need more interactivity since the crowd likes to count along with them. We also need submissions. And instead of just a body slam we should give categories of moves that hit randomly depending on context."
+
+- **Count-along chops.** Chops go one at a time. After each, the man throwing them chooses AGAIN (Space) or THAT'S ENOUGH. The room shouts WOO, louder each time, until it has had its fill; after that the shout shrinks to "woo." and it costs attention. The fill is five the first time and fewer once they have seen it. There is no meter: you stop when you hear it turn. For a man the room does not like, they wince instead ("OHH!") and it is worth half.
+- **Ten punches.** In the corner, up on the second rope; the room counts each one out loud. All ten is a big reaction. Stopping short lets them down. The man in the corner can try to shove him off; the usual "let him / cut him off" choice decides whether he gets all ten in.
+- **Kinds of move, not named moves.** The card offers QUICK MOVE, POWER MOVE and OFF THE ROPES. Which move he actually hits is picked for the moment: he reaches for what the room has not seen, smaller things early, bigger things late, and not the same move twice running.
+  - Quick: arm drag, dropkick, forearm smash.
+  - Power: body slam, suplex, backbreaker, and a spinebuster that only shows up late.
+  - Off the ropes: clothesline, back body drop, big boot.
+- **Body parts.** WORK A BODY PART asks which: the arm, the leg, the back (or a plain headlock). Each is a short move that hurts that place. Some bigger moves hurt a place too (slams and suplexes the back, arm drags the arm). The tally is kept by the CROWD, because it is what they have seen.
+- **Submission holds.** When he is down: an arm bar, a leg lock or a camel clutch, on whichever part has been worked most. The man in the hold chooses:
+  - Fight for the ropes: he crawls, and the nearer the ropes the sooner the break. Position matters again.
+  - Fade: he goes limp, the referee lifts his arm once, twice, and the room gets very loud before he makes the ropes.
+  - Power out: the usual "let him / cut him off" choice.
+  - Give up: the match ends.
+  The room only believes a hold on a part it has seen hurt (worked to 4 or more). A believed hold builds noise every beat; one they do not believe is a rest hold and costs attention. A booked winner who makes the other man give up to a believed hold gets a new ending, SUBMISSION, which counts as a good finish. The CPU as the booked loser will give up to it late in the match. This makes "the technician works a body part to a submission" playable with the current two men.
+- **More corner, ropes and floor.** Corner to corner (whip him from one set of buckles into the other). On the floor: head-first into the ring post.
+- **The choice card** now runs to two rows when there are more than six choices. Esc, or the BACK OFF button, backs out.
+- **Stars** were rebalanced again: the room is read on one scale and the flat bonuses are smaller. CPU-vs-CPU matches score 3¼ to 4¼.
+
+**Parked, with Jordan's agreement in principle ("eventually").**
+- Planning the match before the bell, with gaps left for improvising. The old build has a version (§4, §8).
+- Classic stories: giant against cruiserweight; the technician who works a part to a submission (now playable); the heel's dirty win (needs only a different booking). The first needs new wrestler types, which runs into "one match until it sings, no roster" (§12). Jordan to rule when the time comes.
+- The referee knockout and the weapon.
 
 **Open questions for Jordan.**
 1. Is choosing, then watching, the game? Or does watching feel too passive?

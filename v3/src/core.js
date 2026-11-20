@@ -32,7 +32,7 @@
   PCW.OUT_COUNT = 115;             // frames between counts when a man is outside
 
   PCW.TRUST = { SOLD: 1, BIG: 2, NO_SELL: -8, GREEDY: -5, MOVED: -4, FINISH_KICKOUT: -30 };
-  PCW.RATING = { HEAT_W: 0.35, PEAK_W: 0.25, PER_STAR: 24, CLEAN: 0.25, TRUST: 0.25, FLAT: -0.5, COUNTOUT: -0.75, DQ: -0.75, JOB: 0.4 };
+  PCW.RATING = { HEAT_W: 0.35, PEAK_W: 0.25, FLOOR: 25, PER_STAR: 15, CLEAN: 0.15, TRUST: 0.1, FLAT: -0.5, COUNTOUT: -0.75, DQ: -0.75, JOB: 0.25 };
   PCW.REF_SEES = 250;              // the referee only calls what happens this close to him
   PCW.WARNINGS = 3;                // this many and it is a disqualification
 

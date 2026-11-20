@@ -76,6 +76,7 @@
         const p = PCW.PERSONAS[id];
         this.W[id] = { like: p.startLike, over: p.startOver, taken: 0, like0: p.startLike, over0: p.startOver, lowLike: p.startLike, highLike: p.startLike };
       }
+      this.hurt = { stove: { arm: 0, leg: 0, back: 0 }, boulder: { arm: 0, leg: 0, back: 0 } };   // what they have SEEN worked on
       this.mem = {}; this.pulses = []; this.floaters = []; this.flashes = [];
       this.chant = null; this.shout = null; this.chantCool = 300;
       this.sumHeat = 0; this.sumAttn = 0; this.n = 0; this.peak = 20;
@@ -91,6 +92,57 @@
       const sec = this.t / 60;
       this.quiet = 0;
       let tone = "murmur", mag = 0;
+      if (ev.part && this.hurt[ev.target]) this.hurt[ev.target][ev.part] += ev.hurt || 1;
+
+      if (ev.type === "woo") {
+        // one chop. If the room is with it they shout along; past that it wears thin.
+        const liked = A.like >= T.like;
+        if (ev.loud) {
+          this.heat += (1 + 0.45 * ev.n) * (0.5 + A.over / 100) * (liked ? 1 : 0.5);
+          A.over += 0.3; this.attn += 0.6;
+          this.shout = { text: liked ? "WOO!" : "OHH!", t: 0, scale: 0.55 + 0.09 * ev.n };
+          this.pulse(liked ? "pop" : "boo", ev.actor, 1 + ev.n * 0.4);
+        } else {
+          this.heat -= 1.5; this.attn -= 2;
+          this.shout = { text: "woo.", t: 0, small: true };
+          this.words("seen", 2);
+        }
+        return this.finish("murmur", 0);
+      }
+      if (ev.type === "count10") {
+        // the ten punches in the corner: they count along with a man they like
+        const liked = A.like >= T.like;
+        this.heat += (0.6 + 0.22 * ev.n) * (0.5 + A.over / 100) * (liked ? 1 : 0.45);
+        this.attn += 0.5;
+        this.shout = liked ? { text: ev.n + "!", t: 0, scale: 0.5 + 0.06 * ev.n } : { text: "BOO!", t: 0, small: true };
+        this.pulse(liked ? "count" : "boo", ev.actor, 1 + ev.n * 0.3);
+        return this.finish("murmur", 0);
+      }
+      if (ev.type === "short10") {
+        // he climbed up there and stopped short of ten
+        this.attn -= 3; this.heat -= 2; this.words("endit", 3);
+        return this.finish("murmur", 0);
+      }
+      if (ev.type === "subbeat") {
+        // a hold. If they have seen that body part worked, they believe it could end.
+        const rally = T.like > A.like, b = ev.believed;
+        this.heat += (b ? 3.4 : 1.2) * (0.5 + (rally ? T.over : A.over) / 100) * (ev.fade ? 1.3 : 1);
+        this.attn += b ? 2 : -1.2;
+        T.taken += 1; if (rally) T.like += 0.5;
+        if (ev.count) this.shout = { text: ["", "ONE!", "TWO!"][ev.count], t: 0, scale: 0.8 };
+        this.pulse(rally ? "pop" : "boo", rally ? ev.target : ev.actor, b ? 3 : 1.2);
+        if (rally) this.words("pop", b ? 4 : 1);
+        return this.finish("murmur", 0);
+      }
+      if (ev.type === "ropebreak") {
+        // actor = the man who got out of the hold
+        const liked = A.like >= T.like;
+        mag = (ev.big ? 5 : 3.4) * (0.5 + A.over / 100);
+        this.heat += mag * (liked ? 2.6 : 1.2); this.attn += 3; if (liked) A.like += 1.5;
+        this.shout = null;
+        this.pulse(liked ? "pop" : "boo", ev.actor, mag);
+        return this.finish(liked ? "pop" : "boo", mag);
+      }
 
       if (ev.type === "count") {
         this.heat += [0, 3, 6, 10][ev.n] * (0.6 + this.attn / 150);
@@ -357,7 +409,10 @@
       if (this.attn < 35) return "They are sitting on their hands. Change something.";
       let worn = 0; for (const k in this.mem) worn = Math.max(worn, this.mem[k]);
       if (worn >= 2.4) return "They have seen that move too often. Show them something else.";
+      const worst = id => { const h = this.hurt[id]; let k = "back"; for (const p in h) if (h[p] > h[k]) k = p; return h[k] >= 4 ? k : null; };
+      if (worst(fav) && F.taken >= 3) return "They are scared for " + name(fav) + "'s " + worst(fav) + ". A hold on it would have them screaming.";
       if (sec > 130 && O.taken >= 5) return "They are ready. Give them the finish.";
+      if (worst(oth) && sec > 60) return "They believe " + name(oth) + "'s " + worst(oth) + " is hurt. A hold on it means something now.";
       if (O.taken >= 10 && F.taken < 4 && sec < 120) return "They are happy, but nothing is at stake. " + name(fav) + " needs to be in trouble.";
       if (F.taken >= 3) return "They are worried about " + name(fav) + ". Let it build.";
       return "They are behind " + name(fav) + ". Let him look good.";

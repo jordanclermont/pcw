@@ -829,3 +829,25 @@ Noticed: CPU-vs-CPU matches now score a little higher (up to 4¼), because the c
 
 One thing to change next: piece 3, the referee knockout and the weapon. Or first, Jordan plays a match as The Boulder.
 
+## 2026-11-19 / prototype 3 — more actions: count-alongs, move kinds, submissions
+
+Jordan played the heel build: "I played it this is shaping up now. Still a rough demo but the ideas are great. We just need more actions. Throwing them into the corners, off the ropes, and out of the ring are the most fun actions. The chops and the body slams are okay, but I think the chops need more interactivity since the crowd likes to count along with them. We also need submissions. And instead of just a body slam we should give categories of moves that hit randomly depending on context, where they are in the match, etc." He also sketched where it goes eventually: planning the match with room to improvise, and classic stories (giant vs cruiserweight, technician works a body part to a submission, heel gets a dirty pin). Then: "yes start with 1, 2, 3, 4 go baby go! Lets take this game as far as we can in its current iteration."
+
+What was built (bible §14 has the detail):
+1. Chops one at a time with the room shouting along, and ten punches in the corner with the room counting.
+2. Kinds of move (quick, power, off the ropes) with the actual move picked for the moment. Eight new moves.
+3. Body parts and three submission holds; a new SUBMISSION ending.
+4. Corner to corner, and the ring post on the floor.
+
+What was checked: twelve CPU-vs-CPU matches all finish as booked (3¼ to 4¼ stars) and use the new moves, limb work and holds. Sixty random-choice matches: no crashes; endings included submissions, disqualifications and flat finishes. In the browser by key presses: the two-row card, count-along chops with the WOO, ten punches with the count on screen, working toward and applying a camel clutch, and the hold running through to a rope break. No console errors.
+
+What was NOT checked: feel at full speed; a person making the CPU give up to a hold in a real match; the arm bar and leg lock pictures (only the camel clutch was looked at); the ring post on screen.
+
+Known rough spots:
+- The new moves are first-pass choreography. Some will look odd, the suplex and dropkick most likely.
+- CPU-vs-CPU matches now reach 4¼ stars, so the room above for a person is small.
+- The submission pictures are stand-ins: the two bodies overlap.
+- Pressing Space ten times for the ten punches may be one press too many, or exactly right. Jordan to say.
+
+One thing to change next: Jordan plays, then says which new actions are fun and which are noise.
+
