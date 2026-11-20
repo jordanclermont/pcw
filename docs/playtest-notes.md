@@ -815,3 +815,17 @@ What was NOT checked: whether a person following the gold line actually scores h
 
 One thing to change next: piece 2, the heel's tricks, so the two roles stop sharing one card of choices.
 
+## 2026-11-19 / prototype 3 — the heel's tricks
+
+Piece 2 of the three agreed with Jordan. No new play notes from him this round; he said "Yes, heel tricks".
+
+What changed: the heel gets four choices the face does not have (thumb in the eye, bail out, take a break outside, cover with feet on the ropes). The referee only calls what happens close to him; the card tells you whether he will see it. Three warnings is a disqualification. Bible §14 has the detail.
+
+What was checked: six CPU-vs-CPU matches (3 to 4¼ stars; the CPU heel used the eye, the ropes and the walk outside, was caught by the referee on the ropes, and was never disqualified); 60 random-choice matches with no crashes (4 ended in a disqualification, as they should). In the browser as The Boulder: the heel's card, a thumb in the eye with the referee out of position (no warning), and a cover with feet on the ropes with the crowd booing through the count.
+
+What was NOT checked: a full match played by a person as the heel, and feel at full speed.
+
+Noticed: CPU-vs-CPU matches now score a little higher (up to 4¼), because the cheating makes the room louder. That narrows the room above for a person.
+
+One thing to change next: piece 3, the referee knockout and the weapon. Or first, Jordan plays a match as The Boulder.
+

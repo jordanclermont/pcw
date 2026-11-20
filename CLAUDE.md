@@ -69,6 +69,11 @@ what you can do there, WATCH the move play as set choreography. The other man
 chooses how to take it (sell, sell big, fire back, shrug off). No reflex
 tests except kicking out of a pin. The match is one generator script in
 `v3/src/match.js`; moves are key-pose timelines in `v3/src/moves.js`. Bible
+Roles: FACE's job is to get cheered, HEEL's to get booed, each marked on the
+results card; a "THE ROOM" line says what the crowd wants now. The heel has
+his own tricks (thumb in the eye, bail out, a break outside, feet on the
+ropes) and the referee only calls what he is close enough to see (3 warnings =
+DQ). Not built: referee knockout, weapon, a face who cheats.
 §14 describes it and lists the open questions. Start here for new work unless
 Jordan says otherwise; `v2/` and build 0.15 are kept as they are.
 

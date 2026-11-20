@@ -100,6 +100,28 @@
         return this.finish("murmur", 0);
       }
 
+      if (ev.type === "bail") {
+        // he ran from the fight. They let him hear it; it wears thin if he keeps doing it.
+        const n0 = this.mem[ev.actor + ":bail"] || 0, f = 1 / (1 + 0.55 * n0);
+        this.mem[ev.actor + ":bail"] = n0 + 1;
+        this.heat += 4 * f * (0.5 + A.over / 100); A.like -= 3 * f; A.over += 1.5 * f;
+        if (f < 0.5) this.attn -= 3;
+        this.pulse("boo", ev.actor, 3 * f);
+        return this.finish("boo", 3 * f);
+      }
+      if (ev.type === "feet") {
+        // his feet are on the ropes and everybody but the referee can see it
+        this.heat += 5 * (0.5 + A.over / 100); A.like -= 3; A.over += 2; this.attn += 3;
+        this.pulse("boo", ev.actor, 4); this.words("boo", 6);
+        return this.finish("boo", 4);
+      }
+      if (ev.type === "caught") {
+        // the referee saw it. The room loves that.
+        this.heat += 7; this.attn += 4; A.like -= 1;
+        this.shout = null;
+        this.pulse("pop", ev.target, 4); this.words("pop", 6);
+        return this.finish("pop", 4);
+      }
       if (ev.type === "refcount") {
         // the count on a man outside the ring
         this.shout = { text: String(ev.n), t: 0, small: true };

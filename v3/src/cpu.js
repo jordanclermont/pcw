@@ -115,6 +115,10 @@
 
     if (kind === "answer") {
       if (has(opts, "take")) return has(opts, "take");
+      // the heel takes a walk when the hero gets rolling (once or twice a match, never at the finish)
+      if (has(opts, "bail") && (ai.bails || 0) < 2 && t > 40 && phase !== "finish" && G.run[foe.id] >= 2 && G.tick > (ai.bailAt || 0) && rnd() < 0.45) {
+        ai.bails = (ai.bails || 0) + 1; ai.bailAt = G.tick + 1500; return has(opts, "bail");
+      }
       const big = PCW.SIZE[ctx.move] || 2;
       if (G.trust < 25 && has(opts, "shrug") && rnd() < 0.3) return has(opts, "shrug");            // a receipt
       const finishing = phase === "finish" && !winner;
@@ -137,6 +141,7 @@
 
     /* kind === "lead": I am doing something */
     const first = ai.queue[0];
+    if (first === "cover" && has(opts, "ropecover") && !(foe.finBy === me.id) && G.warn[me.id] < PCW.WARNINGS - 1 && rnd() < 0.7) { ai.queue.shift(); return has(opts, "ropecover"); }
     if (first && has(opts, first)) { ai.queue.shift(); return has(opts, first); }
     if (has(opts, "selfin") && !has(opts, "chops")) {
       if (me.out && !foe.out) return has(opts, "selfin");
@@ -161,7 +166,9 @@
     // it is his time now: hand it over (to a person: only after I have had a couple)
     if (!myTurn && has(opts, "letgo") && G.run[me.id] >= (humanFoe ? 1 : 2)) return has(opts, "letgo");
     if (!winner && has(opts, "finisher") && !ai.usedFin && t > 84 && phase === "heat" && G.run[me.id] >= 3) { ai.usedFin = true; return has(opts, "finisher"); }
-    const pool = opts.filter(o => !["finisher", "letgo", "back"].includes(o.id) && o.id !== ai.last);
+    // a thumb in the eye, but only behind the referee's back
+    if (has(opts, "rake") && !PCW.refSees(me) && G.tick > (ai.rakeAt || 0) && rnd() < 0.6) { ai.rakeAt = G.tick + 1100; ai.last = "rake"; return has(opts, "rake"); }
+    const pool = opts.filter(o => !["finisher", "letgo", "back", "rake"].includes(o.id) && o.id !== ai.last);
     const ok = pool.filter(o => {
       if (o.id === "throwout") return ai.outs < 1 && t > 40 && rnd() < 0.5 && (ai.outs++, true);
       if (o.id === "headlock") return t > 30;

@@ -60,6 +60,12 @@
     cutoff: ["And just like that, the champion shuts it down.", "He had him going, Chet, and he got cut off."],
     comeback: ["HERE HE COMES! He's firing back!", "He's fighting out of it!"],
     countout: "TEN! The referee has counted them out. That is no way to end it.",
+    rake: ["A thumb to the eye! Where is the referee?", "That is a cheap shot, and he knows it."],
+    bail: ["He wants no part of it! The champion is taking a walk.", "He's bailing out. Listen to this crowd."],
+    feet: "His FEET are on the ROPES! Look at his feet, referee!",
+    caught: "The referee SAW it! He stops the count!",
+    warn: ["The referee has had enough of that. That's a warning.", "He's being told: one more and it's over."],
+    dq: "He's calling for the bell! That is a disqualification!",
     tackle: ["Shoulder tackle off the ropes! He ran right through him!"],
     stomp: ["He's putting the boots to a man who's down.", "That's just mean."],
     nosell: ["He popped right back up! That made the other fella look like nothing."],
@@ -89,6 +95,7 @@
     nosell: "You no-sold him. He will remember that.",
     letgo: "Good. Let him get his heat, then make them want your comeback.",
     count: "Seven! Get back in that ring.",
+    warn: "He saw that. Cheat where the referee can't see it.",
     late: "Kick out LATE. The closer to three, the louder it gets."
   };
 })();

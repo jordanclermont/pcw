@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.16 revisions (2026-11-19): §14 gained the heel's tricks (thumb in the eye, bail out, a break outside, feet on the ropes), a referee who only calls what he is close enough to see, warnings, and the disqualification ending.*
+
 *v1.15 revisions (2026-11-19): §14 gained roles and jobs (face: get cheered; heel: get booed), a line on screen saying what the room wants right now, and a star rating that five stars can actually reach.*
 
 *v1.14 revisions (2026-11-18): added §14, prototype 3 in `v3/`. After playing the v2 draft twice Jordan said it still felt "rudimentary and rough" and restated the game as decisions and storytelling, not button skill. Prototype 3 is built from that statement alone: walk to a position, choose what happens, watch it play out. §14 lists what it changes and what it leaves open.*
@@ -480,7 +482,15 @@ Of Jordan's two options for the contact mode, this is the RPG-style one. Quick t
 - The crowd can still disagree with the booking. A heel the room starts cheering has done his job backwards, and the results card says so.
 - **What the room wants.** A gold line at the top of the screen says, in a sentence, what the crowd wants right now: "They want to see STOVE fight back", "They are happy, but nothing is at stake", "They have seen that move too often", "They are ready. Give them the finish". It is read off the same things the crowd has seen, so it is not a script; it is what a wrestler hears from the seats. Giving them what they want at the right time is how the rating climbs.
 - **Stars** now count how loud the room got at its loudest as well as its average, so five stars is reachable. A CPU-vs-CPU match scores 3¼ to 3¾.
-- Still to build (Jordan's list): the heel's own tricks (breaks outside, cheap shots, feet on the ropes), and the referee knockout with a weapon. Right now both roles pick from the same choices.
+**The heel's tricks (added 2026-11-19).** The heel's cards have choices the face's do not.
+- **Thumb in the eye.** On any standing card. The other man gets no answer: it is how a heel takes or keeps control cheaply. The crowd sees it and boos.
+- **Bail out.** When the other man goes for a move, the heel's answers include sliding out of the ring instead. The move never happens, the room boos, and the referee starts his count.
+- **Take a break outside.** The heel can walk to the ropes and roll out from anywhere, to stall. Standing on the floor while the referee counts gets booed, which is his job.
+- **Cover, feet on the ropes.** When the man who is down is near the ropes. The room screams through the count. Half the time the referee looks up at two, sees the feet, and stops the count.
+- **The referee only calls what he can see.** He trails the action, so he is often out of position after a whip or a corner spot. A thumb in the eye within about 250 units of him is a warning; further away he misses it. The card says which it will be before you choose. Three warnings is a disqualification, a bad ending (−0.75 stars). This follows rule 2 from both sides: the crowd reacts to what it saw, and so does the referee.
+- The CPU heel uses all four: the eye only behind the referee's back, a walk outside once or twice when the hero gets rolling, and feet on the ropes for a near-fall. He never gets himself disqualified.
+- The face has no cheating choices yet. Jordan's idea that the room turns on a face who cheats is not built.
+- Still to build (Jordan's list): the referee knockout and the weapon.
 
 **Open questions for Jordan.**
 1. Is choosing, then watching, the game? Or does watching feel too passive?

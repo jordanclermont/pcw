@@ -88,6 +88,9 @@
     rollin: ["ROLL HIM BACK IN", "Take it back to the ring."],
     selfin: ["GET BACK IN", "Back into the ring before the count."],
     selfout: ["ROLL OUTSIDE", "Take a breather on the floor."],
+    rake: ["THUMB IN THE EYE", ""],
+    ropecover: ["COVER, FEET ON THE ROPES", "Cheat on the pin. The room will scream. The referee may catch it at two."],
+    bail: ["BAIL OUT", "Slide out of the ring instead. They will boo you for it."],
     back: ["BACK OFF", "Not yet."],
     /* how he takes it */
     sell: ["SELL IT", "Take it and go down. This is the job."],
@@ -117,6 +120,10 @@
   function opt(id, who) {
     const o = { id, label: OPT[id][0], hint: OPT[id][1] };
     if (id === "finisher") o.label = who.p.finisher;
+    if (id === "rake") o.hint = PCW.refSees(who)
+      ? "He can't answer it. The referee is right there: that is warning " + (G.warn[who.id] + 1) + " of " + PCW.WARNINGS + "."
+      : "He can't answer it. The referee is out of position and won't see it.";
+    if (id === "selfout" && who.p.booked === "heel") { o.label = "TAKE A BREAK OUTSIDE"; o.hint = "Stall on the floor. They hate it."; }
     // a wrestler can feel when the room has seen something too often
     const key = who.id + ":" + (id === "finisher" ? "finisher" : id);
     if (G.crowd.mem[key] >= 1.5) o.stale = true;
@@ -126,7 +133,19 @@
   /* ---------------- where you are decides what you can do ---------------- */
   const reach = (a, b) => Math.hypot(a.x - b.x, (a.z - b.z) * 1.4);
   function nearCorner(w) { const c = PCW.cornerFor(w); return c.d < 185 ? c : null; }
+  PCW.refSees = w => Math.hypot(G.ref.x - w.x, G.ref.z - w.z) < PCW.REF_SEES;
+  const nearRopes = w => w.x < B.XLO + 120 || w.x > B.XHI - 120 || w.z < B.ZLO + 110 || w.z > B.ZHI - 110;
   PCW.context = function (a, b) {
+    const c = baseContext(a, b);
+    if (a.p.booked !== "heel") return c;
+    // THE HEEL'S TRICKS
+    const L = c.list, add = (id, after) => { const i = L.indexOf(after); L.splice(i < 0 ? L.length : i + 1, 0, id); };
+    if ((c.kind === "tie" || c.kind === "corner") && !a.out) add("rake", c.kind === "tie" ? "chops" : "cornerchops");
+    if (c.kind === "down" && !a.out && nearRopes(b)) add("ropecover", "cover");
+    if (!a.out && !b.out && c.kind === "far" && !L.includes("selfout")) L.push("selfout");
+    return c;
+  };
+  function baseContext(a, b) {
     const d = reach(a, b), near = d < PCW.REACH;
     if (!a.out && !b.out) {
       if (b.st === "down") {
@@ -156,7 +175,14 @@
       return { kind: "far", list: ["selfin", "pose"], title: "YOU ARE BOTH ON THE FLOOR" };
     }
     return { kind: "far", list: ["selfin", "pose"], title: "YOU ARE ON THE FLOOR" };
-  };
+  }
+  /* the referee saw him cheat */
+  function warn(a) {
+    G.warn[a.id]++;
+    banner("THE REFEREE", "WARNS " + a.p.short + " (" + G.warn[a.id] + " OF " + PCW.WARNINGS + ")");
+    if (G.warn[a.id] >= PCW.WARNINGS) { PCW.say("pbp", PCW.LINES.dq, 2); endMatch("DQ", other(a)); }
+    else { PCW.say("pbp", PCW.LINES.warn, 1); if (!padOf(a).cpu) gorilla(PCW.GORILLA.warn); }
+  }
   /* the one-line prompt over a player's head while he walks */
   PCW.hintFor = function (w) {
     if (G.phase !== "MATCH" || padOf(w).cpu || G.busy || G.ask || G.pin) return null;
@@ -179,6 +205,7 @@
     G.ref = { x: 640, z: R.D - 70, state: "stand", facing: 1, slap: 0 };
     G.trust = 100; G.trustFlash = null; G.lastAct = 0; G.seqEnd = 0; G.shoots = 0;
     G.ctrl = null; G.ctrlAt = 0; G.run = { stove: 0, boulder: 0 }; G.offence = { stove: 0, boulder: 0 };
+    G.warn = { stove: 0, boulder: 0 };
     G.cb = false; G.out = { n: 0, t: 0 }; G.ask = null; G.pin = null; G.busy = false; G.banner = null;
     G.line = null; G.gorilla = null; G.end = null; G.sparks = [];
     if (!G.crowd) G.crowd = new PCW.Crowd(); else G.crowd.reset();
@@ -355,14 +382,31 @@
         setCtrl(b); banner(a.p.short, "BACKS OFF. IT IS " + b.p.short + "'S MATCH NOW.");
         if (!padOf(a).cpu && padOf(b).cpu) gorilla(PCW.GORILLA.letgo);
         return;
-      case "cover": yield* pin(a, b); return;
+      case "cover": yield* pin(a, b, false); return;
+      case "ropecover": yield* pin(a, b, true); return;
+      case "rake": {
+        const saw = PCW.refSees(a);
+        if (b.st === "corner") b.cornerT = Math.max(b.cornerT, 200);
+        banner(a.p.short, "GOES TO THE EYES");
+        yield* play(M.rake(a, b)); setCtrl(a); G.run[a.id]++;
+        if (saw && G.phase === "MATCH") warn(a);
+        return;
+      }
       case "pickup": yield* play(M.pickup(a, b)); setCtrl(a); yield* act(a); return;
       case "stomp": banner(a.p.short, "PUTS THE BOOTS TO HIM"); yield* play(M.stomp(a, b)); setCtrl(a); G.run[a.id]++; return;
     }
     banner(a.p.short, "GOES FOR " + NAME[id]);
     const o = {};
     if (ANSWERS[id]) {
-      const pick = yield* ask(b, "answer", a.p.short + " IS GOING FOR " + NAME[id], ANSWERS[id].map(k => opt(k, b)), { move: id, lead: a });
+      const ans = ANSWERS[id].slice();
+      // the heel can always decide he wants no part of it
+      if (b.p.booked === "heel" && !b.out && !a.out && b.st !== "corner" && ans.includes("fire")) ans.push("bail");
+      const pick = yield* ask(b, "answer", a.p.short + " IS GOING FOR " + NAME[id], ans.map(k => opt(k, b)), { move: id, lead: a });
+      if (pick.id === "bail") {
+        banner(b.p.short, "BAILS OUT OF THE RING");
+        yield* play(M.bail(a, b));
+        return;
+      }
       if (pick.id === "fire") {
         // grabbing the match back when he has barely touched you is greedy
         if (G.run[a.id] < 2 && G.crowd.W[b.id].taken < 4) PCW.trust(TR.GREEDY, b.p.short + " would not let him get anything in");
@@ -398,8 +442,10 @@
      THE PIN. The man on his back has until three. The later he
      kicks out, the bigger it is. Nothing kicks out for him.
      ============================================================ */
-  function* pin(a, b) {
-    yield* play(PCW.stage.cover(a, b));
+  function* pin(a, b, feet) {
+    yield* play(feet ? PCW.stage.coverFeet(a, b) : PCW.stage.cover(a, b));
+    if (feet) { banner(a.p.short, "HAS HIS FEET ON THE ROPES"); PCW.see({ type: "feet", actor: a.id, target: b.id }); PCW.say("pbp", PCW.LINES.feet, 2); }
+    const catchIt = feet && PCW.rnd() < 0.5;
     const fin = b.finBy === a.id && G.tick - b.finAt < 900;
     const booked = fin && a.id === PCW.BOOKING.winner && b.id === PCW.BOOKING.loser;
     const P = G.pin = { a, b, count: 0, f: 0, fin, booked, human: !padOf(b).cpu };
@@ -426,6 +472,16 @@
       if (here && P.f % PCW.COUNT === 0) {
         P.count++; G.ref.slap = 10;
         G.crowd.see({ type: "count", actor: a.id, n: P.count });
+        if (feet && P.count < 3) G.crowd.words("boo", 5);
+        if (catchIt && P.count === 2) {
+          // the referee looks up and sees the feet
+          G.pin = null;
+          PCW.see({ type: "caught", actor: a.id, target: b.id }); PCW.say("pbp", PCW.LINES.caught, 2);
+          warn(a);
+          if (G.phase !== "MATCH") return;
+          yield* play(M.kickout(a, b));
+          return;
+        }
         if (P.count >= 3) {
           G.pin = null;
           G.crowd.see({ type: "pinfall", actor: a.id, afterBig: fin });
@@ -482,6 +538,7 @@
     if (type === "CLEAN") parts.push(["clean finish", RT.CLEAN]);
     if (type === "FLAT") parts.push(["no real finish", RT.FLAT]);
     if (type === "COUNTOUT") parts.push(["count-out", RT.COUNTOUT]);
+    if (type === "DQ") parts.push(["disqualification", RT.DQ]);
     if (G.trust >= 80) parts.push(["trust held", RT.TRUST]);
     // each man was booked in a role, and each role has a job
     const jobs = { stove: job("stove"), boulder: job("boulder") };
@@ -502,6 +559,7 @@
           type === "FLAT" ? "Title change, but nobody saw a finish." :
             type === "SCREWJOB" ? "The champion kept the belt. That was not the plan." :
               type === "COUNTOUT" ? "Counted out. Nobody paid to see that." :
+                type === "DQ" ? "Disqualified. He cheated once too often, right in front of the referee." :
                 "It fell apart in front of everybody."
     };
   }

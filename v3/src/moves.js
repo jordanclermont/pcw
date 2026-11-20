@@ -329,6 +329,33 @@
     return s;
   };
 
+  /* THE HEEL'S TRICKS ---------------------------------------- */
+  /* a thumb in the eye. He cannot answer it. The crowd sees it; the referee might not. */
+  M.rake = function (a, b) {
+    const s = new Seq(), dir = a.facing;
+    s.k(a, 8, { pose: "reach" }).k(a, 13, { pose: "chop", ease: "snap" }).k(a, 30, { pose: "ready" });
+    s.k(b, 13, {}).k(b, 19, { x: lim(b)(b.x + dir * 14), pose: "eyes", ease: "snap" }).k(b, 80, { pose: "eyes" }).k(b, 100, { pose: b.st === "corner" ? "cornered" : "ready" });
+    s.ev(13, () => {
+      hit(b.x - dir * 6, b.z, 170 * b.p.scale - b.g, 0);
+      PCW.see({ type: "rake", actor: a.id, target: b.id, size: 1.4, q: 1, dirty: true }); PCW.landed(a);
+      PCW.say("color", PCW.LINES.rake, 1);
+    });
+    return s;
+  };
+  /* he wants no part of it: out under the bottom rope */
+  M.bail = function (a, b) {
+    const s = M.selfout(b, a, {});
+    s.k(a, 12, { pose: "reach" }).k(a, 36, { pose: "ready" });
+    s.ev(10, () => { PCW.see({ type: "bail", actor: b.id, target: a.id }); PCW.say("color", PCW.LINES.bail, 1); });
+    return s;
+  };
+  stage.coverFeet = function (a, b) {
+    const s = new Seq();
+    s.k(a, 14, { x: b.x, z: b.z, y: 15, rot: -90, pose: "coverfeet" });
+    s.k(b, 14, { rot: 90, pose: "pinned" });
+    return s;
+  };
+
   M.stomp = function (a, b) {
     const s = new Seq(), curl = Object.assign({}, POSE.down, { lfh: 70, lbh: 50, afs: 60, lean: 20 });
     [[10, 16], [42, 48]].forEach(([u, d]) => {

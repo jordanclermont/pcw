@@ -424,6 +424,7 @@
     ctx.font = face(20, DISPLAY); const nw = ctx.measureText(w.p.name + (cpu ? "  (CPU)" : "")).width;
     const role = PCW.ROLE[w.p.booked].tag, rx = right ? tx - nw - 12 : tx + nw + 12;
     text(role, rx, 37, 11.5, w.p.booked === "face" ? "#9fd4a0" : "#ff8a8a", al);
+    if (G.warn && G.warn[w.id] > 0) text("WARNINGS " + G.warn[w.id] + " / " + PCW.WARNINGS, right ? x + 16 : x + 284, 40, 10.5, "#ff8a8a", right ? "left" : "right");
     if (G.ctrl === w.id && G.phase === "MATCH") text("IN CONTROL", right ? x + 16 : x + 284, 27, 10.5, w.p.accent, right ? "left" : "right");
     // cheers <-> boos: one bar, centre is "they don't care either way"
     const bx = x + 16, bw = 268, mid = bx + bw / 2;
