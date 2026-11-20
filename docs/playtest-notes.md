@@ -851,3 +851,33 @@ Known rough spots:
 
 One thing to change next: Jordan plays, then says which new actions are fun and which are noise.
 
+## 2026-11-20 / prototype 3 — finishing the one-match demo
+
+Jordan on the last build: "new options all feel pretty fun, keep going. Finish the one match demo to the best of your abilities."
+
+What was built (bible §14):
+- Three bookings to pick before the bell: the clean win, the technician (submission), the robbery (the heel cheats to win).
+- Endings judged against the booking.
+- The referee knockout, the chair, and a crowd that tells a receipt from a cheap shot.
+- Sound, made in code.
+- A more neutral opening crowd.
+
+What was checked:
+- Twelve CPU-vs-CPU matches under each booking: all 36 end as booked. Average stars: clean 3.7, technician 3.3, robbery 3.0.
+- Sixty random-choice matches: no crashes, no stuck matches.
+- A contact sheet of frames from every new move, looked at in the browser. One fix came out of it: the dropkick was landing at thigh height and now lands at the chest.
+- On screen: the booking chooser, the referee down with The Boulder holding the chair, the robbery results card. No game errors in the console.
+
+What was NOT checked:
+- The sound. It was built blind: it cannot be heard from the test setup. It might be too loud, too quiet or unpleasant. M mutes it.
+- Feel at full speed, as always.
+- Two people on one keyboard.
+- Each new move was only looked at as small still frames.
+
+Known rough spots:
+- Bodies are code-drawn stand-ins; in holds and pins they overlap.
+- The robbery scores lowest because the room ends on boos, not cheers. That may be right, or the rating may need to learn that a furious room is a good room.
+- The pre-match card is getting crowded.
+
+One thing to change next: Jordan plays each booking once, with the sound on, and says what is wrong with the sound first.
+

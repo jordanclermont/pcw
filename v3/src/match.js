@@ -107,6 +107,9 @@
     selfin: ["GET BACK IN", "Back into the ring before the count."],
     selfout: ["ROLL OUTSIDE", "Take a breather on the floor."],
     rake: ["THUMB IN THE EYE", ""],
+    refbump: ["SHOVE HIM INTO THE REFEREE", "The referee goes down. For a while, nobody is watching."],
+    getchair: ["GET THE CHAIR", "The referee is down. Pull a chair from under the ring."],
+    chair: ["HIT HIM WITH THE CHAIR", ""],
     ropecover: ["COVER, FEET ON THE ROPES", "Cheat on the pin. The room will scream. The referee may catch it at two."],
     bail: ["BAIL OUT", "Slide out of the ring instead. They will boo you for it."],
     back: ["BACK OFF", "Not yet."],
@@ -127,7 +130,7 @@
     elbow: "THE TOP ROPE", stomp: "THE BOOTS", burner: "THE FRONT BURNER", landslide: "THE LANDSLIDE",
     suplex: "A SUPLEX", backbreaker: "A BACKBREAKER", spinebuster: "A SPINEBUSTER", armdrag: "AN ARM DRAG", dropkick: "A DROPKICK",
     forearm: "A FOREARM SMASH", backdrop: "A BACK BODY DROP", bigboot: "A BIG BOOT", across: "THE OTHER CORNER", post: "THE RING POST",
-    limb_arm: "THE ARM", limb_leg: "THE LEG", limb_back: "THE BACK", tenpunch: "TEN PUNCHES"
+    limb_arm: "THE ARM", limb_leg: "THE LEG", limb_back: "THE BACK", tenpunch: "TEN PUNCHES", chair: "THE CHAIR"
   };
   NAME.ropes = "A CLOTHESLINE";
   /* the card offers a KIND of move; which one he actually hits depends on the moment */
@@ -161,7 +164,7 @@
     chops: 1.6, cornerchops: 1.6, slam: 2, ropes: 2.4, tocorner: 1.6, headlock: 1.3, throwout: 2.4, charge: 2.4,
     apron: 2.4, dive: 3.6, elbow: 3.2, burner: 4, landslide: 4,
     suplex: 2.4, backbreaker: 2.2, spinebuster: 2.8, armdrag: 1.6, dropkick: 1.9, forearm: 1.7, backdrop: 2.4, bigboot: 2.2,
-    across: 2, post: 2.8, limb_arm: 1.3, limb_leg: 1.3, limb_back: 1.3, tenpunch: 2.6
+    across: 2, post: 2.8, limb_arm: 1.3, limb_leg: 1.3, limb_back: 1.3, tenpunch: 2.6, chair: 3.4
   };
   const FULL = ["sell", "big", "fire", "shrug"];
   const ANSWERS = {
@@ -169,8 +172,16 @@
     throwout: FULL, charge: ["sell", "big", "fire"], apron: ["sell", "big"], elbow: ["take", "move"], dive: ["take", "move"],
     suplex: FULL, backbreaker: FULL, spinebuster: FULL, armdrag: FULL, dropkick: FULL, forearm: FULL, backdrop: FULL, bigboot: FULL,
     across: ["sell", "big", "fire"], post: ["sell", "big"], limb_arm: ["sell", "big", "fire"], limb_leg: ["sell", "big", "fire"],
-    limb_back: ["sell", "big", "fire"], tenpunch: ["sell", "fire"]
+    limb_back: ["sell", "big", "fire"], tenpunch: ["sell", "fire"], chair: ["sell", "big", "move"]
   };
+  /* how the match ended, against what the office booked */
+  function finishType(w, method) {
+    const Bk = PCW.BOOKING;
+    if (w.id !== Bk.winner) return "SCREWJOB";
+    if (method === "pin" || method === "subweak") return "FLAT";       // the right man, but nobody saw a finish
+    return method === Bk.how ? "CLEAN" : "CALLED";                       // CALLED = a real finish, just not the booked one
+  }
+  const refDown = () => G.ref.down > 0;
   function opt(id, who) {
     const o = { id, label: OPT[id][0], hint: OPT[id][1] };
     if (id === "finisher") o.label = who.p.finisher;
@@ -178,6 +189,7 @@
       ? "He can't answer it. The referee is right there: that is warning " + (G.warn[who.id] + 1) + " of " + PCW.WARNINGS + "."
       : "He can't answer it. The referee is out of position and won't see it.";
     const foe = other(who);
+    if (id === "chair") o.hint = refDown() ? "The referee is down. Nobody can stop you." : "The referee is UP. This is an instant disqualification.";
     if (id === "submit") {
       const part = worstPart(foe), n = G.crowd.hurt[foe.id][part];
       o.hint = PCW.HOLDS[part].name.replace(/^AN? /, "") + " on his " + part + ". " + (n >= 4 ? "They believe it is hurt: this could end it." : "They have no reason to believe it yet.");
@@ -194,13 +206,19 @@
   /* ---------------- where you are decides what you can do ---------------- */
   const reach = (a, b) => Math.hypot(a.x - b.x, (a.z - b.z) * 1.4);
   function nearCorner(w) { const c = PCW.cornerFor(w); return c.d < 185 ? c : null; }
-  PCW.refSees = w => Math.hypot(G.ref.x - w.x, G.ref.z - w.z) < PCW.REF_SEES;
+  PCW.refSees = w => !refDown() && Math.hypot(G.ref.x - w.x, G.ref.z - w.z) < PCW.REF_SEES;
   const nearRopes = w => w.x < B.XLO + 120 || w.x > B.XHI - 120 || w.z < B.ZLO + 110 || w.z > B.ZHI - 110;
   PCW.context = function (a, b) {
     const c = baseContext(a, b);
+    const L = c.list, add = (id, after) => { const i = L.indexOf(after); L.splice(i < 0 ? L.length : i + 1, 0, id); };
+    // THE CHAIR: anyone can use it once the referee is down. What the room makes of it depends on who has been cheating.
+    if (!a.out && !b.out) {
+      if (a.weapon && c.kind !== "far") L.unshift("chair");
+      else if (!a.weapon && refDown() && G.ref.down > 150) L.push("getchair");
+    }
     if (a.p.booked !== "heel") return c;
     // THE HEEL'S TRICKS
-    const L = c.list, add = (id, after) => { const i = L.indexOf(after); L.splice(i < 0 ? L.length : i + 1, 0, id); };
+    if (c.kind === "tie" && !a.out && !refDown() && Math.hypot(G.ref.x - b.x, G.ref.z - b.z) < 330) add("refbump", "chops");
     if ((c.kind === "tie" || c.kind === "corner") && !a.out) add("rake", c.kind === "tie" ? "chops" : "cornerchops");
     if (c.kind === "down" && !a.out && nearRopes(b)) add("ropecover", "cover");
     if (!a.out && !b.out && c.kind === "far" && !L.includes("selfout")) L.push("selfout");
@@ -263,16 +281,17 @@
     G.stove = makeWrestler(PCW.PERSONAS.stove);
     G.boulder = makeWrestler(PCW.PERSONAS.boulder);
     G.ws = [G.stove, G.boulder];
-    G.ref = { x: 640, z: R.D - 70, state: "stand", facing: 1, slap: 0 };
+    G.ref = { x: 640, z: R.D - 70, state: "stand", facing: 1, slap: 0, down: 0 };
     G.trust = 100; G.trustFlash = null; G.lastAct = 0; G.seqEnd = 0; G.shoots = 0;
     G.ctrl = null; G.ctrlAt = 0; G.run = { stove: 0, boulder: 0 }; G.offence = { stove: 0, boulder: 0 };
-    G.warn = { stove: 0, boulder: 0 };
+    G.warn = { stove: 0, boulder: 0 }; G.props = [];
     G.cb = false; G.out = { n: 0, t: 0 }; G.ask = null; G.pin = null; G.busy = false; G.banner = null;
     G.line = null; G.gorilla = null; G.end = null; G.sparks = [];
     if (!G.crowd) G.crowd = new PCW.Crowd(); else G.crowd.reset();
     PCW.clearInput();
     PCW.say("pbp", PCW.LINES.bell, 2);
-    gorilla(PCW.GORILLA.start);
+    gorilla(PCW.BOOKING.gorilla);
+    PCW.sfx.bell(1);
     G.dir = main();
   };
 
@@ -380,7 +399,7 @@
     }
     // the count on a man outside
     if (G.ws.some(w => w.out)) {
-      if (++G.out.t >= PCW.OUT_COUNT) {
+      if (!refDown() && ++G.out.t >= PCW.OUT_COUNT) {
         G.out.t = 0; G.out.n++;
         G.crowd.see({ type: "refcount", actor: "stove", n: G.out.n });
         for (const w of G.ws) if (w.out && w.st === "stand" && !other(w).out && G.out.n >= 4) G.crowd.see({ type: "stall", actor: w.id });
@@ -460,12 +479,19 @@
         if (saw && G.phase === "MATCH") warn(a);
         return;
       }
+      case "refbump":
+        banner(a.p.short, "THROWS HIM INTO THE REFEREE");
+        if (b.st === "corner") { b.st = "stand"; b.corner = null; }
+        yield* play(M.refbump(a, b)); setCtrl(a); G.run[a.id]++;
+        return;
+      case "getchair": banner(a.p.short, "GOES UNDER THE RING"); yield* play(M.getchair(a)); return;
       case "pickup": yield* play(M.pickup(a, b)); setCtrl(a); yield* act(a); return;
       case "stomp": banner(a.p.short, "PUTS THE BOOTS TO HIM"); yield* play(M.stomp(a, b)); setCtrl(a); G.run[a.id]++; return;
     }
     banner(a.p.short, "GOES FOR " + NAME[id]);
     const o = {};
-    if (ANSWERS[id]) {
+    const refUp = !refDown();
+    if (ANSWERS[id] && !(id === "chair" && b.st === "down")) {
       const ans = ANSWERS[id].slice();
       // the heel can always decide he wants no part of it
       if (b.p.booked === "heel" && !b.out && !a.out && b.st !== "corner" && ans.includes("fire")) ans.push("bail");
@@ -482,7 +508,7 @@
         const r = yield* ask(a, "fireback", b.p.short + " IS FIRING BACK", [opt("feed", a), opt("cut", a)], { rec: b });
         if (id === "tenpunch") {
           // up on the ropes: either he gets shoved off part-way, or he gets all ten in anyway
-          if (r.id === "feed") { yield* tenPunch(a, b, o, 4 + Math.floor(PCW.rnd() * 3)); setCtrl(b); if (b.id === PCW.BOOKING.winner && G.tick > 75 * 60) G.cb = true; }
+          if (r.id === "feed") { yield* tenPunch(a, b, o, 4 + Math.floor(PCW.rnd() * 3)); setCtrl(b); if (b.id === PCW.FACE && G.tick > 75 * 60) G.cb = true; }
           else { yield* tenPunch(a, b, o, 0); setCtrl(a); G.run[a.id]++; }
           return;
         }
@@ -492,7 +518,7 @@
         else {
           setCtrl(b);
           // the booked winner fighting back late in the match: this is THE comeback
-          if (b.id === PCW.BOOKING.winner && G.tick > 75 * 60) G.cb = true;
+          if (b.id === PCW.FACE && G.tick > 75 * 60) G.cb = true;
         }
         return;
       }
@@ -513,6 +539,8 @@
     else if (id.startsWith("limb_")) yield* play(M.limb(a, b, o, id.slice(5)));
     else yield* play(M[id](a, b, o));
     if (o.miss) setCtrl(b); else { setCtrl(a); G.run[a.id]++; }
+    // a chair shot in front of the referee ends it on the spot
+    if (id === "chair" && refUp && G.phase === "MATCH") { G.warn[a.id] = PCW.WARNINGS - 1; warn(a); }
   }
 
   /* ============================================================
@@ -576,7 +604,7 @@
         yield* play(M.subBeat(a, b, part, { x: 0, z: 0 }));
         C.see({ type: "subbeat", actor: a.id, target: b.id, believed: believed() });
         yield* play(M.subBreak(a, b, part, { reversed: true }));
-        setCtrl(b); if (b.id === PCW.BOOKING.winner && G.tick > 75 * 60) G.cb = true;
+        setCtrl(b); if (b.id === PCW.FACE && G.tick > 75 * 60) G.cb = true;
         return;
       }
       ans = "s_fade";                                         // he drags him back down and cinches it in
@@ -587,7 +615,7 @@
       yield* play(M.subTap(a, b, part));
       PCW.say("pbp", PCW.LINES.tap, 2);
       C.see({ type: "pinfall", actor: a.id, afterBig: believed() });
-      endMatch(a.id !== PCW.BOOKING.winner ? "SCREWJOB" : believed() ? "SUBMISSION" : "FLAT", a);
+      endMatch(finishType(a, believed() ? "sub" : "subweak"), a);
       return;
     }
     // how far to the nearest rope decides how long he is in it
@@ -615,15 +643,28 @@
     if (feet) { banner(a.p.short, "HAS HIS FEET ON THE ROPES"); PCW.see({ type: "feet", actor: a.id, target: b.id }); PCW.say("pbp", PCW.LINES.feet, 2); }
     const catchIt = feet && PCW.rnd() < 0.5;
     const fin = b.finBy === a.id && G.tick - b.finAt < 900;
-    const booked = fin && a.id === PCW.BOOKING.winner && b.id === PCW.BOOKING.loser;
+    // did he cheat to get here? feet on the ropes, or a chair in the last little while
+    const dirty = feet || (b.dirtyAt !== undefined && G.tick - b.dirtyAt < 1200);
+    const method = dirty ? "dirty" : fin ? "fin" : "pin";
+    const booked = a.id === PCW.BOOKING.winner && method === PCW.BOOKING.how;
+    let vis = 0;
     const P = G.pin = { a, b, count: 0, f: 0, fin, booked, human: !padOf(b).cpu };
     PCW.say("pbp", PCW.LINES.cover, 1);
     const kickAt = padOf(b).cpu ? PCW.cpuKickAt(b, P) : -1;
     for (;;) {
       const here = G.ref.state === "count";
       if (here) P.f++;
-      const wantsOut = P.human ? !!padOf(b).just.act : (P.f === kickAt);
-      if (wantsOut && P.f > 0) {
+      else if (refDown()) {
+        // nobody to count it: the room counts for him (or howls), and the referee starts to stir
+        if (G.ref.down > 170) G.ref.down = 170;
+        if (++vis % PCW.COUNT === 0 && vis / PCW.COUNT <= 5) {
+          G.crowd.see({ type: "viscount", actor: a.id, n: vis / PCW.COUNT });
+          if (vis === PCW.COUNT) PCW.say("pbp", PCW.LINES.visual, 1);
+        }
+      }
+      const cpuOut = kickAt > 0 && (P.f === kickAt || (!here && vis === PCW.COUNT * 2 + 40));
+      const wantsOut = P.human ? !!padOf(b).just.act : cpuOut;
+      if (wantsOut && (P.f > 0 || vis > 20)) {
         const late = P.count === 2 ? (P.f % PCW.COUNT) / PCW.COUNT : 0;
         G.pin = null;
         PCW.see({ type: "kickout", actor: b.id, target: a.id, late });
@@ -653,8 +694,8 @@
         if (P.count >= 3) {
           G.pin = null;
           G.crowd.see({ type: "pinfall", actor: a.id, afterBig: fin });
-          const type = a.id !== PCW.BOOKING.winner ? "SCREWJOB" : fin ? "CLEAN" : "FLAT";
-          PCW.say("pbp", type === "CLEAN" ? PCW.LINES.cleanWin : type === "FLAT" ? PCW.LINES.flatWin : PCW.LINES.screwjob, 2);
+          const type = finishType(a, method);
+          PCW.say("pbp", method === "dirty" ? PCW.LINES.robbery : type === "SCREWJOB" ? PCW.LINES.screwjob : type === "FLAT" ? PCW.LINES.flatWin : PCW.LINES.cleanWin, 2);
           endMatch(type, a);
           return;
         }
@@ -667,6 +708,15 @@
   function refTick() {
     const r = G.ref;
     if (r.slap > 0) r.slap--;
+    if (r.down > 0) {
+      r.state = "down";
+      if (--r.down === 0) {
+        r.state = "stand"; PCW.say("color", PCW.LINES.refup, 1);
+        // he wakes up and finds a man holding a chair
+        for (const w of G.ws) if (w.weapon) { w.weapon = false; warn(w); }
+      }
+      return;
+    }
     let tx, tz, want = "stand";
     if (G.pin) { tx = clamp(G.pin.b.x + 86, R.LO + 30, R.HI - 10); tz = clamp(G.pin.b.z + 46, B.ZLO, B.ZHI); want = "count"; }
     else if (G.ws.some(w => w.out)) { tx = clamp((G.stove.x + G.boulder.x) / 2 + 150, B.XLO, B.XHI); tz = 50; want = "point"; }
@@ -708,11 +758,11 @@
     if (type === "FLAT") parts.push(["no real finish", RT.FLAT]);
     if (type === "COUNTOUT") parts.push(["count-out", RT.COUNTOUT]);
     if (type === "DQ") parts.push(["disqualification", RT.DQ]);
-    if (type === "SUBMISSION") parts.push(["they believed the hold", RT.CLEAN]);
+    PCW.sfx.bell(3);
     if (G.trust >= 80) parts.push(["trust held", RT.TRUST]);
     // each man was booked in a role, and each role has a job
     const jobs = { stove: job("stove"), boulder: job("boulder") };
-    for (const id of ["stove", "boulder"]) parts.push([PCW.PERSONAS[id].short + "'s job", Math.round(jobs[id].score * RT.JOB * 4) / 4]);
+    for (const id of ["stove", "boulder"]) parts.push([PCW.PERSONAS[id].short + "'s job", jobs[id].score * RT.JOB]);
     const secs = G.tick / 60;
     if (secs < 100 && type !== "BREAKDOWN") parts.push(["over too soon", -Math.round((100 - secs) / 100 * 2 * 4) / 4]);
     let stars = parts.reduce((s, p) => s + p[1], 0);
@@ -725,10 +775,10 @@
       heat: Math.round(C.avgHeat()), attn: Math.round(C.avgAttn()), peak: Math.round(C.peak),
       verdict: { stove: verdict("stove"), boulder: verdict("boulder") }, jobs,
       headline:
-        type === "CLEAN" ? "NEW CHAMPION. As booked." :
-          type === "SUBMISSION" ? "NEW CHAMPION. He made him give up. Not the booked finish, but they believed it." :
-          type === "FLAT" ? "Title change, but nobody saw a finish." :
-            type === "SCREWJOB" ? "The champion kept the belt. That was not the plan." :
+        type === "CLEAN" ? (PCW.BOOKING.how === "dirty" ? "He stole it, exactly as booked. They are furious." : PCW.BOOKING.how === "sub" ? "NEW CHAMPION, by submission. As booked." : "NEW CHAMPION. As booked.") :
+          type === "CALLED" ? "The right man won, but not with the booked finish. It still worked." :
+          type === "FLAT" ? "The right man won, but nobody saw a finish." :
+            type === "SCREWJOB" ? "The wrong man won. That was not the plan." :
               type === "COUNTOUT" ? "Counted out. Nobody paid to see that." :
                 type === "DQ" ? "Disqualified. He cheated once too often, right in front of the referee." :
                 "It fell apart in front of everybody."

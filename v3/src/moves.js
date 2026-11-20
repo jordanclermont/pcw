@@ -88,6 +88,7 @@
     g.hitstop = Math.max(g.hitstop, Math.round(1 + power * 2.2));
     g.shake = Math.max(g.shake, 2 + power * 4);
     g.sparks.push({ x, z, h, age: 0, big: power >= 3 });
+    PCW.sfx.hit(power);
   }
   function down(b, frames, from, seated) {
     b.st = "down"; b.downT = Math.round(frames); b.sellT = b.downT; b.seated = !!seated; b.downBy = from || null;
@@ -609,7 +610,7 @@
   };
   M.dropkick = function (a, b, o) {
     const s = new Seq(), dir = a.facing, lx = cx(b.x + dir * 96);
-    s.k(a, 8, { x: a.x - dir * 14, pose: "windup" }).k(a, 20, { x: a.x + dir * 18, y: 78, rot: 80, pose: "highkick", ease: "out" })
+    s.k(a, 8, { x: a.x - dir * 14, pose: "windup" }).k(a, 20, { x: a.x + dir * 30, y: 122, rot: 82, pose: "highkick", ease: "out" })
       .k(a, 36, { x: a.x, y: 0, rot: 90, pose: "down", ease: "in" }).k(a, 62, { rot: 0, pose: "kneel" }).k(a, 78, { pose: "ready" });
     s.k(b, 20, {}).k(b, 24, { pose: "snap", ease: "snap" }).k(b, 46, { x: lx, rot: 90, arc: o.big ? 60 : 40, pose: "air", ease: "lin" }).k(b, 52, { pose: "down" });
     s.ev(20, () => { hit(b.x - dir * 12, b.z, 150 * b.p.scale, 2); seen("dropkick", a, b, 1.9, o); PCW.say("pbp", PCW.LINES.dropkick, 1); });
@@ -757,6 +758,61 @@
     const s = new Seq(), H = PCW.HOLDS[part], tap = Object.assign({}, POSE[H.bw], { afs: 100, afe: 60 });
     for (let i = 0; i < 4; i++) s.k(b, 8 + i * 12, { pose: i % 2 ? H.bw : tap, ease: "snap" });
     s.k(a, 30, { pose: H.aw }).k(a, 60, { pose: H.aw });
+    return s;
+  };
+
+  /* ============================================================
+     THE REFEREE GOES DOWN, AND THE CHAIR COMES OUT
+     ============================================================ */
+  M.refbump = function (a, b) {
+    const s = new Seq(), ref = G().ref, dir = Math.sign(ref.x - b.x) || 1;
+    const tx = cx(ref.x - dir * 40), t1 = 16 + Math.max(6, Math.ceil(Math.hypot(tx - b.x, ref.z - b.z) / RUN_V));
+    s.k(a, 0, { face: Math.sign(b.x - a.x) || a.facing }).k(a, 12, { pose: "whip", ease: "snap" }).k(a, 36, { pose: "ready" });
+    s.k(b, 10, { pose: "hit" }).k(b, 16, { face: dir }).k(b, t1, { x: tx, z: cz(ref.z), pose: "run", ease: "lin" })
+      .k(b, t1 + 6, { pose: "snap", ease: "snap" }).k(b, t1 + 40, { x: cx(tx - dir * 40), pose: "stagger" }).k(b, t1 + 70, { pose: "ready" });
+    s.ev(t1, () => {
+      hit(ref.x, ref.z, 120, 3); ref.down = 620 + Math.floor(PCW.rnd() * 200); ref.state = "down";
+      PCW.see({ type: "refbump", actor: a.id, target: b.id }); PCW.say("pbp", PCW.LINES.refbump, 2);
+    });
+    return s;
+  };
+  M.getchair = function (a) {
+    const s = new Seq(), t0 = Math.max(6, Math.ceil(Math.abs(a.z - 44) / 3.8));
+    s.k(a, t0, { z: 44, pose: "walk", ease: "lin" }).k(a, t0 + 16, { pose: "doubled" }).k(a, t0 + 30, { pose: "doubled" }).k(a, t0 + 46, { pose: "ready" });
+    s.ev(t0 + 30, () => { a.weapon = true; G().crowd.flash(10); PCW.say("pbp", PCW.LINES.getchair, 2); PCW.see({ type: "weaponout", actor: a.id }); });
+    return s;
+  };
+  M.chair = function (a, b, o) {
+    const s = new Seq(), dir = a.facing, lying = b.st === "down";
+    s.k(a, 14, { pose: "chairup" }).k(a, 22, { pose: "chairup" }).k(a, 27, { pose: "chairdn", ease: "snap" });
+    if (o.miss) {
+      // he ducks; the chair comes back off the top rope into the man swinging it
+      s.k(b, 22, { pose: "doubled", ease: "snap" }).k(b, 50, { pose: "doubled" }).k(b, 70, { pose: "ready" });
+      s.k(a, 34, { pose: "snap", ease: "snap" }).k(a, 58, { x: lim(a)(a.x - dir * 60), rot: 90, arc: 30, pose: "air", ease: "lin" }).k(a, 64, { pose: "down" });
+      s.ev(31, () => {
+        hit(a.x + dir * 30, a.z, 170, 4); PCW.sfx.clang(); a.weapon = false; G().props.push({ x: a.x + dir * 70, z: a.z, t: 0 });
+        PCW.see({ type: "crash", actor: b.id, target: a.id, size: 3 }); PCW.trust(TR.MOVED, b.p.short + " ducked the chair"); PCW.say("pbp", PCW.LINES.chairmiss, 2);
+      });
+      s.ev(58, () => down(a, 170, b));
+      return s;
+    }
+    s.k(a, 54, { pose: "chairdn" }).k(a, 74, { pose: "ready" });
+    if (lying) {
+      const curl = Object.assign({}, POSE.down, { lfh: 80, lbh: 60, afs: 70, lean: 24 });
+      s.k(b, 27, {}).k(b, 33, { pose: curl, ease: "snap" }).k(b, 60, { pose: "down" });
+    } else {
+      s.k(b, 27, {}).k(b, 32, { pose: "snap", ease: "snap" }).k(b, 56, { x: lim(b)(b.x + dir * 56), rot: 90, arc: o.big ? 40 : 22, pose: "air", ease: "lin" }).k(b, 62, { pose: "down" });
+    }
+    s.ev(27, () => {
+      hit(b.x - dir * 10, b.z, lying ? 30 : 150, 4); PCW.sfx.clang();
+      b.dirtyAt = G().tick; G().crowd.flash(18);
+      PCW.see({ type: "chair", actor: a.id, target: b.id, size: lying ? 2.8 : 3.4, q: q(o), dirty: true }); PCW.landed(a);
+      PCW.say("pbp", PCW.LINES.chair, 2);
+    });
+    s.ev(56, () => {
+      a.weapon = false; G().props.push({ x: a.x + dir * 40, z: a.z + 10, t: 0 });
+      if (lying) b.downT = Math.max(b.downT, 220); else down(b, 240 * mul(o), a);
+    });
     return s;
   };
 

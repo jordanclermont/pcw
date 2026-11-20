@@ -59,6 +59,7 @@
       const cast = G.ws.map(w => ({ w, front: w.z < -20, key: -w.z + (w.st === "down" ? 0 : 6) + (w.y > 40 ? 6 : 0) }));
       cast.push({ ref: true, front: false, key: -G.ref.z + 5 });
       cast.sort((a, b) => a.key - b.key);
+      props();
       for (const c of cast) if (!c.front) shadow(c.ref ? G.ref : c.w, c.ref);
       for (const c of cast) if (!c.front) { if (c.ref) referee(); else wrestler(c.w); }
       ringFront(); apron();
@@ -289,14 +290,41 @@
     const p = proj(w.x, w.z, -w.g);
     // a little breathing, so nobody is ever a statue
     const pose = Object.assign({}, w.pose); pose.lean += Math.sin(frame / 13 + (w.id === "stove" ? 0 : 2)) * 1.3;
-    body({ x: p.x, floor: p.y, y: w.y * p.s, rot: w.rot, facing: w.facing, pose, scale: w.p.scale * p.s }, w.p);
+    body({ x: p.x, floor: p.y, y: w.y * p.s, rot: w.rot, facing: w.facing, pose, scale: w.p.scale * p.s, chair: w.weapon }, w.p);
   }
   function referee() {
     const r = G.ref, p = proj(r.x, r.z, 0);
+    if (r.down > 0) {
+      // flat on his back, stirring near the end
+      if (!refPose) refPose = PCW.clonePose(PCW.POSE.down);
+      const tg = PCW.clonePose(PCW.POSE.down); if (r.down < 170) { tg.afs += Math.sin(frame / 8) * 30; tg.lfk += Math.sin(frame / 10) * 20; }
+      PCW.chasePose(refPose, tg, 0.2);
+      body({ x: p.x, floor: p.y, y: 0, rot: 90, facing: r.facing || 1, pose: refPose, scale: PCW.REF_LOOK.scale * p.s }, PCW.REF_LOOK);
+      return;
+    }
     refPose = PCW.refPose(r, refPose);
     body({ x: p.x, floor: p.y, y: 0, rot: 0, facing: r.facing, pose: refPose, scale: PCW.REF_LOOK.scale * p.s }, PCW.REF_LOOK);
   }
 
+  function chairShape(x, y, ang, s) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    ctx.lineJoin = "round"; ctx.strokeStyle = "#08080b"; ctx.lineWidth = 2.5;
+    ctx.fillStyle = "#8d939f"; rrect(-22 * s, -58 * s, 44 * s, 36 * s, 4 * s); ctx.fill(); ctx.stroke();       // the back
+    ctx.fillStyle = "#3a3f4a"; rrect(-18 * s, -52 * s, 36 * s, 24 * s, 3 * s); ctx.fill();
+    ctx.fillStyle = "#8d939f"; rrect(-22 * s, -18 * s, 44 * s, 30 * s, 4 * s); ctx.fill(); ctx.stroke();       // the seat
+    ctx.fillStyle = "#3a3f4a"; rrect(-18 * s, -13 * s, 36 * s, 20 * s, 3 * s); ctx.fill();
+    ctx.strokeStyle = "#6f7480"; ctx.lineWidth = 4 * s; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-20 * s, 12 * s); ctx.lineTo(-20 * s, 34 * s); ctx.moveTo(20 * s, 12 * s); ctx.lineTo(20 * s, 34 * s); ctx.stroke();
+    ctx.restore();
+  }
+  /* chairs left lying on the mat */
+  function props() {
+    for (const pr of G.props || []) {
+      const p = proj(pr.x, pr.z, 0);
+      ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(p.x, p.y + 2, 36 * p.s, 7 * p.s, 0, 0, 6.3); ctx.fill();
+      chairShape(p.x, p.y - 4 * p.s, Math.PI / 2 + 0.2, p.s * 0.9);
+    }
+  }
   const OUT = "#08080b";
   function limb(a, b, width, color) {
     ctx.lineCap = "round";
@@ -349,6 +377,11 @@
     head(J, s, look, b.facing);
     drawLeg(J.lf, skin, false);
     drawArm(J.af, skin);
+    if (b.chair) {
+      // a folding chair, held by the seat in the front hand, following the forearm
+      const ang = Math.atan2(J.af.hand[1] - J.af.el[1], J.af.hand[0] - J.af.el[0]);
+      chairShape(J.af.hand[0], J.af.hand[1], ang - Math.PI / 2, s);
+    }
   }
 
   function head(J, s, look, facing) {
@@ -410,7 +443,10 @@
     text("CROWD NOISE", 640, 62, 11.5, "#a9adb8", "center");
     ctx.fillStyle = "#23232b"; ctx.fillRect(582, 69, 116, 5);
     ctx.fillStyle = C.heat > 75 ? "#ffd27a" : "#e6e2d8"; ctx.fillRect(582, 69, 116 * C.heat / 100, 5);
-    if (G.out && G.out.n > 0 && G.phase === "MATCH") {
+    if (G.ref && G.ref.down > 0 && G.phase === "MATCH") {
+      rrect(556, 84, 168, 24, 5); ctx.fillStyle = "rgba(150,20,26,.95)"; ctx.fill();
+      text("THE REFEREE IS DOWN", 640, 97, 12.5, "#fff", "center", DISPLAY);
+    } else if (G.out && G.out.n > 0 && G.phase === "MATCH") {
       rrect(566, 84, 148, 24, 5); ctx.fillStyle = G.out.n >= 7 ? "rgba(150,20,26,.95)" : "rgba(8,8,11,.86)"; ctx.fill();
       text("REFEREE'S COUNT  " + G.out.n + " / 10", 640, 97, 12.5, "#f3ecd8", "center");
     }
@@ -568,7 +604,7 @@
     ctx.fillStyle = G.trust < 35 ? "#c2242c" : G.trust < 65 ? "#d9a13a" : "#c9b377"; ctx.fillRect(74, y + 10, 60 * G.trust / 100, 7);
     if (G.trustFlash && G.trustFlash.why) text(G.trustFlash.why.toUpperCase() + "  " + G.trustFlash.d, 144, y + 13, 11.5, "#ff8a8a", "left");
     else if (G.gorilla) text("GORILLA: " + G.gorilla.text, 144, y + 13, 12, "#e8dcae", "left");
-    else text("Booked: STOVE HOT wins with THE FRONT BURNER", 144, y + 13, 11.5, "#8f93a0", "left");
+    else text("Booked: " + PCW.BOOKING.short, 144, y + 13, 11.5, "#8f93a0", "left");
     // the show, right: the announce desk
     if (G.line && G.line.t < 260 && !(G.out && G.out.n > 0 && false)) {
       const who = G.line.voice === "pbp" ? "CHET" : "DUTCH";
@@ -595,9 +631,19 @@
     const x = 270, y = 120, w = 740, h = 470, B = PCW.BOOKING;
     panel(x, y, w, h);
     text("GORILLA POSITION", x + 36, y + 50, 38, "#f3ecd8", "left", DISPLAY);
+    const idx = PCW.BOOKINGS.indexOf(B), n = PCW.BOOKINGS.length;
     text("TONIGHT'S BOOKING  (the crowd doesn't know this)", x + 36, y + 92, 15, "#d9a13a", "left");
-    text(B.line, x + 36, y + 128, 23, "#f3ecd8", "left");
-    text("Everything before the finish is yours to decide. The crowd is the judge.", x + 36, y + 160, 16, "#c9ccd6", "left");
+    // the chooser: three stories to tell with the same two men
+    const bx = x + w - 36 - 236;
+    PCW.preRects = { prev: { x: bx, y: y + 78, w: 34, h: 28 }, next: { x: bx + 202, y: y + 78, w: 34, h: 28 } };
+    for (const [r, ch] of [[PCW.preRects.prev, "<"], [PCW.preRects.next, ">"]]) {
+      rrect(r.x, r.y, r.w, r.h, 5); ctx.fillStyle = "#ffd24a"; ctx.fill();
+      text(ch, r.x + r.w / 2, r.y + r.h / 2 + 1, 18, "#141006", "center", DISPLAY);
+    }
+    text(B.title, bx + 118, y + 87, 15, "#f3ecd8", "center", DISPLAY);
+    text((idx + 1) + " of " + n + "   (A / D to change)", bx + 118, y + 103, 10.5, "#8f93a0", "center");
+    text(B.line, x + 36, y + 130, 23, "#f3ecd8", "left");
+    wrapLines(B.note, w - 72, 15.5).slice(0, 2).forEach((ln, i) => text(ln, x + 36, y + 158 + i * 19, 15.5, "#c9ccd6", "left"));
     text("HOW IT WORKS", x + 36, y + 204, 15, "#d9a13a", "left");
     const steps = [
       "WALK.  Where you are changes what you can do: the middle, the ropes, a corner, the floor.",
@@ -616,7 +662,7 @@
         x + 220, yy + 9, 13.5, cpu ? "#8f93a0" : "#ffd24a", "left");
     };
     row("stove", y + 346); row("boulder", y + 388);
-    text("Press 1 or 2 to hand a wrestler to the CPU or take him back. Watch the gold line: it says what the room wants.", x + 36, y + 422, 13.5, "#8f93a0", "left");
+    text("1 / 2: hand a wrestler to the CPU or take him back.   M: sound " + (PCW.sfx.on ? "on" : "off") + ".   Watch the gold line: it says what the room wants.", x + 36, y + 422, 13.5, "#8f93a0", "left");
     const blink = Math.sin(frame / 16) > -0.3;
     if (blink) text("PRESS SPACE TO RING THE BELL", x + w / 2, y + 448, 21, "#ffd24a", "center", DISPLAY);
   }
@@ -657,6 +703,6 @@
       wrapLines(v.text, w - 110, 17).forEach((ln, i) => text(ln, x + 56, yy + 48 + i * 20, 17, "#f3ecd8", "left"));
     };
     row("stove", y + 234); row("boulder", y + 334);
-    text("R  run it back", x + w / 2, y + 438, 20, "#ffd24a", "center", DISPLAY);
+    text("R  run it back        B  change the booking", x + w / 2, y + 438, 20, "#ffd24a", "center", DISPLAY);
   }
 })();

@@ -76,6 +76,7 @@
         const p = PCW.PERSONAS[id];
         this.W[id] = { like: p.startLike, over: p.startOver, taken: 0, like0: p.startLike, over0: p.startOver, lowLike: p.startLike, highLike: p.startLike };
       }
+      this.cheats = { stove: 0, boulder: 0 };                                                 // how often they have SEEN each man cheat
       this.hurt = { stove: { arm: 0, leg: 0, back: 0 }, boulder: { arm: 0, leg: 0, back: 0 } };   // what they have SEEN worked on
       this.mem = {}; this.pulses = []; this.floaters = []; this.flashes = [];
       this.chant = null; this.shout = null; this.chantCool = 300;
@@ -93,6 +94,25 @@
       this.quiet = 0;
       let tone = "murmur", mag = 0;
       if (ev.part && this.hurt[ev.target]) this.hurt[ev.target][ev.part] += ev.hurt || 1;
+      if (["rake", "feet", "refbump", "chair"].includes(ev.type)) this.cheats[ev.actor] += ev.type === "rake" ? 1 : 2;
+
+      if (ev.type === "refbump") {
+        // the referee just got flattened. Everybody is on their feet.
+        this.heat += 7; this.attn += 6; A.like -= 3; A.over += 2;
+        this.pulse("boo", ev.actor, 5); this.flash(14);
+        return this.finish("boo", 5);
+      }
+      if (ev.type === "weaponout") {
+        this.heat += 4; this.attn += 5; this.pulse(A.like >= 0 ? "pop" : "boo", ev.actor, 4);
+        return this.finish("murmur", 0);
+      }
+      if (ev.type === "viscount") {
+        // he has him pinned and there is no referee: the room counts it for him, or howls
+        this.heat += 2; this.attn += 1;
+        this.shout = { text: String(ev.n) + "!", t: 0, scale: 0.5 + 0.08 * ev.n };
+        this.pulse(A.like >= 0 ? "count" : "boo", ev.actor, 2 + ev.n * 0.5);
+        return this.finish("murmur", 0);
+      }
 
       if (ev.type === "woo") {
         // one chop. If the room is with it they shout along; past that it wears thin.
@@ -266,6 +286,11 @@
       let size = ev.size * (ev.q || 1);
       let v = (A.like - T.like) / 100;            // who are they rooting for in this exchange
       if (ev.dirty) v -= 0.9 + T.taken * 0.04;    // hitting a man who's down: worse the longer it has been one-sided
+      // ...unless the other man has been cheating all night: then a chair is a RECEIPT, and they love it
+      const receipt = ev.type === "chair" && this.cheats[ev.target] >= this.cheats[ev.actor] + 2;
+      if (receipt) v = Math.abs(v) + 0.5;
+      // a man they like who cheats for no reason: they turn on him
+      else if (ev.dirty && ev.type !== "stomp" && A.like > 0) A.like -= 8 + A.like * 0.25;
 
       // the story, read off the picture: has this man been taking a beating?
       let mult = 1, comeback = false;
@@ -319,6 +344,7 @@
 
     /* ---------------- what the room does with it ---------------- */
     pulse(tone, actor, mag) {
+      PCW.sfx.crowd(tone, mag);
       this.pulses.push({ tone, actor, mag, age: 0, dur: 34 + Math.min(mag, 14) * 7 });
       if (this.pulses.length > 6) this.pulses.shift();
       if (tone === "pop") this.words("pop", Math.min(8, Math.round(mag)));

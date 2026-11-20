@@ -19,17 +19,34 @@
         for (const id in PCW.pads) PCW.pads[id].reset();
         return true;
       }
+      PCW.sfx.init();
+      if (code === "KeyM") { PCW.sfx.toggle(); return true; }
+      if (G.phase === "PRE" && (code === "KeyA" || code === "ArrowLeft")) { cycle(-1); return true; }
+      if (G.phase === "PRE" && (code === "KeyD" || code === "ArrowRight")) { cycle(1); return true; }
       if ((code === "Space" || code === "Enter") && G.phase === "PRE") { PCW.startMatch(); return true; }
       if (code === "KeyR" && G.phase === "ENDED") { PCW.startMatch(); return true; }
+      if (code === "KeyB" && G.phase === "ENDED") { G.phase = "PRE"; return true; }
       return false;
     });
-    canvas.addEventListener("pointerdown", () => { if (G.phase === "PRE") PCW.startMatch(); });
+    function cycle(d) {
+      const L = PCW.BOOKINGS, i = L.indexOf(PCW.BOOKING);
+      PCW.BOOKING = L[(i + d + L.length) % L.length];
+    }
+    canvas.addEventListener("pointerdown", e => {
+      PCW.sfx.init();
+      if (G.phase !== "PRE") return;
+      const r = canvas.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width * PCW.W, y = (e.clientY - r.top) / r.height * PCW.H;
+      const inside = q => q && x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h, P = PCW.preRects || {};
+      if (inside(P.prev)) cycle(-1); else if (inside(P.next)) cycle(1); else PCW.startMatch();
+    });
 
     const STEP = 1000 / 60;
     let last = performance.now(), acc = 0;
     function loop(now) {
       acc += Math.min(100, now - last); last = now;
       while (acc >= STEP) { PCW.tick(); acc -= STEP; }
+      PCW.sfx.bed(G.phase === "MATCH" ? G.crowd.heat : G.phase === "ENDED" ? 30 : 10);
       PCW.render();
       requestAnimationFrame(loop);
     }

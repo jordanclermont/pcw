@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.18 revisions (2026-11-20): §14 gained three bookings chosen before the bell, endings judged against the booking, the referee knockout, the chair, a crowd that counts cheating (receipts), sound, and a more neutral opening crowd.*
+
 *v1.17 revisions (2026-11-19): §14 gained count-along chops and ten punches, kinds of move picked for the moment (with eight new moves), body parts and submission holds with a new SUBMISSION ending, corner-to-corner and the ring post, and a list of what is parked.*
 
 *v1.16 revisions (2026-11-19): §14 gained the heel's tricks (thumb in the eye, bail out, a break outside, feet on the ropes), a referee who only calls what he is close enough to see, warnings, and the disqualification ending.*
@@ -513,10 +515,26 @@ Of Jordan's two options for the contact mode, this is the RPG-style one. Quick t
 - **The choice card** now runs to two rows when there are more than six choices. Esc, or the BACK OFF button, backs out.
 - **Stars** were rebalanced again: the room is read on one scale and the flat bonuses are smaller. CPU-vs-CPU matches score 3¼ to 4¼.
 
+**Finishing the one-match demo (added 2026-11-20).** Jordan: "new options all feel pretty fun, keep going. Finish the one match demo to the best of your abilities."
+
+- **Three bookings, chosen before the bell** (A / D on the pre-match card). Same two men, three stories:
+  - THE CLEAN WIN: Stove wins with the Front Burner.
+  - THE TECHNICIAN: Stove makes The Boulder give up. Work a body part until the room believes it, then a hold.
+  - THE ROBBERY: The Boulder keeps the title by cheating. Feet on the ropes, or the referee goes down and the chair comes out.
+  This is a first, small version of planning the match: the office fixes the finish and you choose which finish tonight. The CPU partner plays each booking: he works a part and goes for the hold, or flattens the referee and gets the chair, and the booked loser lies down or gives up for the booked finish only.
+- **Endings are judged against the booking.** As booked (right man, booked finish). CALLED (right man, a real finish, but not the booked one: no bonus, no penalty). FLAT (right man, no real finish). SCREWJOB (wrong man). Plus count-out, disqualification and breakdown. The old SUBMISSION ending is now just "as booked" under THE TECHNICIAN and CALLED otherwise.
+- **The referee goes down.** The heel can shove the other man into the referee when the referee is close. He is out for ten to fourteen seconds. While he is down nothing is seen: no warnings, no count on the floor, no count on a pin. A cover with no referee gets counted by the crowd instead, the referee starts to stir, and he arrives late.
+- **The chair.** With the referee down, anyone can pull a chair from under the ring. A chair shot is the biggest dirty move in the game. With the referee UP it is an instant disqualification; the card says which before you choose. The man being hit can duck, and the chair comes back off the ropes into the man swinging it. If the referee wakes up and finds a man holding a chair, that is a warning and the chair is gone.
+- **A face who cheats.** The crowd keeps count of how often it has seen each man cheat. A chair shot on a man who has been cheating all night is a receipt, and they cheer it. A man they like who cheats for no reason loses them fast.
+- **Sound**, all made in code: a crowd that gets louder with the room, cheers and boos, impacts, the bell, the chair. M mutes it. It starts on the first key press because browsers require that.
+- **The opening crowd** starts closer to neutral (Stove cheered 30, The Boulder booed 25) so the first minute has something to win.
+- A pin after a recent chair shot or with feet on the ropes counts as a dirty pin, which is the booked finish under THE ROBBERY.
+- Safety valve: after 3:25 the booked loser stays down for any pin, so a match that has gone wrong can still end.
+
 **Parked, with Jordan's agreement in principle ("eventually").**
-- Planning the match before the bell, with gaps left for improvising. The old build has a version (§4, §8).
-- Classic stories: giant against cruiserweight; the technician who works a part to a submission (now playable); the heel's dirty win (needs only a different booking). The first needs new wrestler types, which runs into "one match until it sings, no roster" (§12). Jordan to rule when the time comes.
-- The referee knockout and the weapon.
+- Fuller planning: more than the finish, with gaps left for improvising. The three bookings are the first step. The old build has a bigger version (§4, §8).
+- Giant against cruiserweight, and any story that needs new wrestler types. This runs into "one match until it sings, no roster" (§12). Jordan to rule when the time comes.
+- Real art. Every body is still drawn in code.
 
 **Open questions for Jordan.**
 1. Is choosing, then watching, the game? Or does watching feel too passive?

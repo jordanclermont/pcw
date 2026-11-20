@@ -20,7 +20,7 @@
       hair: null, goatee: true, wristbands: true,
       finisher: "THE FRONT BURNER", finKind: "burner",
       tauntKind: "armsup",
-      startLike: 45, startOver: 55, startX: 460, facing: 1
+      startLike: 30, startOver: 48, startX: 460, facing: 1
     },
     boulder: {
       id: "boulder", name: "THE BOULDER", short: "BOULDER", booked: "heel",
@@ -29,7 +29,7 @@
       hair: "flattop", goatee: false, elbowpads: true, stripe: true,
       finisher: "THE LANDSLIDE", finKind: "landslide",
       tauntKind: "point",
-      startLike: -40, startOver: 55, startX: 820, facing: -1
+      startLike: -25, startOver: 48, startX: 820, facing: -1
     }
   };
 
@@ -40,10 +40,33 @@
     hair: "short", pants: true, stripes: true
   };
 
-  /* tonight's booking — the one thing the office fixed */
-  PCW.BOOKING = {
-    winner: "stove", loser: "boulder",
-    line: "STOVE HOT wins the title with THE FRONT BURNER.",
-    note: "Everything before the finish is yours to call in the ring."
-  };
+  PCW.FACE = "stove"; PCW.HEEL = "boulder";
+
+  /* TONIGHT'S BOOKING: the one thing the office fixed. Pick one before the bell.
+     how: "fin" = pin after the winner's finisher, "sub" = a submission the room believes,
+          "dirty" = a pin he cheated to get. */
+  PCW.BOOKINGS = [
+    {
+      id: "clean", title: "THE CLEAN WIN", winner: "stove", loser: "boulder", how: "fin",
+      line: "STOVE HOT wins the title with THE FRONT BURNER.",
+      note: "Give them a story, hit the Front Burner late, and cover him.",
+      short: "STOVE HOT wins with THE FRONT BURNER",
+      gorilla: "Stove goes over with the Front Burner. Give them a story first."
+    },
+    {
+      id: "sub", title: "THE TECHNICIAN", winner: "stove", loser: "boulder", how: "sub",
+      line: "STOVE HOT makes THE BOULDER give up.",
+      note: "Work one body part until the room believes it is hurt, then lock in a hold.",
+      short: "STOVE HOT wins by submission",
+      gorilla: "Stove goes over by submission. Pick a body part and stay on it."
+    },
+    {
+      id: "dirty", title: "THE ROBBERY", winner: "boulder", loser: "stove", how: "dirty",
+      line: "THE BOULDER keeps his title by cheating.",
+      note: "Stove has him beaten, and he steals it: feet on the ropes, or the referee goes down and the chair comes out.",
+      short: "THE BOULDER steals it by cheating",
+      gorilla: "The champ retains, and he cheats to do it. Make them furious."
+    }
+  ];
+  PCW.BOOKING = PCW.BOOKINGS[0];
 })();

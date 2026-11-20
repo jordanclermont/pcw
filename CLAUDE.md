@@ -77,8 +77,12 @@ DQ). Chops and corner punches are count-alongs (one at a time, again or
 enough, the room shouts along). The card offers KINDS of move (quick, power,
 off the ropes) and the move is picked for the moment. Body parts can be
 worked; the crowd keeps the tally and only believes a submission hold on a
-part it has seen hurt. Not built: referee knockout, weapon, a face who
-cheats, match planning, other wrestler types.
+part it has seen hurt. Three bookings are chosen before the bell (clean win,
+technician/submission, robbery/dirty win) and endings are judged against the
+one picked. The heel can knock the referee down; a chair comes out while he is
+down; the crowd counts cheating and tells a receipt from a cheap shot. Sound
+is synthesized in `v3/src/sound.js` (never heard in testing). Not built:
+fuller match planning, other wrestler types, real art.
 §14 describes it and lists the open questions. Start here for new work unless
 Jordan says otherwise; `v2/` and build 0.15 are kept as they are.
 

@@ -27,7 +27,7 @@
     return t < 32 ? "shine" : t < 124 ? "heat" : "comeback";
   }
   /* whose turn the clock says it is */
-  function turnAt(t) { return phaseAt(t) === "heat" ? BOOK().loser : BOOK().winner; }
+  function turnAt(t) { const ph = phaseAt(t); return ph === "finish" ? BOOK().winner : ph === "heat" ? PCW.HEEL : PCW.FACE; }
   PCW.phaseAt = phaseAt;
 
   const brain = w => w.ai || (w.ai = { pace: 50, seenDown: -1, queue: [], last: null, cuts: 0, usedFin: false, flown: false, outs: 0, dove: false, floor: 0, tryAt: 0 });
@@ -59,7 +59,7 @@
     if (me.out && !foe.out) { if (G.out.n >= 3 || mine) out.act = true; return out; }       // get back in
     if (!me.out && foe.out) {
       if (!mine) return out;
-      if (!ai.floorPlan) ai.floorPlan = (foe.st === "stand" && !ai.dove && me.id === BOOK().winner && t > 60) ? "dive" : (G.out.n < 4 && rnd() < 0.6 ? "goout" : "pose");
+      if (!ai.floorPlan) ai.floorPlan = (foe.st === "stand" && !ai.dove && me.id === PCW.FACE && t > 60) ? "dive" : (G.out.n < 4 && rnd() < 0.6 ? "goout" : "pose");
       if (ai.floorPlan === "pose" && me.hasPosed && G.out.n < 6) return out;                 // posed already: let him get back in
       out.act = true; return out;
     }
@@ -93,8 +93,16 @@
   /* he is down: what do I do about it? A short list, in order. */
   function planDown(me, foe, t, ai) {
     const winner = me.id === BOOK().winner, phase = phaseAt(t);
+    if (me.weapon) return G.ref.down > 70 ? ["chair", "cover"] : [];
+    if (foe.dirtyAt !== undefined && G.tick - foe.dirtyAt < 700 && me.p.booked === "heel") return ["cover"];
     if (foe.finBy === me.id && G.tick - foe.finAt < 500) return ["cover"];
-    if (phase === "finish" && winner) return ["pickup"];
+    if (G.ref.down > 150 && me.p.booked === "heel") return ["getchair"];
+    if (phase === "finish" && winner) {
+      const how = BOOK().how;
+      if (how === "sub") return G.crowd.hurt[foe.id][PCW.worstPart(foe)] >= 4 ? ["submit"] : ["pickup"];
+      if (how === "dirty") return t > 200 ? ["ropecover", "cover"] : ["ropecover", "pickup"];
+      return ["pickup"];
+    }
     const r = rnd(), q = [];
     const landed = G.tick - me.landedAt < 150 && !me.hasPosed;
     const canFly = !foe.seated && PCW.cornerFor(foe).d < 400 && !ai.flown && t > 45 && foe.downT > 150;
@@ -126,13 +134,14 @@
     /* which part to work: he picks one for the night and stays on it */
     if (kind === "limbpart") {
       if (!ai.part) ai.part = PCW.pick(["arm", "leg", "back"]);
+      if (winner && BOOK().how === "sub") return has(opts, "p_" + ai.part);
       return (ai.limbs = (ai.limbs || 0) + 1) % 4 === 0 ? has(opts, "headlock") : has(opts, "p_" + ai.part);
     }
     /* in a hold */
     if (kind === "submit") {
       const loser = me.id === BOOK().loser;
       // the booked loser can give up to a hold the room believes, late: that is a finish too
-      if (loser && ctx.believed && t > 120 && !PCW.pads[foe.id].cpu) return has(opts, "s_tap");
+      if (loser && ctx.believed && (BOOK().how === "sub" ? (phase === "finish" || t > 125) : (t > 120 && !PCW.pads[foe.id].cpu))) return has(opts, "s_tap");
       if (G.tick > ai.tryAt && myTurn && G.ctrl !== me.id && !(phase === "finish" && loser) && rnd() < 0.4) { ai.tryAt = G.tick + 240; return has(opts, "s_power"); }
       if (G.trust >= 50 && ctx.believed && rnd() < 0.5) return has(opts, "s_fade");
       return has(opts, "s_ropes");
@@ -165,7 +174,10 @@
     }
 
     /* kind === "lead": I am doing something */
-    const first = ai.queue[0];
+    if (ai.queue[0] === "chair" && G.ref.down <= 70) ai.queue = [];            // the referee is up: do not swing it
+    if (ai.queue[0] === "ropecover" && G.warn[me.id] >= PCW.WARNINGS - 1) ai.queue.shift();   // one more warning would end it
+    let first = ai.queue[0];
+    while (first && !has(opts, first) && ai.queue.length > 1 && (first === "ropecover" || first === "chair" || first === "getchair")) { ai.queue.shift(); first = ai.queue[0]; }
     if (first === "cover" && has(opts, "ropecover") && !(foe.finBy === me.id) && G.warn[me.id] < PCW.WARNINGS - 1 && rnd() < 0.7) { ai.queue.shift(); return has(opts, "ropecover"); }
     if (first && has(opts, first)) { ai.queue.shift(); return has(opts, first); }
     if (has(opts, "selfin") && !has(opts, "chops")) {
@@ -187,17 +199,36 @@
     if (has(opts, "pose") && !has(opts, "chops") && !has(opts, "cornerchops")) return has(opts, "pose");
 
     // standing, with my hands on him
-    if (phase === "finish" && winner && has(opts, "finisher")) return has(opts, "finisher");
+    if (me.weapon && has(opts, "chair") && G.ref.down > 70) return has(opts, "chair");
+    if (has(opts, "getchair") && me.p.booked === "heel") return has(opts, "getchair");
+    if (phase === "finish" && winner) {
+      const how = BOOK().how;
+      if (how === "fin" && has(opts, "finisher")) return has(opts, "finisher");
+      if (how === "sub") {
+        // stay on one body part until the room believes it, then put him down for the hold
+        const part = PCW.worstPart(foe);
+        if (G.crowd.hurt[foe.id][part] > 0) ai.part = part;
+        if (G.crowd.hurt[foe.id][part] < 4 && has(opts, "limb")) return has(opts, "limb");
+        return has(opts, "quick") || has(opts, "power") || opts[0];
+      }
+      if (how === "dirty") {
+        // steal it: flatten the referee and go for the chair, or get him down by the ropes
+        if (has(opts, "refbump") && (!ai.bumped || G.tick > (ai.bumpAt || 0) + 1500)) { ai.bumped = true; ai.bumpAt = G.tick; return has(opts, "refbump"); }
+        return has(opts, "ropes") || has(opts, "power") || opts[0];
+      }
+    }
+    // the heel's big cheat, once, in the middle of the match: referee down, chair out, a near-fall
+    if (me.p.booked === "heel" && has(opts, "refbump") && !ai.bumped && BOOK().how !== "dirty" && t > 88 && phase === "heat" && G.run[me.id] >= 2 && rnd() < 0.4) { ai.bumped = true; return has(opts, "refbump"); }
     // it is his time now: hand it over (to a person: only after I have had a couple)
     if (!myTurn && has(opts, "letgo") && G.run[me.id] >= (humanFoe ? 1 : 2)) return has(opts, "letgo");
-    if (!winner && has(opts, "finisher") && !ai.usedFin && t > 84 && phase === "heat" && G.run[me.id] >= 3) { ai.usedFin = true; return has(opts, "finisher"); }
+    if (me.p.booked === "heel" && has(opts, "finisher") && !ai.usedFin && t > 84 && phase === "heat" && G.run[me.id] >= 3) { ai.usedFin = true; return has(opts, "finisher"); }
     // a thumb in the eye, but only behind the referee's back
     if (has(opts, "rake") && !PCW.refSees(me) && G.tick > (ai.rakeAt || 0) && rnd() < 0.6) { ai.rakeAt = G.tick + 1100; ai.last = "rake"; return has(opts, "rake"); }
     // working a body part: mostly the heel's game, and mostly while he is on top
     if (has(opts, "limb") && ai.last !== "limb" && rnd() < (me.p.booked === "heel" ? 0.3 : 0.12)) { ai.last = "limb"; return has(opts, "limb"); }
     // ten punches: the crowd counts for a man it likes
     if (has(opts, "tenpunch") && !ai.ten && G.crowd.W[me.id].like > G.crowd.W[foe.id].like && rnd() < 0.5) { ai.ten = true; ai.last = "tenpunch"; return has(opts, "tenpunch"); }
-    const pool = opts.filter(o => !["finisher", "letgo", "back", "rake", "limb", "tenpunch"].includes(o.id) && o.id !== ai.last);
+    const pool = opts.filter(o => !["finisher", "letgo", "back", "rake", "limb", "tenpunch", "refbump", "getchair", "chair"].includes(o.id) && o.id !== ai.last);
     const ok = pool.filter(o => {
       if (o.id === "throwout") return ai.outs < 1 && t > 40 && rnd() < 0.5 && (ai.outs++, true);
       if (o.id === "headlock") return t > 30;
@@ -215,6 +246,7 @@
     if (pin.booked) return -1;                                   // the finish: lie there
     const t = G.tick / 60;
     if (me.id === BOOK().loser && pin.fin && t > 150) return -1;
+    if (me.id === BOOK().loser && t > 205) return -1;             // it has gone long: let it end
     return PCW.COUNT * 2 + 12 + Math.floor(rnd() * 28);          // a good two-count
   };
 })();
