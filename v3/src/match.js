@@ -41,6 +41,12 @@
   PCW.see = function (ev) {
     G.lastAct = G.tick;
     if (PART[ev.type] && !ev.part) { ev.part = PART[ev.type][0]; ev.hurt = PART[ev.type][1]; }
+    // a move that was stopped earlier and finally lands is worth more
+    if (G.boost && !G.boost.used && ev.actor === G.boost.actor && ev.size && ev.target) { ev.size *= G.boost.mult; ev.callback = true; G.boost.used = true; }
+    if (SPOTS[ev.type]) note("spot", ev.actor, nm(ev.actor) + " " + SPOTS[ev.type], { type: ev.type });
+    if (CHEATS[ev.type]) note("cheat", ev.actor, nm(ev.actor) + " " + CHEATS[ev.type], { type: ev.type });
+    if (ev.type === "finisher") note("fin", ev.actor, nm(ev.actor) + " hit " + PCW.PERSONAS[ev.actor].finisher);
+    if (ev.type === "crash") note("crash", ev.actor, nm(ev.actor) + " moved and " + nm(ev.target) + " hit nothing");
     return G.crowd.see(ev);
   };
   PCW.landed = function (a) { a.landedAt = G.tick; a.hasPosed = false; G.offence[a.id]++; };
@@ -67,7 +73,29 @@
   };
   function gorilla(text) { G.gorilla = { text, t: 0 }; }
   function banner(who, text) { G.banner = { who, text, t: 0 }; }
-  function setCtrl(w) { if (G.ctrl !== w.id) { G.ctrl = w.id; G.run[w.id] = 0; G.ctrlAt = G.tick; } }
+  function setCtrl(w) {
+    if (G.ctrl === w.id) return;
+    const last = G.ctrlLog[G.ctrlLog.length - 1]; if (last) last.to = G.tick;
+    G.ctrlLog.push({ id: w.id, from: G.tick });
+    G.ctrl = w.id; G.run[w.id] = 0; G.ctrlAt = G.tick;
+  }
+
+  /* ---------------- THE MATCH REMEMBERS ----------------
+     A running record of what happened, in plain clauses. It feeds three things:
+     callbacks (a move that was stopped pays off when it finally lands), the
+     finisher kick-out, and the write-up on the results card. */
+  const nm = id => PCW.PERSONAS[id].name;
+  function note(kind, who, say, extra) {
+    const n = Object.assign({ kind, who, t: G.tick, say }, extra || {});
+    G.story.push(n);
+    if (say) G.lastSay = n;
+    return n;
+  }
+  const SPOTS = {
+    throwout: "threw him out to the floor", dive: "dived through the ropes onto him", elbow: "came off the top rope",
+    post: "ran him into the ring post", tenpunch: "landed all ten punches with the room counting", apron: "drove him into the ring edge"
+  };
+  const CHEATS = { rake: "went to the eyes", feet: "put his feet on the ropes", refbump: "put the referee down", chair: "hit him with the chair" };
 
   /* ---------------- the choices, in plain words ---------------- */
   const OPT = {
@@ -197,6 +225,8 @@
     }
     if (id.startsWith("p_")) { const n = G.crowd.hurt[foe.id][id.slice(2)]; o.hint = n ? "They have seen it worked " + Math.round(n) + " times." : "Fresh. Nothing done to it yet."; }
     if (id === "selfout" && who.p.booked === "heel") { o.label = "TAKE A BREAK OUTSIDE"; o.hint = "Stall on the floor. They hate it."; }
+    // unfinished business: he stopped this one earlier, so landing it now means more
+    if (G.denied[who.id] && G.denied[who.id][id] !== undefined && G.tick - G.denied[who.id][id] > 600) o.callback = true;
     // a wrestler can feel when the room has seen something too often
     const key = who.id + ":" + (id === "finisher" ? "finisher" : id);
     if (G.crowd.mem[key] >= 1.5) o.stale = true;
@@ -259,6 +289,7 @@
   function warn(a) {
     G.warn[a.id]++;
     banner("THE REFEREE", "WARNS " + a.p.short + " (" + G.warn[a.id] + " OF " + PCW.WARNINGS + ")");
+    note("warn", a.id, "the referee caught " + nm(a.id) + " cheating");
     if (G.warn[a.id] >= PCW.WARNINGS) { PCW.say("pbp", PCW.LINES.dq, 2); endMatch("DQ", other(a)); }
     else { PCW.say("pbp", PCW.LINES.warn, 1); if (!padOf(a).cpu) gorilla(PCW.GORILLA.warn); }
   }
@@ -285,6 +316,8 @@
     G.trust = 100; G.trustFlash = null; G.lastAct = 0; G.seqEnd = 0; G.shoots = 0;
     G.ctrl = null; G.ctrlAt = 0; G.run = { stove: 0, boulder: 0 }; G.offence = { stove: 0, boulder: 0 };
     G.warn = { stove: 0, boulder: 0 }; G.props = [];
+    G.story = []; G.ctrlLog = []; G.denied = { stove: {}, boulder: {} }; G.boost = null;
+    G.peakH = 0; G.peakT = 0; G.peakSay = null; G.lastSay = null; G.fin = null;
     G.cb = false; G.out = { n: 0, t: 0 }; G.ask = null; G.pin = null; G.busy = false; G.banner = null;
     G.line = null; G.gorilla = null; G.end = null; G.sparks = [];
     if (!G.crowd) G.crowd = new PCW.Crowd(); else G.crowd.reset();
@@ -303,7 +336,10 @@
     if (G.hitstop > 0) { G.hitstop--; return; }        // presses made during the freeze are kept
     G.tick++;
     G.dir.next();
-    if (G.phase === "MATCH") { refTick(); officeTick(); G.crowd.tick(); }
+    if (G.phase === "MATCH") {
+      refTick(); officeTick(); G.crowd.tick();
+      if (G.crowd.heat > G.peakH + 0.5) { G.peakH = G.crowd.heat; G.peakT = G.tick; G.peakSay = G.lastSay; }
+    }
     if (G.shake > 0) G.shake *= 0.86;
     if (G.ropeShake > 0) G.ropeShake--;
     if (G.line) G.line.t++;
@@ -451,6 +487,8 @@
   }
 
   function* resolve(a, b, id) {
+    const optId = id, optLabel = id === "finisher" ? a.p.finisher : OPT[id] ? OPT[id][0] : id;
+    const deny = how => { G.denied[a.id][optId] = G.tick; note("deny", b.id, nm(b.id) + " " + how + " " + nm(a.id) + "'s " + optLabel, { opt: optId }); };
     if (id === "finisher") id = a.p.finKind;
     if (POOLS[id]) id = pickMove(id, a);
     if (id === "limb") {
@@ -497,6 +535,7 @@
       if (b.p.booked === "heel" && !b.out && !a.out && b.st !== "corner" && ans.includes("fire")) ans.push("bail");
       const pick = yield* ask(b, "answer", a.p.short + " IS GOING FOR " + NAME[id], ans.map(k => opt(k, b)), { move: id, lead: a });
       if (pick.id === "bail") {
+        deny("bailed out on"); note("bail", b.id, nm(b.id) + " bailed out of the ring");
         banner(b.p.short, "BAILS OUT OF THE RING");
         yield* play(M.bail(a, b));
         return;
@@ -506,6 +545,8 @@
         if (G.run[a.id] < 2 && G.crowd.W[b.id].taken < 4) PCW.trust(TR.GREEDY, b.p.short + " would not let him get anything in");
         banner(b.p.short, "FIRES BACK!");
         const r = yield* ask(a, "fireback", b.p.short + " IS FIRING BACK", [opt("feed", a), opt("cut", a)], { rec: b });
+        if (r.id === "cut") note("cut", b.id, nm(a.id) + " cut off " + nm(b.id) + "'s comeback");
+        else { deny("blocked"); note("feed", b.id, nm(b.id) + " fought back and took over"); }
         if (id === "tenpunch") {
           // up on the ropes: either he gets shoved off part-way, or he gets all ten in anyway
           if (r.id === "feed") { yield* tenPunch(a, b, o, 4 + Math.floor(PCW.rnd() * 3)); setCtrl(b); if (b.id === PCW.FACE && G.tick > 75 * 60) G.cb = true; }
@@ -524,14 +565,18 @@
       }
       if (pick.id === "shrug") {
         if (b.st === "corner") { b.st = "stand"; b.corner = null; }
+        deny("shrugged off"); note("shrug", b.id, nm(b.id) + " shrugged it off");
         banner(b.p.short, "FEELS NOTHING");
         yield* play(M.shrug(a, b)); setCtrl(b);
         if (!padOf(b).cpu) gorilla(PCW.GORILLA.nosell);
         return;
       }
       if (pick.id === "big") o.big = true;
-      if (pick.id === "move") o.miss = true;
+      if (pick.id === "move") { o.miss = true; deny("got out of the way of"); }
     }
+    // unfinished business: this was stopped earlier, and now it lands
+    const stoppedAt = o.miss ? undefined : G.denied[a.id][optId];
+    if (stoppedAt !== undefined && G.tick - stoppedAt > 600) G.boost = { actor: a.id, mult: 1.5, used: false };
     if (padOf(b).cpu && G.trust < 50) { o.flat = true; o.big = false; }      // a partner you have burned stops working for you
     if (b.st === "corner" && !["cornerchops", "charge", "tenpunch", "across"].includes(id)) { b.st = "stand"; b.corner = null; }
     if (id === "chops" || id === "cornerchops") yield* chopsLoop(a, b, o);
@@ -539,6 +584,14 @@
     else if (id.startsWith("limb_")) yield* play(M.limb(a, b, o, id.slice(5)));
     else yield* play(M[id](a, b, o));
     if (o.miss) setCtrl(b); else { setCtrl(a); G.run[a.id]++; }
+    if (G.boost) {
+      if (G.boost.used) {
+        delete G.denied[a.id][optId];
+        note("callback", a.id, nm(a.id) + " finally hit the " + optLabel, { opt: optLabel, stoppedAt });
+        PCW.say("pbp", PCW.LINES.callback, 2); banner(a.p.short, "FINALLY HITS IT");
+      }
+      G.boost = null;
+    }
     // a chair shot in front of the referee ends it on the spot
     if (id === "chair" && refUp && G.phase === "MATCH") { G.warn[a.id] = PCW.WARNINGS - 1; warn(a); }
   }
@@ -601,6 +654,7 @@
       banner(b.p.short, "IS POWERING OUT!");
       const r = yield* ask(a, "fireback", b.p.short + " IS POWERING OUT OF IT", [opt("feed", a), opt("cut", a)], { rec: b });
       if (r.id === "feed") {
+        note("sub", b.id, nm(b.id) + " powered out of " + H.name.toLowerCase(), { result: "power", part });
         yield* play(M.subBeat(a, b, part, { x: 0, z: 0 }));
         C.see({ type: "subbeat", actor: a.id, target: b.id, believed: believed() });
         yield* play(M.subBreak(a, b, part, { reversed: true }));
@@ -614,6 +668,8 @@
       C.see({ type: "subbeat", actor: a.id, target: b.id, believed: believed() });
       yield* play(M.subTap(a, b, part));
       PCW.say("pbp", PCW.LINES.tap, 2);
+      G.fin = { how: "when " + nm(b.id) + " gave up in " + H.name.toLowerCase() };
+      note("finish", a.id, nm(b.id) + " gave up");
       C.see({ type: "pinfall", actor: a.id, afterBig: believed() });
       endMatch(finishType(a, believed() ? "sub" : "subweak"), a);
       return;
@@ -628,6 +684,7 @@
       C.see({ type: "subbeat", actor: a.id, target: b.id, believed: believed(), fade, count, part, hurt: 0.5 }); G.lastAct = G.tick;
       if (G.phase !== "MATCH") return;
     }
+    note("sub", b.id, nm(b.id) + (fade ? " faded in " + H.name.toLowerCase() + " and still got out" : " made the ropes"), { result: fade ? "fade" : "ropes", part });
     C.see({ type: "ropebreak", actor: b.id, target: a.id, big: fade });
     PCW.say("pbp", PCW.LINES.ropebreak, 1); PCW.trust(fade ? TR.BIG : TR.SOLD);
     banner(b.p.short, fade ? "WILL NOT STAY DOWN" : "MAKES THE ROPES");
@@ -646,7 +703,8 @@
     // did he cheat to get here? feet on the ropes, or a chair in the last little while
     const dirty = feet || (b.dirtyAt !== undefined && G.tick - b.dirtyAt < 1200);
     const method = dirty ? "dirty" : fin ? "fin" : "pin";
-    const booked = a.id === PCW.BOOKING.winner && method === PCW.BOOKING.how;
+    // the office does not want it over in ninety seconds: before 1:40 no pin is "the finish" yet
+    const booked = a.id === PCW.BOOKING.winner && method === PCW.BOOKING.how && G.tick >= 100 * 60;
     let vis = 0;
     const P = G.pin = { a, b, count: 0, f: 0, fin, booked, human: !padOf(b).cpu };
     PCW.say("pbp", PCW.LINES.cover, 1);
@@ -667,7 +725,8 @@
       if (wantsOut && (P.f > 0 || vis > 20)) {
         const late = P.count === 2 ? (P.f % PCW.COUNT) / PCW.COUNT : 0;
         G.pin = null;
-        PCW.see({ type: "kickout", actor: b.id, target: a.id, late });
+        PCW.see({ type: "kickout", actor: b.id, target: a.id, late, fin });
+        note("kickout", b.id, nm(b.id) + " kicked out of " + (fin ? a.p.finisher : dirty ? "a dirty pin" : "the cover") + (late > 0.5 ? " at the last instant" : ""), { fin, finName: a.p.finisher });
         if (booked) {
           // the cardinal betrayal: kicking out of the real finish. Always possible, always priced.
           G.shoots++; PCW.trust(TR.FINISH_KICKOUT, b.p.short + " kicked out of the FINISH");
@@ -695,6 +754,8 @@
           G.pin = null;
           G.crowd.see({ type: "pinfall", actor: a.id, afterBig: fin });
           const type = finishType(a, method);
+          G.fin = { how: method === "fin" ? "with " + a.p.finisher : method === "dirty" ? "with a pin he cheated for" : "with a plain cover" };
+          note("finish", a.id, "the referee counted three");
           PCW.say("pbp", method === "dirty" ? PCW.LINES.robbery : type === "SCREWJOB" ? PCW.LINES.screwjob : type === "FLAT" ? PCW.LINES.flatWin : PCW.LINES.cleanWin, 2);
           endMatch(type, a);
           return;
@@ -773,7 +834,7 @@
       type, stars, parts, winner: winner ? winner.id : null,
       time: G.tick / 60, trust: G.trust,
       heat: Math.round(C.avgHeat()), attn: Math.round(C.avgAttn()), peak: Math.round(C.peak),
-      verdict: { stove: verdict("stove"), boulder: verdict("boulder") }, jobs,
+      verdict: { stove: verdict("stove"), boulder: verdict("boulder") }, jobs, story: buildStory(type),
       headline:
         type === "CLEAN" ? (PCW.BOOKING.how === "dirty" ? "He stole it, exactly as booked. They are furious." : PCW.BOOKING.how === "sub" ? "NEW CHAMPION, by submission. As booked." : "NEW CHAMPION. As booked.") :
           type === "CALLED" ? "The right man won, but not with the booked finish. It still worked." :
@@ -785,6 +846,86 @@
     };
   }
   PCW.endMatch = endMatch;
+
+  /* ============================================================
+     THE WRITE-UP. The match told back in a handful of lines, built
+     from the record: who was on top and for how long, what was
+     stopped and what finally landed, the near-falls, the cheating,
+     the loudest moment, and how it ended.
+     ============================================================ */
+  function buildStory(type) {
+    const S = G.story, out = [];
+    const fmt = t => { const s = Math.floor(t / 60); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    const times = n => n === 1 ? "once" : n === 2 ? "twice" : n + " times";
+    const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+    const add = (pr, t, text) => out.push({ pr, t, text });
+    const of = (kind, who) => S.filter(n => n.kind === kind && (who === undefined || n.who === who));
+    const ids = ["stove", "boulder"], oth = id => (id === "stove" ? "boulder" : "stove");
+
+    // who was on top, and for how long
+    const log = G.ctrlLog.map(c => ({ id: c.id, from: c.from, to: c.to === undefined ? G.tick : c.to })).filter(c => c.to - c.from > 150);
+    if (log[0]) add(5, log[0].from, nm(log[0].id) + " had the first stretch: " + Math.round((log[0].to - log[0].from) / 60) + " seconds on top.");
+    let long = null;
+    for (const c of log.slice(1)) if (!long || c.to - c.from > long.to - long.from) long = c;
+    if (long && long.to - long.from > 25 * 60) {
+      const h = G.crowd.hurt[oth(long.id)]; let part = null; for (const p in h) if (h[p] >= 3 && (!part || h[p] > h[part])) part = p;
+      add(7, long.from, nm(long.id) + " took over at " + fmt(long.from) + " and stayed on top for " + Math.round((long.to - long.from) / 60) + " seconds" + (part ? ", going after the " + part + "." : "."));
+    }
+    for (const id of ids) {
+      const ch = of("cheat", id), caught = of("warn", id).length;
+      if (ch.length) add(6, ch[0].t, nm(id) + " cheated " + times(ch.length) + (caught ? "; the referee caught him " + times(caught) + "." : ", and the referee saw none of it."));
+      const cuts = of("cut", id);
+      if (cuts.length) add(6, cuts[0].t, nm(id) + " tried to fight back and was cut off " + times(cuts.length) + ".");
+      const bails = of("bail", id);
+      if (bails.length) add(4, bails[0].t, nm(id) + " bailed out of the ring " + times(bails.length) + ".");
+      const shrugs = of("shrug", id);
+      if (shrugs.length) add(3, shrugs[0].t, nm(id) + " shrugged off " + plural(shrugs.length, "move") + ".");
+      // holds he was caught in, and how he got out
+      const subs = of("sub", id);
+      if (subs.length) {
+        const c = r => subs.filter(n => n.result === r).length, bits = [];
+        if (c("ropes")) bits.push("made the ropes " + times(c("ropes")));
+        if (c("fade")) bits.push("faded and still got out " + times(c("fade")));
+        if (c("power")) bits.push("powered out " + times(c("power")));
+        add(7, subs[0].t, nm(id) + " was caught in " + (subs.length === 1 ? "a hold" : subs.length + " holds") + ": he " + bits.join(", ") + ".");
+      }
+      const kicks = of("kickout", id), fk = kicks.find(n => n.fin);
+      if (fk) add(10, fk.t, nm(id) + " kicked out of " + fk.finName + " at " + fmt(fk.t) + ".");
+      else if (kicks.length >= 2) add(4, kicks[kicks.length - 1].t, nm(id) + " kicked out " + times(kicks.length) + ".");
+    }
+    const feed = S.find(n => n.kind === "feed" && n.who === PCW.FACE && n.t > 60 * 60);
+    if (feed) add(8, feed.t, "The comeback started at " + fmt(feed.t) + ".");
+    for (const cb of of("callback")) add(9, cb.t, nm(cb.who) + " finally hit the " + cb.opt + ". It had been stopped at " + fmt(cb.stoppedAt) + ".");
+    const bump = S.find(n => n.kind === "cheat" && n.type === "refbump");
+    if (bump) add(8, bump.t, "The referee went down at " + fmt(bump.t) + (S.some(n => n.kind === "cheat" && n.type === "chair" && n.t > bump.t) ? ", and the chair came out." : "."));
+    const seenSpot = {};
+    for (const sp of of("spot")) {
+      if (seenSpot[sp.type]) continue; seenSpot[sp.type] = true;
+      add({ dive: 6, elbow: 5, tenpunch: 5, post: 5, throwout: 4, apron: 3 }[sp.type] || 3, sp.t, sp.say + " at " + fmt(sp.t) + ".");
+    }
+    const crash = of("crash")[0];
+    if (crash) add(6, crash.t, crash.say + ".");
+
+    // the loudest moment: attach it to the line it belongs to, or give it one of its own
+    if (G.peakSay && G.peakT > 0) {
+      const near = out.filter(l => Math.abs(l.t - G.peakSay.t) < 150).sort((a, b) => b.pr - a.pr)[0];
+      if (near) { near.text += " That was the loudest the room got."; near.pr += 2; }
+      else add(9, G.peakSay.t, "The loudest the room got was at " + fmt(G.peakT) + ", when " + G.peakSay.say + ".");
+    }
+
+    // how it ended
+    const at = "It ended at " + fmt(G.tick) + " ";
+    const dq = ids.find(id => G.warn[id] >= PCW.WARNINGS);
+    const end =
+      type === "COUNTOUT" ? at + "on a count-out." :
+        type === "DQ" ? at + "when the referee disqualified " + nm(dq || PCW.HEEL) + "." :
+          type === "BREAKDOWN" ? "It fell apart at " + fmt(G.tick) + ". The two of them stopped working together." :
+            at + (G.fin ? G.fin.how : "") +
+            (type === "CLEAN" ? ", as booked." : type === "CALLED" ? ". Not the booked finish, but a real one." : type === "FLAT" ? ". Nobody saw a real finish." : ". The wrong man won.");
+    const picked = out.sort((a, b) => b.pr - a.pr || a.t - b.t).slice(0, 5).sort((a, b) => a.t - b.t);
+    picked.push({ t: G.tick, text: end });
+    return picked.map(l => ({ t: fmt(l.t), text: l.text }));
+  }
 
   /* THE JOB. The face's job is to be cheered; the heel's job is to be booed.
      How well it was done = how strongly they feel that way x how much they react to him at all. */

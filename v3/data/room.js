@@ -88,6 +88,7 @@
     refup: "The referee is stirring. He has no idea what just happened.",
     visual: "He's got him pinned, and there is NO REFEREE to count it!",
     robbery: "ONE, TWO, THREE. He STOLE it! The champion retains, and this crowd wants blood!",
+    callback: ["HE GOT IT THIS TIME! He was stopped cold on that earlier, and now he hits it!", "There it is! He's been trying for that all match!"],
     tackle: ["Shoulder tackle off the ropes! He ran right through him!"],
     stomp: ["He's putting the boots to a man who's down.", "That's just mean."],
     nosell: ["He popped right back up! That made the other fella look like nothing."],

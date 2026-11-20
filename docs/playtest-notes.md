@@ -881,3 +881,20 @@ Known rough spots:
 
 One thing to change next: Jordan plays each booking once, with the sound on, and says what is wrong with the sound first.
 
+## 2026-11-20 / prototype 3 — the match remembers itself
+
+Pushed live first, at Jordan's word ("Push it live"): https://jordanclermont.github.io/pcw/v3/ . Then he asked how to take it to the next level; of four suggestions he picked the second: "add the features for number 2 to make the match remember itself."
+
+What was built (bible §14): a record of the match; callbacks for moves that were stopped earlier; a finisher kick-out the crowd remembers; and the match written up in about six lines on the results card.
+
+What was checked: 36 CPU-vs-CPU matches across the three bookings all still end as booked; sixty random-choice matches with no crashes; the write-up read for four matches (callbacks, kick-outs, holds, the referee going down and the finish all came out right, after two wording fixes); the new results card and the callback mark on the choice card in the browser, with no console errors.
+
+What was NOT checked: feel at full speed; the sound (still unheard); whether a person notices and goes for a callback without being told.
+
+Known rough spots:
+- The CPU heel hits his finisher for a near-fall in most matches, so "kicked out of THE LANDSLIDE" appears in most write-ups.
+- The write-up names the kind of move on the card ("the POWER MOVE"), not the move that actually landed.
+- This batch is NOT on the live site yet. It is committed locally only.
+
+One thing to change next: Jordan plays, reads the write-up, and says whether it tells the match he remembers playing.
+

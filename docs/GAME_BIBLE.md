@@ -7,6 +7,8 @@ to the actual Pitch model as built (§8), added a status note that corners
 are drafted but not yet physically implemented (§8), and added the deferred
 commentary design (§5.9). Sections 1–4, 6, 7 unchanged.*
 
+*v1.19 revisions (2026-11-20): §14 gained the match record, callbacks ("he stopped this earlier"), a finisher kick-out the crowd remembers, and the written match story on the results card.*
+
 *v1.18 revisions (2026-11-20): §14 gained three bookings chosen before the bell, endings judged against the booking, the referee knockout, the chair, a crowd that counts cheating (receipts), sound, and a more neutral opening crowd.*
 
 *v1.17 revisions (2026-11-19): §14 gained count-along chops and ten punches, kinds of move picked for the moment (with eight new moves), body parts and submission holds with a new SUBMISSION ending, corner-to-corner and the ring post, and a list of what is parked.*
@@ -530,6 +532,14 @@ Of Jordan's two options for the contact mode, this is the RPG-style one. Quick t
 - **The opening crowd** starts closer to neutral (Stove cheered 30, The Boulder booed 25) so the first minute has something to win.
 - A pin after a recent chair shot or with feet on the ropes counts as a dirty pin, which is the booked finish under THE ROBBERY.
 - Safety valve: after 3:25 the booked loser stays down for any pin, so a match that has gone wrong can still end.
+
+**The match remembers itself (added 2026-11-20).** Asked how to take it further, the recommendation was that every choice was being judged on its own, and the step up was payoffs. Jordan: "add the features for number 2 to make the match remember itself."
+
+- **A record.** The game keeps a running list of what happened, in plain clauses: who took control and when, what was blocked, dodged or shrugged off, every near-fall, every piece of cheating and whether the referee caught it, every hold and how the man got out, the big spots, and the moment the room was loudest.
+- **Callbacks.** When a man stops something (blocks it and fires back, shrugs it off, moves, or bails), that choice is remembered as unfinished business. Ten seconds or more later, the same choice shows on the card marked "HE STOPPED THIS EARLIER". Landing it is worth half as much again with the crowd, the announcer calls it, and it goes in the write-up. The CPU goes back for its own unfinished business too.
+- **The finisher kick-out.** The crowd remembers whether anybody has kicked out of each man's finisher tonight. The first kick-out is nearly twice the reaction of an ordinary one. After it, the room's line reads "They cannot believe he kicked out of that. Hit it again and they will believe it is over", and the next finisher from that man lands harder.
+- **An early finisher is not the finish.** Before 1:40 no pin counts as the booked finish, so kicking out of an early finisher costs no trust, and the CPU will do it. That is what makes the first kick-out available as a story beat at all.
+- **The write-up.** The results card has a second column, "THE MATCH, AS THE ROOM SAW IT": up to five lines chosen from the record by how much they mattered, in time order, plus how it ended. For example: "THE BOULDER took over at 0:33 and stayed on top for 95 seconds, going after the arm." "STOVE HOT kicked out of THE LANDSLIDE at 1:31." "STOVE HOT finally hit the POWER MOVE. It had been stopped at 0:31." "It ended at 2:45 with THE FRONT BURNER, as booked." The loudest moment is attached to the line it belongs to.
 
 **Parked, with Jordan's agreement in principle ("eventually").**
 - Fuller planning: more than the finish, with gaps left for improvising. The three bookings are the first step. The old build has a bigger version (§4, §8).

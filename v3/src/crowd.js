@@ -76,6 +76,7 @@
         const p = PCW.PERSONAS[id];
         this.W[id] = { like: p.startLike, over: p.startOver, taken: 0, like0: p.startLike, over0: p.startOver, lowLike: p.startLike, highLike: p.startLike };
       }
+      this.finKicked = { stove: false, boulder: false };   // has anybody kicked out of this man's finisher tonight?
       this.cheats = { stove: 0, boulder: 0 };                                                 // how often they have SEEN each man cheat
       this.hurt = { stove: { arm: 0, leg: 0, back: 0 }, boulder: { arm: 0, leg: 0, back: 0 } };   // what they have SEEN worked on
       this.mem = {}; this.pulses = []; this.floaters = []; this.flashes = [];
@@ -263,6 +264,11 @@
       if (ev.type === "kickout") {
         const surprise = ((this.t - this.lastBig.t < 480 && this.lastBig.actor !== ev.actor) ? 2.0 : 1.0) * (1 + (ev.late || 0) * 0.5);
         mag = 4 * surprise * fresh * (0.5 + A.over / 100);
+        if (ev.fin) {
+          // he kicked out of the FINISHER. The first time anybody does that, the room loses its mind.
+          mag *= this.finKicked[ev.target] ? 1.25 : 1.9;
+          this.finKicked[ev.target] = true; this.attn += 6; this.flash(20);
+        }
         if (A.like >= -10) { tone = "pop"; this.heat += mag * 2.6; A.like += mag * 0.5; A.over += mag * 0.8; }
         else { tone = "boo"; this.heat += mag * 2.0; A.over += mag * 0.5; A.like -= mag * 0.3; }
         this.attn += 5 * fresh;
@@ -295,8 +301,10 @@
       // the story, read off the picture: has this man been taking a beating?
       let mult = 1, comeback = false;
       if (A.taken >= 6 && !ev.dirty) { mult += Math.min(A.taken, 16) / 10; comeback = true; }
+      if (ev.callback) { this.attn += 4; this.words("pop", 4); }      // they remember he was stopped on this
       if (ev.type === "finisher") {
         mult *= clamp(0.3 + sec / 140, 0.3, 1);   // a finisher in minute one means nothing yet
+        if (this.finKicked[ev.actor]) mult *= 1.3;   // he kicked out of it once: this time they believe it is over
         this.lastBig = { t: this.t, actor: ev.actor };
       } else if (ev.size >= 3) this.lastBig = { t: this.t, actor: ev.actor };
 
@@ -429,6 +437,8 @@
       const fav = S.like >= B.like ? "stove" : "boulder", oth = fav === "stove" ? "boulder" : "stove";
       const F = this.W[fav], O = this.W[oth], name = id => PCW.PERSONAS[id].short;
       if (this.quiet > 450) return "They are getting restless. Do something.";
+      for (const id of ["stove", "boulder"]) if (this.finKicked[id] && this.t - this.lastBig.t < 900 && this.lastBig.actor === id)
+        return "They cannot believe he kicked out of that. Hit it again and they will believe it is over.";
       if (F.like - O.like < 25) return "They have not picked a side. Give them a reason to.";
       if (F.taken >= 20) return "They have seen enough of this beating. Let " + name(fav) + " fight back NOW.";
       if (F.taken >= 8) return "They want to see " + name(fav) + " fight back.";

@@ -81,7 +81,10 @@ part it has seen hurt. Three bookings are chosen before the bell (clean win,
 technician/submission, robbery/dirty win) and endings are judged against the
 one picked. The heel can knock the referee down; a chair comes out while he is
 down; the crowd counts cheating and tells a receipt from a cheap shot. Sound
-is synthesized in `v3/src/sound.js` (never heard in testing). Not built:
+is synthesized in `v3/src/sound.js` (never heard in testing). The match keeps
+a record (`note()` in match.js): stopped moves become callbacks, the crowd
+remembers a finisher kick-out, and the results card writes the match up.
+Live at https://jordanclermont.github.io/pcw/v3/ . Not built:
 fuller match planning, other wrestler types, real art.
 §14 describes it and lists the open questions. Start here for new work unless
 Jordan says otherwise; `v2/` and build 0.15 are kept as they are.

@@ -228,6 +228,9 @@
     if (has(opts, "limb") && ai.last !== "limb" && rnd() < (me.p.booked === "heel" ? 0.3 : 0.12)) { ai.last = "limb"; return has(opts, "limb"); }
     // ten punches: the crowd counts for a man it likes
     if (has(opts, "tenpunch") && !ai.ten && G.crowd.W[me.id].like > G.crowd.W[foe.id].like && rnd() < 0.5) { ai.ten = true; ai.last = "tenpunch"; return has(opts, "tenpunch"); }
+    // unfinished business: go back to the thing he stopped earlier
+    const owed = opts.find(o => o.callback && !["finisher", "letgo"].includes(o.id));
+    if (owed && rnd() < 0.6) { ai.last = owed.id; return owed; }
     const pool = opts.filter(o => !["finisher", "letgo", "back", "rake", "limb", "tenpunch", "refbump", "getchair", "chair"].includes(o.id) && o.id !== ai.last);
     const ok = pool.filter(o => {
       if (o.id === "throwout") return ai.outs < 1 && t > 40 && rnd() < 0.5 && (ai.outs++, true);

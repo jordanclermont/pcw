@@ -577,8 +577,9 @@
       const lines = wrapLines(o.label, cw - 46, 15, DISPLAY);
       lines.slice(0, 2).forEach((ln, k) => text(ln, cx0 + 38, cy0 + (lines.length > 1 ? 13 : 20) + k * 15, 15, "#f3ecd8", "left", DISPLAY));
       const hl = wrapLines(o.hint || "", cw - 18, 11.5), top = lines.length > 1 ? 46 : rows === 2 ? 38 : 42;
-      hl.slice(0, rows === 2 || quick ? 2 : 3).forEach((ln, k) => text(ln, cx0 + 9, cy0 + top + k * 13.5, 11.5, "#a9adb8", "left"));
-      if (o.stale) text("SEEN A LOT", cx0 + cw - 8, cy0 + 11, 9.5, "#ff8a8a", "right");
+      const tag = o.callback ? "HE STOPPED THIS EARLIER" : o.stale ? "SEEN A LOT" : null;
+      hl.slice(0, (rows === 2 || quick ? 2 : 3) - (tag && rows === 2 ? 1 : 0)).forEach((ln, k) => text(ln, cx0 + 9, cy0 + top + k * 13.5, 11.5, "#a9adb8", "left"));
+      if (tag) text(tag, cx0 + cw - 8, cy0 + ch - 8, 9.5, o.callback ? "#ffd24a" : "#ff8a8a", "right");
     });
     ctx.globalAlpha = 1;
   }
@@ -680,29 +681,42 @@
     if (fill > 0) { ctx.save(); ctx.beginPath(); ctx.rect(cx - r, cy - r, 2 * r * fill, 2 * r); ctx.clip(); path(); ctx.fillStyle = "#ffd24a"; ctx.fill(); ctx.restore(); }
   }
   function resultCard() {
-    const E = G.end, x = 240, y = 96, w = 800, h = 470;
+    const E = G.end, x = 70, y = 56, w = 1140, h = 608, col = 520;
     panel(x, y, w, h);
     text("THE PCW OBSERVER", x + 36, y + 46, 30, "#f3ecd8", "left", DISPLAY);
-    for (let i = 0; i < 5; i++) star(x + 500 + i * 56, y + 46, 22, PCW.clamp(E.stars - i, 0, 1));
+    for (let i = 0; i < 5; i++) star(x + w - 300 + i * 56, y + 46, 22, PCW.clamp(E.stars - i, 0, 1));
     text(E.headline, x + 36, y + 92, 22, "#ffd24a", "left");
     const sec = Math.floor(E.time);
-    text("Time " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0") + "     Crowd noise, average " + E.heat + " (peak " + E.peak +
+    text("Booked: " + PCW.BOOKING.title + "     Time " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0") + "     Crowd noise, average " + E.heat + " (peak " + E.peak +
       ")     Front row " + E.attn + "     Trust " + Math.round(E.trust), x + 36, y + 124, 14.5, "#c9ccd6", "left");
     text(E.parts.map(p => p[0] + " " + (p[1] >= 0 ? "+" : "") + p[1].toFixed(2)).join("     "), x + 36, y + 148, 13.5, "#8f93a0", "left");
 
+    // left: what the room made of each man
     text("WHAT THE ROOM MADE OF THEM", x + 36, y + 192, 15, "#d9a13a", "left");
     const row = (id, yy) => {
       const p = PCW.PERSONAS[id], v = E.verdict[id];
-      ctx.fillStyle = p.accent; ctx.fillRect(x + 36, yy - 20, 6, 78);
+      ctx.fillStyle = p.accent; ctx.fillRect(x + 36, yy - 20, 6, 118);
       text(p.name, x + 56, yy - 4, 24, "#f3ecd8", "left", DISPLAY);
       const word = n => n >= 0 ? "cheered " + n : "booed " + (-n);
       const jb = E.jobs[id], R2 = PCW.ROLE[jb.role];
-      ctx.font = face(24, DISPLAY); const nw = ctx.measureText(p.name).width;
-      text(R2.tag + ".  Job: " + R2.job + ".  " + jb.word, x + 70 + nw, yy - 3, 14.5, jb.word === "DONE" ? "#9fd4a0" : jb.word === "HALF DONE" ? "#ffd24a" : "#ff8a8a", "left");
-      text("Walked in: " + word(v.like0) + "     Walked out: " + word(v.like) + "     Reaction " + v.over0 + " to " + v.over, x + 56, yy + 24, 14, "#c9ccd6", "left");
-      wrapLines(v.text, w - 110, 17).forEach((ln, i) => text(ln, x + 56, yy + 48 + i * 20, 17, "#f3ecd8", "left"));
+      text(R2.tag + ".  Job: " + R2.job + ".  " + jb.word, x + 56, yy + 24, 14.5, jb.word === "DONE" ? "#9fd4a0" : jb.word === "HALF DONE" ? "#ffd24a" : "#ff8a8a", "left");
+      text("In: " + word(v.like0) + "     Out: " + word(v.like) + "     Reaction " + v.over0 + " to " + v.over, x + 56, yy + 46, 14, "#c9ccd6", "left");
+      wrapLines(v.text, col - 80, 16).slice(0, 2).forEach((ln, i) => text(ln, x + 56, yy + 70 + i * 20, 16, "#f3ecd8", "left"));
     };
-    row("stove", y + 234); row("boulder", y + 334);
-    text("R  run it back        B  change the booking", x + w / 2, y + 438, 20, "#ffd24a", "center", DISPLAY);
+    row("stove", y + 236); row("boulder", y + 384);
+
+    // right: the match, told back
+    const rx = x + col + 40, rw = w - col - 76;
+    ctx.fillStyle = "#2c2c36"; ctx.fillRect(rx - 22, y + 180, 2, 360);
+    text("THE MATCH, AS THE ROOM SAW IT", rx, y + 192, 15, "#d9a13a", "left");
+    let ly = y + 224;
+    for (const ln of E.story || []) {
+      text(ln.t, rx, ly, 14, "#ffd24a", "left", DISPLAY);
+      const wrapped = wrapLines(ln.text, rw - 52, 15);
+      wrapped.forEach((t, i) => text(t, rx + 52, ly + i * 19, 15, "#f3ecd8", "left"));
+      ly += wrapped.length * 19 + 12;
+      if (ly > y + 540) break;
+    }
+    text("R  run it back        B  change the booking", x + w / 2, y + h - 30, 20, "#ffd24a", "center", DISPLAY);
   }
 })();
